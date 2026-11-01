@@ -51,4 +51,5 @@ in memory against `original/`, the registers and stack at `$E700`, the display a
 Publishing a release on GitHub builds the disk from the release's tag (`.github/workflows/release.yml`)
 and attaches it as `StuntCarRacer_Enhanced_<tag>.adf`.
 
-Status: boots to the game's entry in the harness; still to try in WinUAE.
+Status: boots to the game's entry in the harness; still to try in WinUAE. What is planned:
+[`TODO.md`](TODO.md).

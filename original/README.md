@@ -15,6 +15,7 @@ Galahad), disassembled: sources that reassemble byte-identical, and the disk reb
 | [`disk/`](disk) | the files the boot chain reads, named by track, and the disk map ([`disk/FILES.md`](disk/FILES.md)); `disk/SHA1SUMS` |
 | [`bin/`](bin) | what is made from them: the loader unpacked, the helper block, the loading picture as bitplanes |
 | [`docs/BOOT.md`](docs/BOOT.md) | the boot chain step by step, the helper block at `$C0`, the game's own disk access |
+| [`docs/MEMORY.md`](docs/MEMORY.md) | how the game's single load uses the 512K |
 | [`tools/disasm/`](tools/disasm) | the disassembler (the New Zealand Story's engine, `core.py`) and its configs (`*_cfg.py`): `make.py` |
 | [`tools/disk/`](tools/disk) | `extract_files.py` (the ADF -> `disk/files/`, `bin/`), `unpack_loader.py` |
 | [`render/`](render) | `assets.py`: the pictures as PNGs and the samples as WAVs; `loadpic.py`: the loading picture (`render/out/`) |
