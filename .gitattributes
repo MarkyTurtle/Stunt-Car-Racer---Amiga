@@ -1,0 +1,8 @@
+# Text files keep LF line endings in the checkout on every system (Windows included), so a build
+# on Windows sees the same sources as on Linux. vasm and Python read LF on Windows.
+* text=auto eol=lf
+
+# Binary files: never converted
+*.bin   binary
+*.adf   binary
+*.png   binary

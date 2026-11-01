@@ -10,8 +10,11 @@ with the $4489 sync) with no filesystem, read only through the 4489_byteloader:
         offset on the disk and its length, longs
   $600  the files, one after another in id order
 
-The files (ids: FID_ in boot_4489.s), from original/ (original/tools/disk/extract_files.py):
-  0  the game: original/disk/files/t010-083_game.bin, loaded to $E700 and entered there
+  python3 enhanced/tools/build_disk.py --check SHA1    (fails unless the disk's SHA-1 is SHA1)
+
+The files (ids: FID_ in boot_4489.s):
+  0  the game: src/scr_game.s (the hand-edited source forked from original/scr_game.s),
+     assembled at $E700; loaded to $E700 and entered there
   1  the loading picture: original/bin/loadpic_78000.bin (4 bitplanes), loaded to $78000
   2  the helper block the game calls: original/bin/lowmem_c0.bin, loaded to $C0
 """
@@ -25,13 +28,14 @@ ADF = os.path.join(OUT, 'scr.adf')
 VASM = os.environ.get('VASM', 'vasmm68k_mot')
 DISK = 901120
 FT_OFFSET, FT_VERSION, FT_ENTRIES, DATA_START = 0x400, 1, 16, 0x600
-FILES = [os.path.join(ORIG, 'disk', 'files', 't010-083_game.bin'),     # 0 FID_GAME
+GAME_BIN = os.path.join(OUT, 'game.bin')
+FILES = [GAME_BIN,                                                      # 0 FID_GAME (src/scr_game.s)
          os.path.join(ORIG, 'bin', 'loadpic_78000.bin'),               # 1 FID_LOADPIC
          os.path.join(ORIG, 'bin', 'lowmem_c0.bin')]                   # 2 FID_LOWMEM
 
 
-def vasm(src, out, listing):
-    cmd = [VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC, '-L', listing, '-o', out, src]
+def vasm(src, out, listing=None):
+    cmd = [VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC] + (['-L', listing] if listing else []) + ['-o', out, src]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True)
     except FileNotFoundError:
@@ -54,6 +58,7 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     bin_ = os.path.join(OUT, 'boot_4489.bin')
     vasm(os.path.join(SRC, 'boot_4489.s'), bin_, os.path.join(OUT, 'boot_4489.lst'))
+    vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN)
     boot = open(bin_, 'rb').read()
     if len(boot) != 1024: sys.exit(f'the bootblock is {len(boot)} bytes, not 1024')
     adf = bytearray(DISK)
@@ -65,15 +70,21 @@ def build():
         if pos + len(data) > DISK: sys.exit(f'{path} does not fit on the disk')
         adf[pos:pos + len(data)] = data
         struct.pack_into('>LL', table, 16 + 8 * i, pos, len(data))
-        print(f'  file {i}: {os.path.relpath(path, ORIG):34s} ${pos:05X} length ${len(data):05X}')
+        print(f'  file {i}: {os.path.relpath(path, os.path.join(ENH, "..")):34s} ${pos:05X} length ${len(data):05X}')
         pos = (pos + len(data) + 1) & ~1
     adf[FT_OFFSET:FT_OFFSET + len(table)] = table
     adf[0:1024] = bootblock_checksum(boot)
     open(ADF, 'wb').write(adf)
-    print(f'{os.path.relpath(ADF, os.path.join(ENH, ".."))}: {pos:,} of {DISK:,} bytes used, '
-          f'sha1 {hashlib.sha1(adf).hexdigest()}')
-    return ADF
+    sha = hashlib.sha1(adf).hexdigest()
+    print(f'{os.path.relpath(ADF, os.path.join(ENH, ".."))}: {pos:,} of {DISK:,} bytes used, sha1 {sha}')
+    return sha
 
 
 if __name__ == '__main__':
-    build()
+    sha = build()
+    if '--check' in sys.argv:
+        want = sys.argv[sys.argv.index('--check') + 1]
+        if sha != want:
+            sys.exit(f'the disk SHA-1 is {sha}, not {want}: if the change is intended, update ADF_SHA1 in '
+                     '.github/workflows/enhanced.yml')
+        print('SHA-1 as expected')

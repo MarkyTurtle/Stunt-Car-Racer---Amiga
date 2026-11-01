@@ -2,8 +2,9 @@
 
 The game on an ordinary AmigaDOS-format disk with a file table, loaded through the
 [4489_byteloader](https://github.com/MarkyTurtle/4489_byteloader), as the Ghosts'n Goblins and
-New Zealand Story disks are. For now the game itself is the original's; the improvements come
-once it is disassembled.
+New Zealand Story disks are. The game is assembled from its own source, `src/scr_game.s`,
+forked from `original/scr_game.s`: for now unchanged (the disk's SHA-1 is checked by the
+workflow), and where the improvements go.
 
 ```
 python3 enhanced/tools/build_disk.py     # -> enhanced/build/scr.adf
@@ -16,7 +17,7 @@ python3 enhanced/tools/test_boot.py      # boots it in the emulator harness: eve
 |---|---|
 | `$000-$3FF` | the bootblock, [`src/boot_4489.s`](src/boot_4489.s), with the 4489_byteloader ([`src/byteloader.i`](src/byteloader.i)) |
 | `$400-$5FF` | the file table: `'SCRF'`, version.w, count.w, 8 bytes zero, then offset.l and length.l per file |
-| `$600-` | file 0 the game (to `$E700`), file 1 the loading picture (to `$78000`), file 2 the helper block (to `$C0`), from `original/` |
+| `$600-` | file 0 the game (`src/scr_game.s`, to `$E700`), file 1 the loading picture (to `$78000`), file 2 the helper block (to `$C0`); the last two from `original/bin/` |
 
 About half the disk is free.
 
@@ -43,5 +44,10 @@ A load that fails is tried again; after 8 failures COLOR00 flashes red while it 
 repository): booted from DF0, DF1, DF3 and from a unit of another device, each with the disk DMA
 starting at sector 0 and at a random sector. It checks the game, the picture and the helper block
 in memory against `original/`, the registers and stack at `$E700`, the display and the drive.
+
+## Releases
+
+Publishing a release on GitHub builds the disk from the release's tag (`.github/workflows/release.yml`)
+and attaches it as `StuntCarRacer_Enhanced_<tag>.adf`.
 
 Status: boots to the game's entry in the harness; still to try in WinUAE.

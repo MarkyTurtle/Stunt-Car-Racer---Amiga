@@ -1,0 +1,51 @@
+# The enhanced game: build its disk on Windows and Linux (enhanced/tools/build_disk.py, as
+# BUILDING.md describes), check its SHA-1, boot it in the emulator harness, and keep the disk as
+# the run's artifact (downloadable from the run's page). The disk uses the loading picture and the
+# helper block from original/, so changes there run it too.
+name: enhanced
+
+on:
+  push:
+    paths: ['enhanced/**', 'original/**', '.github/workflows/enhanced.yml', '.github/actions/**']
+  pull_request:
+    paths: ['enhanced/**', 'original/**', '.github/workflows/enhanced.yml', '.github/actions/**']
+  workflow_dispatch:
+
+env:
+  # The disk's SHA-1 while the game is the original's. A change to the game or the bootblock
+  # changes it: update this line with the new SHA-1 (build_disk.py prints it).
+  ADF_SHA1: cf5908060f7a410d0dbf348a5ed5f6dd8f2cfce9
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: windows-latest, python: '3.13'}
+          - {os: ubuntu-latest, python: '3.11'}
+          - {os: ubuntu-latest, python: '3.13'}
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}, Python ${{ matrix.python }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Python packages
+        shell: bash
+        run: |
+          python -m pip install -r enhanced/requirements.txt > "$RUNNER_TEMP/pip.log" 2>&1 || { tail -n 25 "$RUNNER_TEMP/pip.log" | sed 's/^/::error::/'; exit 1; }
+      - uses: ./.github/actions/vasm
+      - name: Build the disk and check its SHA-1 (enhanced/tools/build_disk.py)
+        run: python enhanced/tools/build_disk.py --check ${{ env.ADF_SHA1 }}
+      - name: Boot it in the emulator harness (enhanced/tools/test_boot.py)
+        run: python enhanced/tools/test_boot.py
+      - name: The checkout is unchanged
+        shell: bash
+        run: |
+          test -z "$(git status --porcelain)" || { git status --porcelain | sed 's/^/::error::changed by the build - /'; exit 1; }
+      - uses: actions/upload-artifact@v5
+        with:
+          name: enhanced-disk-${{ matrix.os }}-py${{ matrix.python }}
+          path: enhanced/build/scr.adf

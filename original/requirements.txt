@@ -1,3 +1,5 @@
-# The original game's Python packages, for the tools. Tested with the versions noted.
+# The original game's Python packages. build.py needs none of them: only vasm. They are for the
+# tools. Tested with the versions noted.
+capstone>=5.0     # (tested 5.0.7) tools/disasm/make.py: the disassembler
 unicorn>=2.1      # (tested 2.1.4) tools/disk/unpack_loader.py: runs the loader's own decruncher
 pillow>=10        # render/loadpic.py
