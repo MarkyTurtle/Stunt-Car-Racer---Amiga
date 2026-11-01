@@ -1,21 +1,31 @@
 # Memory
 
 The game is a single load: the loader reads all of it ($325 sectors, 412,160 bytes) to `$E700` and
-it never reads the boot disk again. On a 512K Amiga (chip RAM `$00000-$7FFFF`, 524,288 bytes) it
-uses:
+it never reads the boot disk again. This page is measured: the game run in `tools/scremu` with
+every byte it touches recorded (the CPU's reads, writes and instructions, and DMA: the bitplanes,
+the copper, the audio, the blitter) - `tools/scremu/run_usage.py`: the title, the name, a racing
+season scripted, then 300,000 frames (about 1 h 40 min of play) of random joystick, which race,
+crash, finish races and wander the menus. The screens shown only between races were measured by
+calling their routines (`calli` in scremu). The start-up checksum, which reads the whole game once,
+is left out.
 
-| Address | Bytes | What |
-|---|---:|---|
-| `$00000-$000FF` | 256 | exception vectors; the release's helper block at `$C0` |
-| `$00400-` | | the save-disk routine's MFM buffer (`SectorLoader`, a1 = `$400`) |
-| `-$03D7F` | | the supervisor stack (SSP = `$3D80`) |
-| `$03D80-$0E6FF` | 43,392 | no use found yet (no absolute references; not yet checked by running the game) |
-| `$0E700-$730FF` | 412,160 | **the game as loaded** (below) |
-| `$73100-$79F93` | 28,308 | the rest of the second screen (it starts at `$72294`, inside the image) |
-| `$7A01A-$7B6FF` | about 5,900 | work areas outside the image (`$7A21A` the save-slot names, `$7A61A`, `$7A91A`, ...) |
-| `-$7FFFF` | | the user stack (USP = `$7FFFC`) |
+## The 512K
 
-So the game takes about 430K of the 512K, and nearly all of chip RAM is spoken for.
+| Address | Bytes | Used for | Measured |
+|---|---:|---|---|
+| `$00000-$000FF` | 256 | exception vectors; the release's helper block at `$C0` | |
+| `$00100-$0015B` | 92 | | a few bytes read |
+| `$0015C-$03D79` | 15,390 | **free**: nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
+| `$03D80-$0648F` | 10,000 | the race's work area: cleared at the start of each race (`$5D83A`) | read and written |
+| `$06490-$0E297` | 32,264 | the cut-out graphics: 52 pieces of the pictures (the cockpit's parts, the chains, ...) masked by `MakeCutouts` at start-up; their addresses at `CutoutPointers` | written once, read |
+| `$0E298-$0E729` | 1,170 | free (no use found) | untouched |
+| `$0E700-$730FF` | 412,160 | **the game as loaded** (below) | |
+| `$73100-$79F93` | 28,308 | the rest of the second screen (`$72294-$79F93`) | DMA, written |
+| `$7A01A-$7B6F9` | 5,856 | work areas: cleared at start-up (`Main`); the save-slot names (`$7A21A`), the league sent over the link (`$7A41A`), the piece models (`$7AA1A`), the polygon list (`$7B08A`) | read and written |
+| `$7B6FA-$7FFFF` | 18,694 | the user stack (from `$7FFFC`, grows down) and, until the game's first screen flip, the loading picture still on show at `$78000` | DMA at the start only |
+
+So of the 512K, about 17K is free while the game runs (most of it the 15K at `$015C-$3D79`, which
+the save routine borrows for a moment), and the game itself is the rest.
 
 ## The 412,160 bytes loaded
 
@@ -28,14 +38,24 @@ So the game takes about 430K of the 512K, and nearly all of chip RAM is spoken f
 | tracks | 1,248 | 0.3% | the 8 tracks (`tracks/`) |
 | the rest | 26,828 | 7% | variables, tables (maths, models, text), leftovers (the 6502 bytes, `CopylockRoutine`) |
 
-The pictures, by when they are on screen:
+## When each picture is used
 
-| Pictures | Bytes | When |
-|---|---:|---|
-| cockpit | 14,990 | every race |
-| title, stadium (track preview), divisions, Hall of Fame | 105,222 | the menus between races |
-| wreck, season_win, season_crowd, champion | 104,383 | the screens shown between races and at the end of a season |
+| Picture | Bytes | Read | Measured |
+|---|---:|---|---|
+| cockpit | 14,990 | at start-up (`UnpackCockpit`, `MakeCutouts`) and before each race | read in play |
+| title | 32,034 | the menus' background and the font | read in play |
+| stadium | 21,052 | the track preview before each race | read in play |
+| divisions | 32,034 | between races in a season | read in play |
+| hall_of_fame | 20,102 | the Hall of Fame only (`HallOfFame`) | read only by it |
+| wreck, season_win, season_crowd, champion | 104,383 | the screens after a race and at the end of a season (`ShowTablePicture` 3, 1, 2, 4) | each read only by its screen |
 
-About 210K of the load - half of it - is pictures that are only on screen between races, and
-every one of them is in memory all the time. The tracks themselves are small (1,248 bytes for
-all 8).
+Each of the last five is read only while its screen is put up: it is unpacked into the second
+screen and not needed again. That is 124,485 bytes - 30% of the load - that could stay on the disk
+until wanted. The menus' pictures (title, stadium, divisions: 85,120 bytes) are used often, and the
+cockpit is needed for every race.
+
+## Not used
+
+* The blitter: the game draws everything with the CPU. Its only blits are the save routine's MFM
+  encoding (`BlitMFMEncode`) when a game position is written.
+* `CopylockRoutine` (`$5C984`, 1,340 bytes) and the 6502 bytes after the tracks (`$1FDC4-$1FE2B`).

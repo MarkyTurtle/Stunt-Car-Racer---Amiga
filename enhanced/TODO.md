@@ -2,15 +2,18 @@
 
 What is left for the enhanced game, roughly in order. The memory these plans work with is in
 [`../original/docs/MEMORY.md`](../original/docs/MEMORY.md): the game is a single load of 412,160
-bytes at `$E700`, and with its screens, work areas and stacks it takes about 430K of a 512K
-Amiga's chip RAM. Half the load (about 210K) is pictures only shown between races.
+bytes at `$E700`; measured in the emulator, the game uses all but about 17K of a 512K Amiga's
+chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). Five pictures -
+124,485 bytes, 30% of the load - are read only while their own screen is up.
 
 ## Groundwork
 
 * Try the disk in WinUAE: A500 512K, expanded A500, A1200.
-* Annotate the game's source (`original/scr_game.s`): name the routines, the variables, the data.
-* Confirm which memory is free, by running the game in an emulator and recording every address it
-  touches - `$3D80-$E6FF` (43K) has no references found so far.
+* Annotate the rest of the game's source: 210 routines and most of the race's variables are not
+  named yet (`original/docs/CODE.md`, `original/tools/names.py`): the physics, the opponent, the 3D
+  view's internals, the track format.
+* ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
+  the race's work area and the cut-out graphics.
 * Put the 4489_byteloader in the game (as Ghosts'n Goblins and The New Zealand Story did), reading
   the boot drive through the file table, so the game can load files while it runs. The game's own
   `SectorLoader` (`$62E86`) only reads DF0 and is kept for the save disk.
@@ -35,10 +38,10 @@ Load the screens shown between races - and new ones - from the disk when they ar
 keeping them all in memory.
 
 * The four pictures shown between races and at the end of a season (wreck, season_win,
-  season_crowd, champion: 104,383 bytes) all go through one routine: `$59352` shows picture d0 of
-  the table at `$56FF8`. Make it load the picture's file into a buffer, then unpack it to the screen
-  as now. The menu pictures (title, stadium, divisions, Hall of Fame: 105,222 bytes) can follow the
-  same way.
+  season_crowd, champion: 104,383 bytes) all go through one routine: `ShowTablePicture` (`$59352`)
+  shows picture d0 of `PictureTable`. Make it load the picture's file into a buffer, then unpack it
+  to the screen as now. The Hall of Fame's picture (20,102 bytes, `HallOfFame`) the same way. The
+  menus' pictures (title, stadium, divisions) are used before every race: keep them.
 * New intermediate screens for each race's result - success or failure (race won, race lost,
   crashed, promoted, relegated, ...) - each with its own picture and its own sounds (a crowd cheer,
   a crash, a jingle), loaded from the disk only when the screen is shown.
@@ -52,5 +55,9 @@ keeping them all in memory.
 
 ## Performance
 
-* Find where the time goes (the 3D track and car drawing, the blits) and improve the frame rate in
-  `src/scr_game.s`.
+* `FrameLimiter` (`$5DAC0`) caps the race at a frame every 6 vertical blanks (8.3 a second); the
+  release's turbo removes the cap. Measure how long a frame really takes on an A500 (scremu's
+  `profile`, `blittime`) to see whether the cap or the drawing is the limit.
+* Find where the time goes - the drawing is all CPU (the blitter is unused): the polygon filling
+  (`FillPolygon`, the PlotWord routines), the projection - and improve it in `src/scr_game.s`;
+  the blitter could fill the polygons (line mode and fill mode) while the CPU does the next piece.

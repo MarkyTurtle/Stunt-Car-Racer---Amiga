@@ -9,3 +9,7 @@ __pycache__/
 /original/tools/disasm/_*.bin
 # the enhanced build
 /enhanced/build/
+# the study emulator (built by tools/scremu/build.sh)
+/original/tools/scremu/Musashi/
+/original/tools/scremu/scremu
+/original/tools/scremu/conf.h

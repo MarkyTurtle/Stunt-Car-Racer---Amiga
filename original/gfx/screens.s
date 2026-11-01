@@ -8,5 +8,5 @@
 
 Screens:
 	incbin	"gfx/screens_initial.bin"		; $6A594-$730FF, 35692 bytes
-dat_6A594	equ	Screens
-dat_6A5B6	equ	Screens+$22
+ScreenMemory	equ	Screens
+PictureBuffer	equ	Screens+$22

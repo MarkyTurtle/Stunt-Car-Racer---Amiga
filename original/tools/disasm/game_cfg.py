@@ -47,34 +47,14 @@ PROLOGUE = r'''
 
 SEGMENT_TEXT = ['\torg\t$E700']
 
-NAMES = {
-    0xE700: 'GameEntry',
-    0xE73C: 'Trap0Handler',
-    0xEEC8: 'Level1Handler', 0xEF0A: 'Level2Handler', 0xEF1A: 'Level3Handler', 0xEF5A: 'Level4Handler',
-    0xEFC4: 'Level5Handler', 0xEFF0: 'Level6Handler', 0xF000: 'Level7Handler',
-    0x5C984: 'CopylockRoutine',
-    0x5F4B6: 'CheckDriverName',
-    0x5F586: 'DriverNameStrings',
-    0x62B74: 'ReadSaveSector', 0x62B7C: 'WriteSaveSector',
-    0x62D0A: 'ReadSaveDirectory',
-    0x62E78: 'SaveDiskIO',
-    0x62E86: 'SectorLoader',
-}
+# the names and descriptions: tools/names.py (shared with tools/annotate.py, which applies them to
+# the hand-edited sources)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..'))
+from names import NAMES as _NAMES
 
-HEADERS = {
-    0xE700: 'GameEntry - entered by the loader at $4000 with a0 = $E700, USP $7FFFC, SSP $3D80.\n'
-            'A word checksum of $E730-$722D7; the release replaced the branch on it with NOPs.',
-    0xE73C: 'Trap0Handler - the game continues here in supervisor mode (trap #0 at $E73A).',
-    0x5C984: "CopylockRoutine - Rob Northen's Copylock, as the game was protected. Nothing in this\n"
-             'release calls it: the release removed the protection. Kept as data.',
-    0x5F4B6: 'CheckDriverName - compares the driver name with the two strings at $5F586.',
-    0x62B74: 'Read/WriteSaveSector - one sector of a game position (slot n: sector $17+n) through\n'
-             'SaveDiskIO, always in DF0 (a separate, formatted save disk).',
-    0x62D0A: 'ReadSaveDirectory - sector 5: the save slot names, 16 bytes each, to $7A21A.',
-    0x62E86: 'SectorLoader - the same sector loader as the loader at $4000 ($44F8), with writing:\n'
-             'd0 = drive, d1 = first sector, d2 = sectors, d3 = 0 read / 1 write,\n'
-             'a0 = buffer, a1 = MFM buffer; d0 = 0 if it worked.',
-}
+NAMES = {a: n for a, (n, d) in _NAMES.items()}
+HEADERS = {a: f'{n} - {d}' for a, (n, d) in _NAMES.items() if d}
 
 COMMENTS = {
     0xF036: 'the release helper block: keyboard hook ($FC: F1-F3)',
