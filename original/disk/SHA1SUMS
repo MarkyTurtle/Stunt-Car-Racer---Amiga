@@ -1,0 +1,6 @@
+1b0a2f4ed7a602573f922b598f609278d3e3eebe  files/t000_bootblock.bin
+b1a11ee483062e21611c734030a5a3f609ecf382  files/t002-008_loader_packed.bin
+e1808f34a83fa6dec856a7b6c6f380613ec0226f  files/t010-083_game.bin
+f2d2e307a35e901abc6ba787fbfd9bb5212ae72d  ../bin/loader_4000.bin
+ea0c70c5265858cffd089836c5822d3abdeb04ae  ../bin/lowmem_c0.bin
+9e88aa822cb30e5758fb075f315e31519d3aff7e  ../bin/loadpic_78000.bin
