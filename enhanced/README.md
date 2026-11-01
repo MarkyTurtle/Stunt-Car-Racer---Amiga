@@ -12,6 +12,12 @@ workflow). So far it differs from the original in:
   [`src/helper_c0.s`](src/helper_c0.s);
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
+* **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they
+  are shown (wreck, season_win, season_crowd, champion, hall_of_fame: 124,485 bytes no longer in
+  memory all the time - [`src/diskload.i`](src/diskload.i)): the game is 123,808 bytes smaller and
+  about 89K of chip memory is free for the enhancements. The 4489_byteloader reads them from the
+  drive the game was booted from; if the game's disk is not in it (a save disk, no disk), the game
+  says "Insert the Stunt Car Racer disc into drive n" and waits for it.
 
 Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F6 the cockpit,
 P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
@@ -31,7 +37,7 @@ python3 enhanced/tools/reloc_test.py               # the game still works with i
 |---|---|
 | `$000-$3FF` | the bootblock, [`src/boot_4489.s`](src/boot_4489.s), with the 4489_byteloader ([`src/byteloader.i`](src/byteloader.i)) |
 | `$400-$5FF` | the file table: `'SCRF'`, version.w, count.w, 8 bytes zero, then offset.l and length.l per file |
-| `$600-` | file 0 the game (`src/scr_game.s`, to `$E700`), file 1 the loading picture (to `$78000`, from `original/bin/`), file 2 the helper block (`src/helper_c0.s`, to `$C0`) |
+| `$600-` | file 0 the game (`src/scr_game.s`, to `$E700`), file 1 the loading picture (to `$78000`, from `original/bin/`), file 2 the helper block (`src/helper_c0.s`, to `$C0`), files 3-7 the pictures the game loads while it runs (hall_of_fame, wreck, season_win, season_crowd, champion: `original/gfx/`) |
 
 About half the disk is free.
 
@@ -57,7 +63,13 @@ A load that fails is tried again; after 8 failures COLOR00 flashes red while it 
 `tools/test_boot.py` boots the disk in Unicorn with `tools/floppy.py` (from the Ghosts'n Goblins
 repository): booted from DF0, DF1, DF3 and from a unit of another device, each with the disk DMA
 starting at sector 0 and at a random sector. It checks the game, the picture and the helper block
-in memory against `original/`, the registers and stack at `$E700`, the display and the drive.
+in memory, the registers and stack at `$E700`, the display and the drive; then calls the game's
+own loader (`DiskInit`, `LoadPicture` for each picture file) and compares what it read.
+
+`tools/test_pictures.py` plays the game in the study emulator, with its disk answered from the
+ADF: the Hall of Fame and the four pictures shown after races, each loaded and checked; then the
+wreck with no disk in, with another disk in (the game asks for its disk and waits) and with its
+disk back. `--png DIR` draws the screens.
 
 ## Measuring the speed
 

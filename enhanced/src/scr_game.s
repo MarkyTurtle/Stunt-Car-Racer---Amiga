@@ -46,13 +46,14 @@ l_0E730:
 ;-------------------------------------------------------------------------------
 Trap0Handler:
         movea.l #SuperStackTop,a7               ; 0E73C
+        jsr     (DiskInit).l                    ; the bootblock's file table kept (diskload.i)
         jsr     (InitHardware).l                ; 0E742
         jmp     (Main).l                        ; 0E748
 CopperList:				; the copper list: the 4 bitplane pointers (written by SetCopperPlanes), the 32 colours, the 8 sprite pointers (all to an empty sprite), a wait for line $FA and a copper interrupt (it flips the screens)
 	dc.b	$00,$E0,$00,$07,$00,$E2,$80,$00,$00,$E4,$00,$07,$00,$E6,$A0,$00
 	dc.b	$00,$E8,$00,$07,$00,$EA,$C0,$00,$00,$EC,$00,$07,$00,$EE,$E0,$00
 	dc.b	$01,$80
-CopperColours:				; the copper list's colour moves: CopperColours+2 + 4n is colour n
+CopperColours:				; the copper list's colours: colour n's value at CopperColours + 4n (its register number before it)
 	dc.b	$00,$00,$01,$82,$00,$00,$01,$84,$00,$00,$01,$86,$00,$00,$01,$88
 	dc.b	$00,$00,$01,$8A,$00,$00,$01,$8C,$00,$00,$01,$8E,$00,$00,$01,$90
 	dc.b	$00,$00,$01,$92,$00,$00,$01,$94,$00,$00,$01,$96,$00,$00,$01,$98
@@ -3471,12 +3472,12 @@ dat_20080:
 	dc.b	$00,$00,$00,$FF,$00,$00,$00,$81,$81,$81,$81,$81,$81,$81,$81,$81
 	dc.b	$81,$00,$00,$00,$00,$00,$00,$81,$FF,$00,$00,$00,$00,$00,$00,$FF
 	dc.b	$30,$18,$0C,$06,$0C,$18,$30,$00
-	include	"gfx/pictures.s"
+	include	"pictures.s"			; (src/pictures.s: without the five pictures loaded from the disk)
 	dc.b	$00,$00
 	dc.b	$00,$04,$00,$08,$00,$0C,$00,$03,$00,$07,$00,$0B,$00,$0F,$00,$01
 	dc.b	$00,$01,$00,$01,$00,$01,$00,$80,$00,$54,$00,$2A,$00,$00
 PictureTable:				; the pictures ShowTablePicture shows: 0 the loading picture (in memory at $78000), 1 season_win, 2 season_crowd, 3 wreck, 4 champion
-	dc.l	$78000,Pic_SeasonWin,Pic_SeasonCrowd,Pic_Wreck,Pic_Champion
+	dc.l	$78000,FID_SEASONWIN,FID_SEASONCROWD,FID_WRECK,FID_CHAMPION	; 1-4: files on the disk (LoadPicture)
 
 ;-------------------------------------------------------------------------------
 ; LinkSendByte - d0: a byte sent to the other machine, added to LinkSendSum
@@ -5823,12 +5824,15 @@ l_59350:
 ;-------------------------------------------------------------------------------
 ShowTablePicture:
         asl.w   #$2,d0                          ; 59352
-        move.w  d0,-(a7)                        ; 59354
-        move.w  #$0,d0                          ; 59356
-        jsr     (FadeOutTo).l                   ; 5935A
-        move.w  (a7)+,d0                        ; 59360
         movea.l #PictureTable,a0                ; 59362
         movea.l (a0,d0.w),a6                    ; 59368
+        cmpa.w  #$100,a6                        ; a file on the disk: loaded first, while the
+        bcc.s   .inmemory                       ; screen before still shows (LoadPicture)
+        move.w  a6,d0
+        jsr     (LoadPicture).l                 ; a6 = DiskPicture
+.inmemory:
+        move.w  #$0,d0                          ; 59356
+        jsr     (FadeOutTo).l                   ; 5935A
         lea.l   $2(a6),a1                       ; 5936C
         jsr     (SetPictureColours).l           ; 59370
         lea.l   $22(a6),a0                      ; 59376
@@ -12266,7 +12270,9 @@ l_5FB9A:
 ;-------------------------------------------------------------------------------
 HallOfFame:
         move.b  #$42,(dat_5D724).l              ; 5FBC6
-        move.w  (dat_30BD0).l,d0                ; 5FBCE
+        move.w  #FID_HALLOFFAME,d0              ; its picture loaded from the disk (LoadPicture)
+        jsr     (LoadPicture).l
+        move.w  (DiskPicture+2).l,d0          ; 5FBCE
         jsr     (FadeOutTo).l                   ; 5FBD4
         move.l  (ScreenDraw).l,-(a7)            ; 5FBDA
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 5FBE0
@@ -12287,12 +12293,12 @@ l_5FC00:
         subq.b  #$1,d2                          ; 5FC28
         subq.b  #$1,d1                          ; 5FC2A
         bpl.w   l_5FC00                         ; 5FC2C
-        movea.l #dat_30BD0,a1                   ; 5FC30
+        movea.l #DiskPicture+2,a1             ; 5FC30
         jsr     (SetPictureColours).l           ; 5FC36
         move.b  #$f,d0                          ; 5FC3C
         jsr     (SetTextColour).l               ; 5FC40
         move.b  #$80,(dat_1BBD3).l              ; 5FC46
-        movea.l #dat_30BF0,a0                   ; 5FC4E
+        movea.l #DiskPicture+$22,a0           ; 5FC4E
         movea.l (ScreenBack).l,a1               ; 5FC54
         jsr     (UnpackPicture).l               ; 5FC5A
         move.b  #$2,(dat_1BB6D).l               ; 5FC60
@@ -15175,7 +15181,16 @@ MessageTexts:				; messages: "LOAD game position", "SAVE game position", "Drive 
 	dc.b	'into drive 0.'
 	dc.b	$1F,$09,$14
 	dc.b	'Press any key to continue'
+	dc.b	$FF
+InsertGameDiscText:			; (the enhanced game) asked for by LoadPicture when its disk is not in the drive
+	dc.b	$1F,$07,$16
+	dc.b	' Insert the Stunt Car Racer '
+	dc.b	$1F,$07,$17
+	dc.b	'     disc into drive '
+InsertGameDiscDrive:
+	dc.b	'0      '
 	dc.b	$FF,$00
+	even
 sub_62748:
         jsr     (ClearPanel).l                  ; 62748
         jsr     (CopyPanel).l                   ; 6274E
@@ -24277,12 +24292,18 @@ dat_6A2A6:
 	dc.b	$00
 CutoutPointers:				; the 52 cut-out graphics' addresses (MakeCutouts)
 	dcb.b	216,$00
-ScreenFront:				; the screen at $6A594
+ScreenFront:				; the first screen's address (Screens: set at start-up, not changed)
 	dc.b	$00,$00,$00,$00
-ScreenBack:				; the screen at $72294 (the one drawn on while the other is shown)
+ScreenBack:				; the screen to show: the one just drawn (FrameLimiter), shown from the next copper interrupt (FlipScreens, ScreenToShow)
 	dc.b	$00,$00,$00,$00
-ScreenDraw:				; the screen the drawing routines draw on
+ScreenDraw:				; the screen the drawing routines draw on: the other one
 	dc.b	$00,$00,$00,$00
 ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	dc.b	$00,$00,$00,$00
+	include	"diskload.i"			; (the enhanced game) loading from the disk while the game runs
 	include	"gfx/screens.s"
+DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
+							; pictures loaded from the disk (LoadPicture)
+	ifgt	DiskPicture+PICTURE_MAX-$7A01A
+	fail	"DiskPicture runs into the work areas at $7A01A"
+	endc

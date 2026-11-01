@@ -47,6 +47,10 @@
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
  *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
+ *   inject ADDR [D0]      make the game call ADDR now, as from where it is (with D0): the script goes on
+ *                         while it runs (to press fire in it, take snapshots)
+ *   disk ADDR ADF|none    the game's 4489_byteloader (at ADDR) done at once from the ADF; "none": no disk in
+ *                         (each call fails). The disk is otherwise not emulated.
  *   crashwatch            stop when the PC leaves the memory (below $C0 or above 512K): print the last 64 PCs
  *   writecount LO HI      count every CPU write to each word of LO-HI, and by the instruction that wrote it
  *   writecountdump PREFIX write them: PREFIX.addr (a 32-bit count a word, host order), PREFIX.pc ("pc count")
@@ -404,8 +408,22 @@ static void cp_hook(unsigned pc) {
 }
 
 static int crashwatch; static unsigned pcring[64]; static unsigned pcring_n;   /* crashwatch: the last 64 PCs */
+static unsigned disk_loader = 0xFFFFFFFF; static uint8_t *disk_adf; static long disk_size; static long disk_loads;
+/* disk: the game's call of the 4489_byteloader done at once from an ADF (d0 offset, d1 length, a0
+ * where -> d0 = 0), or failed (d0 = 1) with no disk in */
+static void disk_call(void) {
+    unsigned off = m68k_get_reg(NULL, M68K_REG_D0), len = m68k_get_reg(NULL, M68K_REG_D1), dst = m68k_get_reg(NULL, M68K_REG_A0);
+    int ok = disk_adf && off + len <= (unsigned long)disk_size && dst + len <= RAM;
+    if (ok) { memcpy(ram + dst, disk_adf + off, len); for (unsigned i = 0; i < len; i++) usage[dst + i] |= 8; }
+    if (logf) fprintf(logf, "frame %lu: disk read $%X+$%X to $%X: %s\n", frame, off, len, dst, ok ? "ok" : "failed");
+    disk_loads++;
+    m68k_set_reg(M68K_REG_D0, ok ? 0 : 1);
+    unsigned sp = m68k_get_reg(NULL, M68K_REG_A7);
+    m68k_set_reg(M68K_REG_PC, m68k_read_memory_32(sp)); m68k_set_reg(M68K_REG_A7, sp + 4);
+}
 void instr_hook(unsigned int pc) {
     pc &= 0xFFFFFF;
+    if (pc == disk_loader) { disk_call(); return; }
     if (crashwatch) {
         if (pc < 0xC0 || pc >= RAM) {
             FILE *o = logf ? logf : stdout;
@@ -606,6 +624,15 @@ int main(int argc, char **argv) {
             if (o && prof) for (unsigned i = 0; i < RAM / 2; i++) if (prof[i]) fprintf(o, "%X %u\n", i * 2, prof[i]);
             if (o) fclose(o); }
         else if (!strcmp(cmd, "writelog")) { wlog_lo = strtoul(a1, 0, 0); wlog_hi = strtoul(a2, 0, 0); if (!wlogf) wlogf = logf ? logf : stdout; }
+        else if (!strcmp(cmd, "inject")) {                     /* inject ADDR [D0]: the game made to call ADDR now (it returns where it was) */
+            unsigned sp = m68k_get_reg(NULL, M68K_REG_A7) - 4; m68k_write_memory_32(sp, m68k_get_reg(NULL, M68K_REG_PC));
+            m68k_set_reg(M68K_REG_A7, sp); if (a2[0]) m68k_set_reg(M68K_REG_D0, strtoul(a2, 0, 0));
+            m68k_set_reg(M68K_REG_PC, strtoul(a1, 0, 0)); }
+        else if (!strcmp(cmd, "disk")) {                       /* disk ADDR ADF|none: the byteloader at ADDR, done from ADF */
+            disk_loader = strtoul(a1, 0, 0); free(disk_adf); disk_adf = 0;
+            if (strcmp(a2, "none")) { FILE *f = fopen(a2, "rb"); if (!f) { perror(a2); exit(1); }
+                fseek(f, 0, SEEK_END); disk_size = ftell(f); rewind(f); disk_adf = malloc(disk_size);
+                if (fread(disk_adf, 1, disk_size, f) != (size_t)disk_size) exit(1); fclose(f); } }
         else if (!strcmp(cmd, "crashwatch")) crashwatch = 1;  /* stop when the PC leaves memory: the last 64 PCs */
         else if (!strcmp(cmd, "writecount")) {                /* writecount LO HI: count each CPU write to LO-HI */
             wc_lo = strtoul(a1, 0, 0); wc_hi = strtoul(a2, 0, 0); free(wc_addr); free(wc_pc);

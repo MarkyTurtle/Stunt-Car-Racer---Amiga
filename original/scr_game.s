@@ -50,7 +50,7 @@ CopperList:				; the copper list: the 4 bitplane pointers (written by SetCopperP
 	dc.b	$00,$E0,$00,$07,$00,$E2,$80,$00,$00,$E4,$00,$07,$00,$E6,$A0,$00
 	dc.b	$00,$E8,$00,$07,$00,$EA,$C0,$00,$00,$EC,$00,$07,$00,$EE,$E0,$00
 	dc.b	$01,$80
-CopperColours:				; the copper list's colour moves: CopperColours+2 + 4n is colour n
+CopperColours:				; the copper list's colours: colour n's value at CopperColours + 4n (its register number before it)
 	dc.b	$00,$00,$01,$82,$00,$00,$01,$84,$00,$00,$01,$86,$00,$00,$01,$88
 	dc.b	$00,$00,$01,$8A,$00,$00,$01,$8C,$00,$00,$01,$8E,$00,$00,$01,$90
 	dc.b	$00,$00,$01,$92,$00,$00,$01,$94,$00,$00,$01,$96,$00,$00,$01,$98
@@ -24364,11 +24364,11 @@ dat_6A2A6:
 	dc.b	$00
 CutoutPointers:				; the 52 cut-out graphics' addresses (MakeCutouts)
 	dcb.b	216,$00
-ScreenFront:				; the screen at $6A594
+ScreenFront:				; the first screen's address (Screens: set at start-up, not changed)
 	dc.b	$00,$00,$00,$00
-ScreenBack:				; the screen at $72294 (the one drawn on while the other is shown)
+ScreenBack:				; the screen to show: the one just drawn (FrameLimiter), shown from the next copper interrupt (FlipScreens, ScreenToShow)
 	dc.b	$00,$00,$00,$00
-ScreenDraw:				; the screen the drawing routines draw on
+ScreenDraw:				; the screen the drawing routines draw on: the other one
 	dc.b	$00,$00,$00,$00
 ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	dc.b	$00,$00,$00,$00

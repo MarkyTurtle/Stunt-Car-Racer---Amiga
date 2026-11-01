@@ -19,6 +19,8 @@ The files (ids: FID_ in boot_4489.s):
      assembled at $E700 (its data - sound/, gfx/, tracks/ - from original/: -I original);
      loaded to $E700 and entered there
   1  the loading picture: original/bin/loadpic_78000.bin (4 bitplanes), loaded to $78000
+  3-7  the pictures the game loads while it runs (src/diskload.i): hall_of_fame, wreck,
+       season_win, season_crowd, champion - original/gfx/*.bin, as the original game kept them
   2  the helper block the game calls: src/helper_c0.s (the release's, original/bin/lowmem_c0.bin,
      without its self-modifying code: checked to assemble to the release's bytes with ORIGINAL
      defined), loaded to $C0
@@ -37,7 +39,9 @@ FT_OFFSET, FT_VERSION, FT_ENTRIES, DATA_START = 0x400, 1, 16, 0x600
 GAME_BIN = os.path.join(OUT, 'game_telemetry.bin' if TELEMETRY else 'game.bin')
 FILES = [GAME_BIN,                                                      # 0 FID_GAME (src/scr_game.s)
          os.path.join(ORIG, 'bin', 'loadpic_78000.bin'),               # 1 FID_LOADPIC
-         os.path.join(OUT, 'helper_c0.bin')]                            # 2 FID_LOWMEM (src/helper_c0.s)
+         os.path.join(OUT, 'helper_c0.bin'),                            # 2 FID_LOWMEM (src/helper_c0.s)
+         ] + [os.path.join(ORIG, 'gfx', f + '.bin') for f in               # 3-7: the pictures the game loads
+              ('hall_of_fame', 'wreck', 'season_win', 'season_crowd', 'champion')]   # (src/diskload.i FID_)
 
 
 def vasm(src, out, listing=None, defines=()):
@@ -65,7 +69,8 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     bin_ = os.path.join(OUT, 'boot_4489.bin')
     vasm(os.path.join(SRC, 'boot_4489.s'), bin_, os.path.join(OUT, 'boot_4489.lst'))
-    vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN, defines=['TELEMETRY=1'] if TELEMETRY else [])
+    vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN, os.path.splitext(GAME_BIN)[0] + '.lst',
+         defines=['TELEMETRY=1'] if TELEMETRY else [])
     helper = os.path.join(OUT, 'helper_c0.bin')
     vasm(os.path.join(SRC, 'helper_c0.s'), helper + '.orig', defines=['ORIGINAL=1'])
     if open(helper + '.orig', 'rb').read() != open(os.path.join(ORIG, 'bin', 'lowmem_c0.bin'), 'rb').read():

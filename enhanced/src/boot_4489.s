@@ -3,7 +3,8 @@
 ; is an ordinary 880K AmigaDOS-format disk (11 sectors a track, $4489 sync) with no filesystem:
 ;
 ;   $000-$3FF   this bootblock
-;   $400-$5FF   the file table (FT_OFFSET): 'SCRF', version.w, count.w, 8 bytes free, then
+;   $400-$5FF   the file table (FT_OFFSET): 'SCRF', version.w, count.w, 8 bytes free (in memory
+;               the bootblock puts the drive booted from in the first 4, for the game), then
 ;               per file (file id = index) its offset on the disk and its length, longs
 ;   $600-       the files, one after another
 ;
@@ -83,6 +84,7 @@ Loader:
         move.l  #FT_ENTRIES*8+16,d1
         lea     FILE_TABLE,a0
         bsr.w   LoadIt
+        move.l  Drive(pc),FILE_TABLE+8          ; the drive booted from, for the game (diskload.i)
         moveq   #FID_LOADPIC,d0                 ; the loading picture
         lea     PICTURE,a0
         bsr.w   LoadFile

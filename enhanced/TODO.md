@@ -3,8 +3,9 @@
 What is left for the enhanced game, roughly in order. The memory these plans work with is in
 [`../original/docs/MEMORY.md`](../original/docs/MEMORY.md): the game is a single load of 412,160
 bytes at `$E700`; measured in the emulator, the game uses all but about 17K of a 512K Amiga's
-chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). Five pictures -
-124,485 bytes, 30% of the load - are read only while their own screen is up.
+chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). The enhanced game
+loads the five pictures read only while their own screen is up (124,485 bytes) from the disk when
+they are shown: about 89K of chip memory is free now.
 
 ## Groundwork
 
@@ -16,17 +17,17 @@ chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). F
   `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
   code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
   or goes in the unused `CopylockRoutine`'s 1,318 bytes (now `plotpixel.i` and, in the telemetry
-  build, `telemetry.i`: about 100 bytes left). Freeing the pictures between races (below) is what
-  will make room.
+  build, `telemetry.i`: about 100 bytes left) - or now that the pictures between races are loaded
+  from the disk (below), anywhere: the screens move up with the code, into the 89K freed.
 * ~~Remove the self-modifying code~~: done (`original/docs/RENDER.md`): `PlotPixel`'s colours,
   `ColourWordJump`, and the helper block's turbo (now assembled from `src/helper_c0.s`). Checked:
   the enhanced game writes none of its instructions. It costs 2.3% of a frame until `PlotPixel` and
   the fill are rewritten. Then: try the disk on a 68020/68030 with the caches on (WinUAE A1200).
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
-* Put the 4489_byteloader in the game (as Ghosts'n Goblins and The New Zealand Story did), reading
-  the boot drive through the file table, so the game can load files while it runs. The game's own
-  `SectorLoader` (`$62E86`) only reads DF0 and is kept for the save disk.
+* ~~Put the 4489_byteloader in the game~~: done (`src/diskload.i`): `DiskRead` reads the boot
+  drive (left by the bootblock in the file table), `LoadPicture` loads a file after checking the
+  disk is the game's. The game's own `SectorLoader` is kept for the save disk.
 
 ## Feature: load each track when it is raced (level loading)
 
@@ -47,16 +48,21 @@ Load what a race needs when it is set up instead of keeping everything in memory
 Load the screens shown between races - and new ones - from the disk when they are shown, instead of
 keeping them all in memory.
 
-* The four pictures shown between races and at the end of a season (wreck, season_win,
-  season_crowd, champion: 104,383 bytes) all go through one routine: `ShowTablePicture` (`$59352`)
-  shows picture d0 of `PictureTable`. Make it load the picture's file into a buffer, then unpack it
-  to the screen as now. The Hall of Fame's picture (20,102 bytes, `HallOfFame`) the same way. The
-  menus' pictures (title, stadium, divisions) are used before every race: keep them.
+* ~~The pictures shown after a race, at the end of a season and in the Hall of Fame~~: done.
+  wreck, season_win, season_crowd, champion and hall_of_fame are files 3-7 on the disk, loaded
+  into `DiskPicture` (after the screens, outside what is loaded) by `ShowTablePicture` and
+  `HallOfFame` - before the fade, while the screen before still shows. The game is 123,808 bytes
+  smaller; free chip memory from `DiskPicture`'s end to the loading picture at `$78000`: 83K (and
+  8K more, to the work areas at `$7A01A`, once the loading picture is not needed).
+  If the game's disk is not in its drive, it asks for it ("Insert the Stunt Car Racer disc into
+  drive n", in white on dark blue on the screen on show) and waits.
+* The screens' bytes in the load (`gfx/screens_initial.bin`, 35,692 bytes: what was in that memory
+  when the game was saved, drawn over by the game) could be left out of the load - a shorter load
+  and disk read at the start.
 * New intermediate screens for each race's result - success or failure (race won, race lost,
   crashed, promoted, relegated, ...) - each with its own picture and its own sounds (a crowd cheer,
-  a crash, a jingle), loaded from the disk only when the screen is shown.
-* A loading buffer: the packed pictures are up to 28,581 bytes; the largest raw one is 32,034. The
-  pictures removed from the load free far more than that.
+  a crash, a jingle), loaded from the disk only when the screen is shown: `LoadPicture` and
+  `DiskPicture` are ready for the pictures; sounds need a buffer of their own.
 * Sounds loaded with a screen go in chip RAM (Paula plays from chip RAM only), in the space freed
   by the pictures; the game's sound driver plays samples through its table (`SampleTable`), which
   can point at loaded ones.

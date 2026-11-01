@@ -3,7 +3,8 @@
 # the run's artifact (downloadable from the run's page). The disk uses the loading picture and the
 # helper block from original/, so changes there run it too.
 # Then its performance (Linux): the telemetry build's disk, the check that the game still works
-# when its code moves (enhanced/tools/reloc_test.py), and the race benchmark
+# when its code moves (enhanced/tools/reloc_test.py), the pictures it loads from its disk while it
+# runs (enhanced/tools/test_pictures.py: original/build.py first, for another disk), and the race benchmark
 # (enhanced/tools/bench.py) against enhanced/bench_baseline.json - its report on the run's
 # summary page, the disk and the figures as the run's artifact.
 name: enhanced
@@ -18,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: 46b160fa3592046874487bfec2eb2976f48c1f28
+  ADF_SHA1: 3ad4f0be29e301d57b15dadf6c2039fdfd343edf
 
 jobs:
   build:
@@ -66,8 +67,12 @@ jobs:
         run: python enhanced/tools/build_disk.py --telemetry
       - name: Build scremu (original/tools/scremu/build.sh)
         run: sh original/tools/scremu/build.sh
+      - name: Build the original disk (another disk for test_pictures.py)
+        run: python original/build.py
       - name: The game works with its code moved (enhanced/tools/reloc_test.py)
         run: python enhanced/tools/reloc_test.py
+      - name: The pictures loaded from the disk (enhanced/tools/test_pictures.py)
+        run: python enhanced/tools/test_pictures.py
       - name: The race benchmark (enhanced/tools/bench.py)
         run: |
           python enhanced/tools/bench.py --json bench.json --compare enhanced/bench_baseline.json | tee bench.txt

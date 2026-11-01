@@ -5,9 +5,11 @@ drives connected.
 
 Checks: at $E700 with the game, the loading picture and the helper block in memory as in original/;
 the stacks (USP $7FFFC, SSP $3D80), a0 and d0 as the source disk's loader leaves them; the
-loading picture's display (copper list, BPLCON0); the drive left off. Cases: booted from DF0,
-from DF1, from DF3, and from a unit of some other device (DF0 then), each also with the DMA
-starting at a random sector.
+loading picture's display (copper list, BPLCON0); the drive left off. Then the game's own loading
+(src/diskload.i): DiskInit, and LoadPicture for each of the pictures on the disk (files 3-7), each
+compared with its file, and the drive left off after. Cases: booted from DF0, from DF1, from DF3,
+and from a unit of some other device (DF0 then), each also with the DMA starting at a random
+sector.
 
   python3 enhanced/tools/test_boot.py"""
 import os, struct, sys
@@ -48,6 +50,16 @@ def files():
             f(build, 'helper_c0.bin'))                                      # tools/build_disk.py made them
 
 
+def symbols():
+    """the game's symbols, from its listing (tools/build_disk.py writes it)"""
+    out = {}
+    for line in open(os.path.join(ENH, 'build', 'game.lst'), errors='replace'):
+        p = line.split()
+        if len(p) == 2 and p[1][:2] in ('A:', 'E:') and len(p[1]) == 10:
+            out[p[0]] = int(p[1][2:], 16)
+    return out
+
+
 def boot(adf, unit=0, drives=(0, 1), random_start=False, foreign=False):
     m = Machine(); u = m.u
     w = lambda a, f, *v: u.mem_write(a, struct.pack(f, *v))
@@ -68,7 +80,9 @@ def boot(adf, unit=0, drives=(0, 1), random_start=False, foreign=False):
     w(BOOTREQ + 0x14, '>LL', DEVICE, FOREIGN if foreign else UNITS[unit])
     u.reg_write(UC_M68K_REG_A1, BOOTREQ)
     m.w8(0xBFE001, 0xFF)
-    fd = floppy.Floppy(m, adf, timing_ranges=[(0x1000, 0x1400)], random_start=random_start, unit=unit)
+    sym = symbols()
+    fd = floppy.Floppy(m, adf, timing_ranges=[(0x1000, 0x1400), (sym['ByteLoader'], sym['ByteLoader'] + 0x200)],
+                       random_start=random_start, unit=unit)
     u.reg_write(UC_M68K_REG_A6, EXEC)
     u.reg_write(UC_M68K_REG_SR, 0x2000)
     u.reg_write(UC_M68K_REG_A7, 0x7F000)
@@ -88,6 +102,22 @@ def boot(adf, unit=0, drives=(0, 1), random_start=False, foreign=False):
               ('BPLCON0 4 planes', m.r16(0xDFF100) == 0x4200),
               (f'units opened: {opened}', opened[0] == 3 and opened[-1] == (0 if foreign else unit)),
               (f'the motor off or DF{unit} deselected', not fd.motor or not fd.sel)]
+    # the game's loading: DiskInit, then LoadPicture for each picture file, each call returning to RET
+    RET = 0x3000                                                    # (a stop: nothing runs there)
+    def call(addr, d0=0):
+        u.reg_write(UC_M68K_REG_A7, 0x3D00); w(0x3D00, '>L', RET)
+        u.reg_write(UC_M68K_REG_D0, d0)
+        u.emu_start(addr, RET, count=200_000_000)
+        return u.reg_read(UC_M68K_REG_PC) == RET
+    checks.append(('DiskInit', call(sym['DiskInit'])))
+    table = adf[0x400:0x400 + 16 + 16 * 8]
+    for fid in range(3, 8):
+        off, ln = struct.unpack_from('>LL', table, 16 + 8 * fid)
+        done = call(sym['LoadPicture'], fid)
+        got = bytes(u.mem_read(sym['DiskPicture'], ln))
+        checks.append((f'LoadPicture: file {fid} ({ln:,} bytes) at DiskPicture ${sym["DiskPicture"]:05X}',
+                       done and got == adf[off:off + ln] and u.reg_read(UC_M68K_REG_A6) == sym['DiskPicture']))
+    checks.append(('the motor off after the loads', not fd.motor))
     print(f'DF{unit} ({"booted from a unit of another device" if foreign else "booted from"}; drives {list(drives)}; '
           f'random start {random_start}): {fd.reads} track reads, head at cylinder {fd.cyl}')
     ok = True

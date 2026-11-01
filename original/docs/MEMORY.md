@@ -63,3 +63,18 @@ cockpit is needed for every race.
   encoding (`BlitMFMEncode`) when a game position is written.
 * `CopylockRoutine` (`$5C984`, 1,318 bytes; the telemetry build's code goes there) and the 6502
   bytes after the tracks (`$1FDC4-$1FE2B`).
+
+## The enhanced game
+
+The enhanced game (`enhanced/`) loads the five pictures read only while their own screen is up
+from its disk when they are shown (`enhanced/src/diskload.i`): its load is 123,808 bytes smaller,
+and its screens - which follow the code - start at `$4C25A` instead of `$6A594`.
+
+| Address | Bytes | Used for |
+|---|---:|---|
+| `$00400-$032BF` | 11,968 | the byteloader's MFM buffer while a picture is loaded (and, as before, the save routine's) |
+| `$0E700-$4C259` | 252,762 | the game: code, data, the pictures it keeps (cockpit, title, stadium, divisions) |
+| `$4C25A-$5BC59` | 64,000 | the two screens |
+| `$5BC5A-$63A7B` | 32,034 | `DiskPicture`: the picture loaded from the disk |
+| `$63A7C-$77FFF` | 83,332 | **free** |
+| `$78000-$7A019` | 8,218 | free once the loading picture is not needed |
