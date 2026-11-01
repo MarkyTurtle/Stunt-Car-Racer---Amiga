@@ -47,6 +47,9 @@
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
  *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
+ *   crashwatch            stop when the PC leaves the memory (below $C0 or above 512K): print the last 64 PCs
+ *   writecount LO HI      count every CPU write to each word of LO-HI, and by the instruction that wrote it
+ *   writecountdump PREFIX write them: PREFIX.addr (a 32-bit count a word, host order), PREFIX.pc ("pc count")
  *   callprof 1 / 0        time the call tree, from now / stop: each jsr/bsr's time, its callees' included
  *   callprofdump FILE     write it: "caller callee calls cycles", one line a caller -> callee (caller 0:
  *                         the top: called by no routine being timed)
@@ -342,7 +345,12 @@ unsigned int m68k_read_memory_16(unsigned int a) {
 }
 unsigned int m68k_read_memory_32(unsigned int a) { return m68k_read_memory_16(a) << 16 | m68k_read_memory_16(a + 2); }
 static unsigned wlog_lo = 1, wlog_hi = 0; static FILE *wlogf;   /* writelog: every CPU write to LO-HI */
+static unsigned wc_lo = 1, wc_hi = 0; static unsigned *wc_addr, *wc_pc;   /* writecount: CPU writes to LO-HI */
+static void wcount(unsigned a) {
+    if (a >= wc_lo && a < wc_hi) { wc_addr[(a - wc_lo) >> 1]++; unsigned pc = m68k_get_reg(NULL, M68K_REG_PPC); if (pc < RAM) wc_pc[pc >> 1]++; }
+}
 static void wlog(unsigned a, unsigned v, int size) {
+    wcount(a & ~1u);
     if (a + size > wlog_lo && a < wlog_hi && wlogf)
         fprintf(wlogf, "%lu %lu %X %X %X/%d\n", frame, line_no, m68k_get_reg(NULL, M68K_REG_PPC), a, v, size);
 }
@@ -395,8 +403,19 @@ static void cp_hook(unsigned pc) {
     if ((op & 0xFFC0) == 0x4E80 || (op & 0xFF00) == 0x6100) cp_pending = sp;
 }
 
+static int crashwatch; static unsigned pcring[64]; static unsigned pcring_n;   /* crashwatch: the last 64 PCs */
 void instr_hook(unsigned int pc) {
     pc &= 0xFFFFFF;
+    if (crashwatch) {
+        if (pc < 0xC0 || pc >= RAM) {
+            FILE *o = logf ? logf : stdout;
+            fprintf(o, "crash: frame %lu line %lu, the PC at $%X; the instructions before it, oldest first:\n", frame, line_no, pc);
+            for (unsigned i = 0; i < 64; i++) fprintf(o, " $%X", pcring[(pcring_n + i) & 63]);
+            fprintf(o, "\n  a7 $%X\n", m68k_get_reg(NULL, M68K_REG_A7));
+            crashwatch = 0; until_hit = 1; m68k_end_timeslice();
+        }
+        pcring[pcring_n++ & 63] = pc;
+    }
     if (callprof) cp_hook(pc);
     if (prof) {
         long c = cyc_now();
@@ -412,8 +431,8 @@ void instr_hook(unsigned int pc) {
         if ((op & 0xFFC0) == 0x4E80 || (op & 0xFF00) == 0x6100) call_from = pc;
     }
     if (pc == trace_pc && logf)
-        fprintf(logf, "frame %lu line %lu: pc $%X d0 $%X d1 $%X d2 $%X a0 $%X a1 $%X a5 $%X a6 $%X\n",
-                frame, line_no, pc, m68k_get_reg(NULL, M68K_REG_D0), m68k_get_reg(NULL, M68K_REG_D1),
+        fprintf(logf, "frame %lu line %lu: pc $%X sr $%04X a7 $%X intreq $%04X d0 $%X d1 $%X d2 $%X a0 $%X a1 $%X a5 $%X a6 $%X\n",
+                frame, line_no, pc, m68k_get_reg(NULL, M68K_REG_SR), m68k_get_reg(NULL, M68K_REG_A7), intreq, m68k_get_reg(NULL, M68K_REG_D0), m68k_get_reg(NULL, M68K_REG_D1),
                 m68k_get_reg(NULL, M68K_REG_D2), m68k_get_reg(NULL, M68K_REG_A0), m68k_get_reg(NULL, M68K_REG_A1),
                 m68k_get_reg(NULL, M68K_REG_A5), m68k_get_reg(NULL, M68K_REG_A6));
 }
@@ -587,6 +606,16 @@ int main(int argc, char **argv) {
             if (o && prof) for (unsigned i = 0; i < RAM / 2; i++) if (prof[i]) fprintf(o, "%X %u\n", i * 2, prof[i]);
             if (o) fclose(o); }
         else if (!strcmp(cmd, "writelog")) { wlog_lo = strtoul(a1, 0, 0); wlog_hi = strtoul(a2, 0, 0); if (!wlogf) wlogf = logf ? logf : stdout; }
+        else if (!strcmp(cmd, "crashwatch")) crashwatch = 1;  /* stop when the PC leaves memory: the last 64 PCs */
+        else if (!strcmp(cmd, "writecount")) {                /* writecount LO HI: count each CPU write to LO-HI */
+            wc_lo = strtoul(a1, 0, 0); wc_hi = strtoul(a2, 0, 0); free(wc_addr); free(wc_pc);
+            wc_addr = calloc((wc_hi - wc_lo) / 2 + 1, sizeof *wc_addr); wc_pc = calloc(RAM / 2, sizeof *wc_pc); }
+        else if (!strcmp(cmd, "writecountdump")) {            /* writecountdump PREFIX: PREFIX.addr (a u32 a word), PREFIX.pc ("pc count") */
+            char fn[500]; snprintf(fn, sizeof fn, "%s.addr", a1); FILE *o = fopen(fn, "wb");
+            if (o && wc_addr) { fwrite(wc_addr, sizeof *wc_addr, (wc_hi - wc_lo) / 2, o); fclose(o); }
+            snprintf(fn, sizeof fn, "%s.pc", a1); o = fopen(fn, "w");
+            for (unsigned i = 0; o && wc_pc && i < RAM / 2; i++) if (wc_pc[i]) fprintf(o, "%X %u\n", i * 2, wc_pc[i]);
+            if (o) fclose(o); }
         else if (!strcmp(cmd, "callprof")) { callprof = atoi(a1); cp_n = 0; cp_pending = 0; if (callprof) memset(cp_edge, 0, sizeof cp_edge); }
         else if (!strcmp(cmd, "callprofdump")) {             /* callprofdump FILE: "caller callee calls cycles" */
             FILE *o = fopen(a1, "w");

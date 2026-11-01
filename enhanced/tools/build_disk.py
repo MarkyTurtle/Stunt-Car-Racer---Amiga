@@ -19,7 +19,9 @@ The files (ids: FID_ in boot_4489.s):
      assembled at $E700 (its data - sound/, gfx/, tracks/ - from original/: -I original);
      loaded to $E700 and entered there
   1  the loading picture: original/bin/loadpic_78000.bin (4 bitplanes), loaded to $78000
-  2  the helper block the game calls: original/bin/lowmem_c0.bin, loaded to $C0
+  2  the helper block the game calls: src/helper_c0.s (the release's, original/bin/lowmem_c0.bin,
+     without its self-modifying code: checked to assemble to the release's bytes with ORIGINAL
+     defined), loaded to $C0
 """
 import hashlib, os, struct, subprocess, sys
 
@@ -35,7 +37,7 @@ FT_OFFSET, FT_VERSION, FT_ENTRIES, DATA_START = 0x400, 1, 16, 0x600
 GAME_BIN = os.path.join(OUT, 'game_telemetry.bin' if TELEMETRY else 'game.bin')
 FILES = [GAME_BIN,                                                      # 0 FID_GAME (src/scr_game.s)
          os.path.join(ORIG, 'bin', 'loadpic_78000.bin'),               # 1 FID_LOADPIC
-         os.path.join(ORIG, 'bin', 'lowmem_c0.bin')]                   # 2 FID_LOWMEM
+         os.path.join(OUT, 'helper_c0.bin')]                            # 2 FID_LOWMEM (src/helper_c0.s)
 
 
 def vasm(src, out, listing=None, defines=()):
@@ -64,6 +66,12 @@ def build():
     bin_ = os.path.join(OUT, 'boot_4489.bin')
     vasm(os.path.join(SRC, 'boot_4489.s'), bin_, os.path.join(OUT, 'boot_4489.lst'))
     vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN, defines=['TELEMETRY=1'] if TELEMETRY else [])
+    helper = os.path.join(OUT, 'helper_c0.bin')
+    vasm(os.path.join(SRC, 'helper_c0.s'), helper + '.orig', defines=['ORIGINAL=1'])
+    if open(helper + '.orig', 'rb').read() != open(os.path.join(ORIG, 'bin', 'lowmem_c0.bin'), 'rb').read():
+        sys.exit('src/helper_c0.s with ORIGINAL defined is not the release\'s helper block (original/bin/lowmem_c0.bin)')
+    os.remove(helper + '.orig')
+    vasm(os.path.join(SRC, 'helper_c0.s'), helper)
     boot = open(bin_, 'rb').read()
     if len(boot) != 1024: sys.exit(f'the bootblock is {len(boot)} bytes, not 1024')
     adf = bytearray(DISK)

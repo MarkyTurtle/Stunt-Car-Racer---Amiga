@@ -74,8 +74,10 @@ TelNow:
 	lsr.l	#8,d0
 	andi.l	#$1FF,d0			; the beam's line
 	move.l	(TEL_LINES).w,d1
-	btst	#5,(CUSTOM+INTREQR+1).l		; a vertical blank not yet counted: the clock is a frame behind
+	btst	#5,(CUSTOM+INTREQR+1).l		; a vertical blank not yet counted: the clock is a frame behind -
 	beq.s	.counted
+	cmpi.w	#TEL_FRAMELINES/2,d0		; if the beam was read after it (the beam in the frame's top
+	bhs.s	.counted			; half); read on the last line before it, the beam is still the old frame's
 	addi.l	#TEL_FRAMELINES,d1
 .counted:
 	add.l	d1,d0

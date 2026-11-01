@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--game BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--game BIN] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -40,6 +40,14 @@ def script(frames, snap):
     return '\n'.join(L) + '\n'
 
 
+def helper():
+    """the helper block at $C0: the enhanced build's (src/helper_c0.s), or with --helper FILE that one"""
+    h = arg('--helper') or os.path.join(ENH, 'build', 'helper_c0.bin')
+    if not os.path.exists(h):
+        subprocess.run([sys.executable, os.path.join(HERE, 'build_disk.py')], check=True, stdout=subprocess.DEVNULL)
+    return h
+
+
 def arg(name, default=None):
     return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
 
@@ -58,7 +66,7 @@ def main():
     os.makedirs(work, exist_ok=True)
     sc = os.path.join(work, 'bench.txt')
     open(sc, 'w').write(script(frames, os.path.join(work, 'race')))
-    subprocess.run([EMU, game, os.path.join(ORIG, 'bin', 'lowmem_c0.bin'), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), sc],
+    subprocess.run([EMU, game, helper(), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), sc],
                    check=True, stdout=subprocess.DEVNULL)
     sys.argv = (['telemetry.py', os.path.join(work, 'race.mem')] + sum(([o, arg(o)] for o in ('--json', '--compare') if arg(o)), []) +
                 (['--list'] if '--list' in sys.argv else []))

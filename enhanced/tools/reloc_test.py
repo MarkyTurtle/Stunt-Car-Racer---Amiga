@@ -9,7 +9,7 @@ rest - code, data, pictures - is 16 bytes later), then plays the benchmark's rac
 the menus, the season's first race, N vertical blanks of it, default 3,000) in scremu with both, and
 compares how often each routine was called. Any difference means something in the game still uses
 an address that did not move with the code. (The game's load ends with its screens and the work
-areas follow 135 bytes later, so code can grow by about that much before the screens are moved.)
+areas follow soon after: the code can be moved, but it cannot grow much - enhanced/TODO.md.)
 """
 import os, subprocess, sys, tempfile
 
@@ -59,7 +59,7 @@ def main():
         lines = txt.split('\n')
         lines.insert(len(lines) - 2, f'callsdump {b}.calls')
         open(sc, 'w').write('\n'.join(lines))
-        subprocess.run([bench.EMU, b, os.path.join(bench.ORIG, 'bin', 'lowmem_c0.bin'),
+        subprocess.run([bench.EMU, b, bench.helper(),
                         os.path.join(bench.ORIG, 'bin', 'loadpic_78000.bin'), sc], check=True, stdout=subprocess.DEVNULL)
         results.append(b + '.calls')
     a, m = calls(results[0]), calls(results[1], entry)

@@ -3,8 +3,18 @@
 The game on an ordinary AmigaDOS-format disk with a file table, loaded through the
 [4489_byteloader](https://github.com/MarkyTurtle/4489_byteloader), as the Ghosts'n Goblins and
 New Zealand Story disks are. The game is assembled from its own source, `src/scr_game.s`,
-forked from `original/scr_game.s`: for now unchanged (the disk's SHA-1 is checked by the
-workflow), and where the improvements go. Its data (`sound/`, `gfx/`, `tracks/`) is the
+forked from `original/scr_game.s`, where the improvements go (the disk's SHA-1 is checked by the
+workflow). So far it differs from the original in:
+
+* **no self-modifying code** - the game's (`PlotPixel`'s colours, `ColourWordJump`) and the
+  helper block's (the turbo), so that the 68020's and later processors' caches can be left on
+  ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)); the helper block is assembled from
+  [`src/helper_c0.s`](src/helper_c0.s);
+* **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
+  the track to the bottom of the view and what the cockpit costs.
+
+Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F6 the cockpit,
+P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
 original's: the build finds it with `-I original`.
 
 ```
@@ -21,7 +31,7 @@ python3 enhanced/tools/reloc_test.py               # the game still works with i
 |---|---|
 | `$000-$3FF` | the bootblock, [`src/boot_4489.s`](src/boot_4489.s), with the 4489_byteloader ([`src/byteloader.i`](src/byteloader.i)) |
 | `$400-$5FF` | the file table: `'SCRF'`, version.w, count.w, 8 bytes zero, then offset.l and length.l per file |
-| `$600-` | file 0 the game (`src/scr_game.s`, to `$E700`), file 1 the loading picture (to `$78000`), file 2 the helper block (to `$C0`); the last two from `original/bin/` |
+| `$600-` | file 0 the game (`src/scr_game.s`, to `$E700`), file 1 the loading picture (to `$78000`, from `original/bin/`), file 2 the helper block (`src/helper_c0.s`, to `$C0`) |
 
 About half the disk is free.
 
@@ -71,7 +81,8 @@ python3 enhanced/tools/telemetry.py telemetry.bin [--list]
 **The benchmark** (`tools/bench.py`) plays the same race the same way every time in the study
 emulator (`original/tools/scremu`): Division 4's first race, a minute of it with the throttle held.
 `--json FILE` keeps its figures and `--compare FILE` shows the change in each phase, so every
-change to the game can be measured against `bench_baseline.json` (the game as it is now). The
+change to the game can be measured against `bench_baseline.json` (the game as released: the
+original code with the telemetry build's hooks). The
 workflow runs it and shows the report on the run's page. The emulator's times are close to an
 A500's (it does not slow the CPU for the display's memory use) and exact from run to run.
 

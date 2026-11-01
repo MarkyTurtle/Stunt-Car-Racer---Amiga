@@ -30,13 +30,18 @@ a shorter step.
 
 | Phase | ms | Share | What |
 |---|---:|---:|---|
-| input | 4.7 | 3.4% | the controls, `CarPhysics`, the engine's sound |
-| cars | 3.1 | 2.2% | the cars placed on their pieces, the opponent |
-| geometry | 40.3 | 29.4% | the pieces in view: points rotated and projected, the edges clipped and stepped |
-| drawing | 63.9 | 46.6% | the sky and ground, the mountains, the track's surfaces and lines, the opponent's car |
-| cockpit | 22.6 | 16.5% | the cockpit's parts drawn over the view (`DrawCutout`), the chains |
-| rest | 2.4 | 1.8% | the drawbridge, the instruments |
+| input | 4.7 | 3.6% | the controls, `CarPhysics`, the engine's sound |
+| cars | 3.1 | 2.4% | the cars placed on their pieces, the opponent |
+| geometry | 40.2 | 31.0% | the pieces in view: points rotated and projected, the edges clipped and stepped |
+| drawing | 63.9 | 49.3% | the sky and ground, the mountains, the track's surfaces and lines, the opponent's car |
+| cockpit | 15.2 | 11.7% | the cockpit's parts drawn over the view (`DrawCutout`), the chains |
+| rest | 2.4 | 1.9% | the drawbridge, the instruments |
 | wait | 0.1 | 0.1% | `FrameLimiter` |
+
+(The first version of the telemetry now and then read its clock a frame ahead - the beam read on a
+frame's last line, the vertical blank arriving before the interrupt request was read - which put
+a phase of 65,000 lines into the totals: the cockpit's share was given as 16.5%. Fixed, and the
+baseline measured again.)
 
 ## The pipeline
 
@@ -75,12 +80,33 @@ blitter is not used in the race).
 8. **The instruments, then `FrameLimiter`**: the screens swapped (`ScreenDraw`, `ScreenBack`;
    the copper interrupt shows the new one at line `$FA`).
 
+### How the polygons reach the screen
+
+There is no off-screen picture: every polygon is filled straight into the screen being drawn -
+the hidden one of two (`ScreenDraw`; `FrameLimiter` swaps it with the one on show, and the copper
+interrupt at line `$FA` shows it). What is kept off the screen is only what describes the
+polygons, never their pixels:
+
+* the projected points (`PointScreenX`, `PointScreenY`);
+* the **edge buffers**: for each edge, its x on every line it crosses (a word a line), built by
+  `ScanEdge` in the race work area (`$3D80-$60A8`, up to about 9K a frame);
+* the **row table** at `$7B08A`: for each cross-section of the track, pointers to its edges' buffers
+  - the polygon list;
+* for the surface being filled, the list of its edges (`dat_69B7C`) and their left/right order
+  (`dat_69BFC`).
+
+A surface is filled a line at a time (`FillBetweenEdges`): between its left and right edges' x on
+that line, the partial words at the two ends through `ClearWordPlanes` (and so `PlotWord<colour>`:
+read, mask, or, write in each plane), the whole words between with a `move.w` to each of the 4
+planes (the planes are 8,000 bytes apart, not interleaved: 4 separate writes for every 16 pixels).
+The order is the painter's: everything is drawn far to near over what was there, with no depth
+buffer and no test of what is hidden.
+
 ### The screen
 
 Two screens of 32,000 bytes (`$7D00` apart), each 4 bitplanes of 320 x 200 one after the other
-(8,000 bytes, `$1F40`, a plane; 40 bytes a line). The view is 256 x 128 pixels at `ScreenDrawTop`.
-A pixel's colour is written to the 4 planes separately, so every fill writes 4 words for each 16
-pixels.
+(8,000 bytes, `$1F40`, a plane; 40 bytes a line). The view is 256 x 128 pixels at `ScreenDrawTop`
+(line 16, pixel 32).
 
 ### Colours by changing the code
 
@@ -89,6 +115,86 @@ The drawing routines are given a colour by rewriting themselves: `SetPolygonColo
 plane; the fills patch the displacement of `ColourWordJump`'s branch so that it goes to
 `PlotWord<colour>` (15 routines, one per colour, each or-ing the planes of its colour and clearing
 the others).
+
+## Overdraw
+
+Measured by counting every write to the screens in the benchmark's race
+(`original/tools/scremu/overdraw.py`): a word of the view is written **1.87 times a frame** on
+average (the median word once; at most 23 times). 15,969 words are written to the screen a frame,
+where the view written once is 8,192 (2,048 words in each of 4 planes).
+
+![How many times each 16-pixel word of the view is written in a frame: blue once, green twice, yellow 3 times, red 4-5, white 6 or more](overdraw.png)
+
+| Where | Writes a word | Why |
+|---|---:|---|
+| the sky (lines 0-47) | 1.0 | `DrawHorizon` only |
+| the mountains (lines 48-63) | 1.2-2.3 | the sky, then the mountains over it |
+| the horizon band (lines 64-71) | up to 7 | the far rows of the track, each a few lines tall, stacked by the painter's order, with their lines (`PlotPixel`: a byte write a plane a pixel) |
+| the track (lines 72-103) | 2.0 | the ground, then the track's surface over it; off the track, 1.0 |
+| the bottom (lines 104-127) | 2.6-5.5 | the ground, the track, then the cockpit over both |
+
+By routine: `DrawHorizon` 8,209 (51% - the whole view, once), `FillBetweenEdges` and the
+`PlotWord`s 3,460 (22%), `DrawCutout` 2,295 (14%), `PlotPixel` 1,460 (9%), `FillPolygon` 304,
+the instruments' digits 201.
+
+So the overdraw is moderate - less than 2 - and most of it is the ground under the track and the
+cockpit over the bottom of the view. It is not what makes the drawing slow: `DrawHorizon` writes
+its 8,192 words in about 56,000 cycles (7 a word, `move.l`s), while `FillBetweenEdges` spends about
+98,000 cycles on its 3,460 (28 a word): the time goes on the work for each line and each edge -
+the variables kept in memory, the edges stepped a pixel at a time - not on the pixels written
+twice. The waste that would pay to remove: the ground drawn under the track (the track's area
+filled twice), and everything under the cockpit's solid parts (below).
+
+## The cockpit
+
+The cockpit is a picture (`Pic_Cockpit`) unpacked at the start of each race into the first
+screen and copied to the second (`UnpackCockpit`). Outside the view it is never drawn again: the
+3D view writes only inside its 256 x 128 rectangle. Where the cockpit overlaps the view - the
+engine and the dashboard's top along the bottom, the rounded corners at the top, and the chains -
+it is drawn again every frame, after the view, straight into the screen being drawn: 7 cut-outs
+(`DrawCutout`: 52 were masked from the pictures by `MakeCutouts` at start-up) and the chains.
+Each is a masked copy by the CPU over its rectangle - read the screen, and it with the mask, or
+the cut-out, write - in each plane: 8,896 pixels of rectangles, of which 3,478 are solid in the
+view (10.6% of it: the bottom 21 lines' engine, the corners). It costs 15.2 ms a frame (11.7%),
+and everything the view drew under those 3,478 pixels is lost.
+
+The enhanced game can turn it off with **F6** (in the race): the cut-outs are not drawn, the track
+is seen to the bottom of the view, and the cockpit's phase drops from 188 lines to 6 - a frame
+then fits in the 6 vertical blanks the limit allows (measured). The part of the cockpit picture
+below the view (a strip of the engine) stays, as it is never redrawn.
+
+Ways to make it cheaper: the blitter's cookie-cut for the cut-outs (in parallel with the CPU);
+cut-outs split so that their transparent parts are skipped; and the view's drawing stopped above
+the engine's solid lines (`FillBetweenEdges` and `DrawHorizon` given a bottom line).
+
+## Self-modifying code
+
+The game rewrites its own instructions in two places (found by playing it in scremu and listing
+every byte that is both executed and written - nothing else does it):
+
+* `SetPolygonColour` turns each of `PlotPixel`'s 8 `bset` instructions (`PlotPixelP0Hi` ...
+  `PlotPixelP3Lo`) into `bclr` and back, one for each plane, to give it a colour;
+* 14 places patch the displacement of `ColourWordJump`'s `bra.w` (in `ClearWordPlanes`) so that it
+  goes to `PlotWord<colour>`.
+
+And the release's helper block at `$C0` does too: F3 (the turbo) rewrites its wait loop's `bne` into
+a `NOP` and back.
+
+On a 68000 this works. On a 68020 or later, the instruction cache may keep the instruction as it
+was before it was rewritten, and run it - the wrong colours, or the wrong routine - unless the
+cache is off (and on a 68040 or 68060, with its copyback data cache, the new instruction may not
+even have reached memory). The enhanced game has none of it, checked the same way:
+
+* `SetPolygonColour` chooses one of 32 fixed routines (`PlotPixelOdd<colour>`,
+  `PlotPixelEven<colour>`: `enhanced/src/plotpixel.i`) and `PlotPixel` jumps through the address it
+  stored;
+* `SetColourWord` stores the address of `PlotWord<colour>` and `ColourWordJump` jumps through it
+  (an assembly-time check keeps the 15 `PlotWord` routines 16 bytes apart);
+* the helper block has a source, `enhanced/src/helper_c0.s` (checked to assemble to the release's
+  bytes with `ORIGINAL` defined), whose wait tests F3's flag.
+
+It costs 2.3% of a frame (the jumps through an address are slower than the patched instructions:
+the drawing phase +2.8 ms) - to be won back when `PlotPixel` and the fill are rewritten.
 
 ## The cost, by routine
 
@@ -156,5 +262,7 @@ tables of pointers (`PictureTable`, `KeysPlainPtr`, `KeysShiftedPtr`, `dat_699B8
 the 6502 data's base (`Data6502`), and an address the game worked out from two constants
 (`dat_64AEC+dat_14874`). `enhanced/tools/reloc_test.py` checks it: the game assembled with 16
 bytes put in before its code plays the benchmark's race exactly as before (every routine called
-the same number of times). The game's load ends with its screens, and the work areas start 135
-bytes after them: code can grow by that much before the screens are moved.
+the same number of times). The game's load ends with its screens, and the work areas start soon after them (the
+second screen ends 263 bytes before them in the enhanced game): the game cannot grow - new code
+replaces old code or goes in the space of the unused `CopylockRoutine` (1,318 bytes: the enhanced
+game's `plotpixel.i` and the telemetry build's code are there).

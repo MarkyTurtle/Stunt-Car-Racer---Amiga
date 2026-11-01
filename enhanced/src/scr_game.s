@@ -9441,95 +9441,13 @@ CopylockCall:		; (no references found: found by the code sweep)
 ; CopylockRoutine - Rob Northen's Copylock, as the game was protected. Nothing in this
 ; release calls it: the release removed the protection. Kept as data.
 ;-------------------------------------------------------------------------------
-CopylockRoutine:				; Rob Northen's Copylock, as the game was protected. Nothing in this release calls it: the release removed the protection. Kept as data.
+CopylockRoutine:				; (the enhanced game) the space of Rob Northen's Copylock, which nothing in this release calls: code the enhanced game adds
+	include	"plotpixel.i"
 	ifd	TELEMETRY
 	include	"telemetry.i"
-	dcb.b	CopylockRoutine+$526-*,0		; the rest of the routine's 1,318 bytes (an error if the code outgrows them)
-	else
-	dc.b	$48,$7A,$00,$1C,$23,$DF,$00,$00,$00,$10,$22,$4F,$4E,$7A,$00,$02
-	dc.b	$41,$FA,$FF,$C6,$20,$80,$08,$80,$00,$00,$4E,$7B,$00,$02,$2E,$49
-	dc.b	$23,$C1,$00,$00,$00,$10,$4C,$F9,$00,$FF,$00,$00,$00,$08,$48,$D6
-	dc.b	$00,$FF,$41,$FA,$00,$7E,$23,$C8,$00,$00,$00,$10,$4A,$FC,$D5,$03
-	dc.b	$FF,$E1,$60,$1E,$2A,$C6,$B5,$39,$9F,$83,$00,$7C,$4A,$CC,$D5,$33
-	dc.b	$FF,$89,$60,$76,$2A,$D6,$B5,$29,$9F,$AB,$00,$54,$4A,$84,$D5,$7B
-	dc.b	$00,$49,$9F,$B6,$2A,$82,$B5,$7D,$60,$47,$FF,$B8,$4A,$98,$D5,$67
-	dc.b	$00,$71,$9F,$8E,$2A,$B6,$B5,$49,$60,$63,$FF,$9C,$B5,$54,$2A,$AB
-	dc.b	$FF,$81,$60,$7E,$D5,$C0,$4A,$3F,$9F,$87,$00,$78,$4A,$7E,$D5,$81
-	dc.b	$FF,$81,$60,$7E,$D5,$CC,$4A,$33,$60,$3B,$FF,$C4,$4A,$06,$D5,$F9
-	dc.b	$FF,$E9,$60,$16,$D5,$E8,$4A,$17,$60,$1F,$FF,$E0,$4A,$3E,$D5,$C1
-	dc.b	$FF,$F5,$48,$E7,$80,$C0,$41,$FA,$00,$34,$23,$C8,$00,$00,$00,$24
-	dc.b	$41,$FA,$04,$64,$23,$C8,$00,$00,$00,$20,$06,$AF,$00,$00,$00,$02
-	dc.b	$00,$0E,$00,$2F,$00,$07,$00,$0C,$08,$6F,$00,$07,$00,$0C,$43,$FA
-	dc.b	$FE,$F0,$67,$1A,$20,$51,$20,$A9,$00,$04,$60,$26,$02,$7C,$F8,$FF
-	dc.b	$48,$E7,$80,$C0,$43,$FA,$FE,$DA,$20,$51,$20,$A9,$00,$04,$20,$6F
-	dc.b	$00,$0E,$22,$88,$23,$50,$00,$04,$20,$28,$FF,$FC,$46,$80,$48,$40
-	dc.b	$B1,$90,$4C,$DF,$03,$01,$4E,$73,$F0,$76,$FC,$E0,$40,$E6,$0F,$89
-	dc.b	$00,$08,$BA,$0D,$0E,$CE,$81,$36,$0C,$C9,$C1,$2E,$EC,$5B,$31,$65
-	dc.b	$9F,$52,$EC,$52,$73,$AD,$60,$BF,$05,$CA,$05,$4A,$00,$D6,$06,$0A
-	dc.b	$06,$4A,$06,$CA,$05,$4A,$01,$10,$DE,$D5,$04,$93,$B5,$3A,$DE,$C0
-	dc.b	$69,$D8,$7A,$05,$E4,$FA,$96,$C7,$1F,$3B,$81,$C4,$68,$7E,$F1,$81
-	dc.b	$7E,$BB,$B5,$6A,$F1,$92,$6F,$6D,$48,$D1,$D6,$2E,$91,$4E,$2C,$DF
-	dc.b	$D6,$27,$5D,$DA,$C3,$25,$29,$6A,$E6,$BB,$C3,$2C,$EC,$93,$21,$5A
-	dc.b	$3C,$2B,$B3,$FC,$6C,$6D,$3C,$26,$A2,$D9,$92,$D6,$0C,$29,$5C,$5A
-	dc.b	$C5,$EB,$36,$44,$E7,$0C,$7E,$DD,$83,$4A,$4D,$A6,$00,$12,$99,$CB
-	dc.b	$27,$DC,$FF,$F5,$70,$06,$EE,$F9,$00,$D2,$4F,$51,$11,$52,$82,$9D
-	dc.b	$71,$0C,$EE,$AF,$FF,$F6,$67,$07,$94,$96,$00,$0A,$FF,$F6,$67,$0F
-	dc.b	$28,$8C,$00,$05,$90,$E0,$3E,$D5,$00,$56,$F9,$C7,$C1,$2B,$FF,$F6
-	dc.b	$0C,$67,$3E,$D0,$FF,$F6,$66,$93,$F8,$6C,$00,$E9,$8F,$16,$10,$C5
-	dc.b	$8E,$3A,$70,$31,$C9,$4E,$50,$A7,$9F,$76,$C9,$5B,$64,$E4,$99,$5B
-	dc.b	$36,$A7,$F4,$18,$99,$4E,$37,$7A,$F4,$85,$7B,$7A,$E4,$8B,$3B,$1A
-	dc.b	$7B,$77,$F6,$8C,$79,$73,$56,$14,$F8,$22,$79,$70,$C5,$76,$07,$DD
-	dc.b	$03,$D4,$BD,$D1,$FA,$BC,$64,$43,$42,$70,$8F,$A1,$64,$56,$D7,$76
-	dc.b	$73,$52,$C2,$F3,$5D,$0C,$8E,$11,$51,$80,$5D,$01,$D0,$F4,$6D,$93
-	dc.b	$C3,$A5,$D0,$F7,$61,$7D,$9C,$C2,$2F,$0B,$ED,$B4,$9C,$D7,$5E,$54
-	dc.b	$12,$4A,$FF,$EC,$41,$EA,$ED,$B5,$03,$D4,$D1,$63,$ED,$B8,$2F,$3B
-	dc.b	$A7,$89,$FF,$F8,$3D,$7B,$D1,$62,$FF,$FA,$3D,$79,$A7,$8C,$FF,$FC
-	dc.b	$3D,$7F,$D1,$61,$FF,$FE,$3D,$7D,$D1,$61,$FF,$EE,$41,$E8,$2E,$9E
-	dc.b	$03,$D4,$BF,$D1,$D3,$5F,$5E,$AA,$83,$8D,$2D,$BB,$5E,$A9,$EF,$23
-	dc.b	$58,$7B,$D1,$56,$1C,$A9,$B0,$17,$3F,$E8,$D6,$0F,$5D,$F7,$41,$0B
-	dc.b	$DA,$F6,$77,$49,$D9,$7C,$DA,$F1,$74,$C7,$D9,$73,$6A,$13,$8B,$36
-	dc.b	$3A,$BC,$A4,$43,$74,$27,$EA,$D8,$5A,$FE,$C3,$09,$01,$B7,$5A,$F1
-	dc.b	$D5,$0E,$64,$84,$A6,$3B,$D5,$01,$64,$8B,$B4,$74,$7F,$A5,$64,$84
-	dc.b	$F0,$7F,$6E,$80,$9B,$93,$05,$6C,$91,$DD,$4E,$3D,$FF,$B7,$43,$B1
-	dc.b	$B1,$1D,$F0,$00,$3C,$83,$CE,$F2,$00,$96,$CC,$15,$71,$0D,$00,$24
-	dc.b	$CC,$A7,$E8,$F2,$00,$9E,$CC,$1D,$82,$0D,$00,$9E,$CC,$20,$7D,$8C
-	dc.b	$A1,$3B,$33,$FF,$FF,$7C,$5E,$C6,$00,$9C,$1D,$2B,$E2,$94,$7F,$63
-	dc.b	$B3,$DC,$1D,$4F,$D1,$F0,$4C,$07,$FD,$8D,$41,$8B,$B3,$27,$F0,$00
-	dc.b	$2F,$C3,$4C,$D8,$0B,$B8,$95,$47,$B2,$A7,$45,$71,$6A,$B9,$00,$1F
-	dc.b	$99,$F6,$07,$09,$FE,$86,$67,$8B,$AB,$08,$01,$7B,$00,$9C,$CC,$1F
-	dc.b	$BE,$84,$00,$24,$8F,$24,$3E,$AE,$F2,$2D,$70,$D9,$00,$9C,$CC,$1F
-	dc.b	$CF,$26,$00,$24,$8F,$DB,$3E,$51,$E1,$92,$70,$24,$0B,$B8,$95,$47
-	dc.b	$8E,$93,$79,$55,$6A,$BD,$00,$BF,$E0,$01,$78,$F4,$E6,$0B,$1E,$D2
-	dc.b	$87,$DD,$08,$DD,$B9,$57,$36,$A8,$87,$22,$0A,$22,$E6,$1C,$78,$62
-	dc.b	$D1,$00,$1E,$D1,$78,$77,$D1,$08,$2F,$76,$C3,$48,$2E,$48,$D1,$00
-	dc.b	$2F,$3E,$C3,$00,$2E,$40,$D1,$00,$1D,$03,$D5,$BF,$00,$DF,$F0,$9E
-	dc.b	$41,$14,$CC,$14,$20,$2A,$BE,$54,$D1,$00,$26,$7E,$41,$AC,$DF,$9F
-	dc.b	$00,$5C,$BE,$53,$00,$1E,$9E,$E1,$41,$62,$F0,$E8,$3F,$39,$41,$73
-	dc.b	$D4,$8A,$4A,$75,$BE,$BA,$27,$75,$E7,$88,$FA,$3F,$E7,$8A,$6A,$74
-	dc.b	$01,$CB,$99,$2E,$0C,$D5,$81,$D5,$3A,$68,$B5,$94,$FE,$57,$C5,$96
-	dc.b	$54,$6B,$F8,$14,$66,$EB,$AB,$DE,$24,$22,$88,$9F,$11,$96,$D3,$36
-	dc.b	$88,$8E,$16,$71,$2C,$AB,$A3,$54,$12,$DE,$A5,$C6,$7C,$AB,$F7,$01
-	dc.b	$00,$C7,$83,$50,$00,$BF,$E0,$01,$78,$EE,$F7,$12,$7A,$12,$E4,$ED
-	dc.b	$08,$CD,$A6,$F8,$E4,$FE,$6B,$FE,$F4,$11,$49,$80,$6B,$EF,$F5,$10
-	dc.b	$B6,$49,$3B,$E3,$56,$9E,$4A,$28,$C5,$D7,$76,$F7,$B5,$D3,$04,$59
-	dc.b	$D4,$A6,$4A,$59,$FB,$88,$4E,$76,$DA,$8D,$2D,$F2,$B1,$88,$46,$F7
-	dc.b	$D2,$0D,$3E,$32,$B9,$B7,$D1,$00,$26,$3F,$46,$48,$AA,$77,$D9,$7F
-	dc.b	$D1,$00,$0E,$E0,$91,$2F,$0F,$D0,$F1,$15,$1D,$2A,$F0,$90,$D1,$00
-	dc.b	$60,$8A,$8F,$4C,$2E,$40,$D1,$00,$2E,$FF,$D1,$C0,$11,$3E,$DC,$EF
-	dc.b	$D1,$D5,$78,$2B,$84,$54,$49,$B4,$BE,$65,$7B,$AB,$FF,$EF,$67,$14
-	dc.b	$90,$6B,$00,$12,$B1,$98,$2F,$67,$FF,$CD,$08,$0B,$D0,$98,$00,$BF
-	dc.b	$EE,$01,$77,$08,$DB,$77,$42,$66,$F3,$EC,$04,$2A,$BD,$99,$00,$BF
-	dc.b	$EE,$01,$77,$E2,$DB,$9D,$43,$7A,$AF,$79,$24,$6A,$00,$BF,$EE,$01
-	dc.b	$02,$02,$FF,$8C,$00,$BF,$E4,$01,$08,$02,$FF,$42,$00,$BF,$E5,$01
-	dc.b	$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01
-	dc.b	$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01
-	dc.b	$54,$8B,$AB,$74,$1A,$FE,$E5,$01,$54,$8B,$AB,$74,$1A,$FE,$E5,$01
-	dc.b	$54,$8B,$EA,$8E,$E0,$32,$3E,$8D,$15,$6D,$AB,$68,$3B,$F6,$E4,$89
-	dc.b	$3A,$37,$C4,$0D,$77,$08,$C5,$37,$FA,$B8,$25,$7E,$3A,$C8,$00,$04
-	dc.b	$DD,$FB,$63,$FE,$FF,$D9,$2F,$6E,$9C,$03,$29,$00,$20,$3A,$FA,$CA
-	dc.b	$6B,$04,$4E,$7B,$00,$02,$48,$F9,$00,$FF,$00,$00,$00,$08,$4C,$FA
-	dc.b	$7F,$FF,$FA,$4E,$4E,$73
 	endc
+EnhancedSpaceEnd:
+	dcb.b	CopylockRoutine+$526-*,0		; the rest of the routine's 1,318 bytes (an error if the code outgrows them)
 
 l_5CEAA:
         jsr     (GameLoop).l                    ; 5CEAA
@@ -18220,6 +18138,17 @@ sub_64E18:
         rts                                     ; 64E4A
 
 ;-------------------------------------------------------------------------------
+; DrawCockpitPart - d0: a cut-out - drawn over the view (DrawCutout) unless the cockpit is off (F6)
+;-------------------------------------------------------------------------------
+DrawCockpitPart:
+	tst.b	(HelperCockpitOff).w			; F6 toggles it (the helper block's keyboard hook: helper_c0.s)
+	bne.s	.off
+	jmp	(DrawCutout).l
+.off:	rts
+
+HelperCockpitOff	equ	$15E		; non-zero: the cockpit's parts are not drawn over the view (F6)
+
+;-------------------------------------------------------------------------------
 ; RaceView - the view each race frame: the cars placed on their pieces (or, off the track, the
 ; fallback), the pieces in view projected and their edges stepped (ProjectNearPiece,
 ; ProjectFarPieces, EdgesFirstPiece, EdgesNextPiece, EdgesFarPieces), the sky and ground
@@ -18373,21 +18302,21 @@ l_650FC:
 	endc
         jsr     (DropCar).l                     ; 65102
         move.b  #$d,d0                          ; 65108
-        jsr     (DrawCutout).l                  ; 6510C
+        jsr     (DrawCockpitPart).l             ; 6510C  (F6: the cockpit on or off)
         move.b  #$e,d0                          ; 65112
-        jsr     (DrawCutout).l                  ; 65116
+        jsr     (DrawCockpitPart).l             ; 65116  (F6: the cockpit on or off)
         jsr     (sub_5E778).l                   ; 6511C
         move.b  (dat_1BBDB).l,d0                ; 65122
-        jsr     (DrawCutout).l                  ; 65128
+        jsr     (DrawCockpitPart).l             ; 65128  (F6: the cockpit on or off)
         move.b  #$5,d0                          ; 6512E
         sub.b   (dat_1BBDB).l,d0                ; 65132
-        jsr     (DrawCutout).l                  ; 65138
+        jsr     (DrawCockpitPart).l             ; 65138  (F6: the cockpit on or off)
         move.b  #$a,d0                          ; 6513E
-        jsr     (DrawCutout).l                  ; 65142
+        jsr     (DrawCockpitPart).l             ; 65142  (F6: the cockpit on or off)
         move.b  #$b,d0                          ; 65148
-        jsr     (DrawCutout).l                  ; 6514C
+        jsr     (DrawCockpitPart).l             ; 6514C  (F6: the cockpit on or off)
         move.b  #$c,d0                          ; 65152
-        jsr     (DrawCutout).l                  ; 65156
+        jsr     (DrawCockpitPart).l             ; 65156  (F6: the cockpit on or off)
         tst.b   (dat_1BB62).l                   ; 6515C
         beq.w   l_651B0                         ; 65162
         move.b  (dat_1BB69).l,d0                ; 65166
@@ -18403,14 +18332,14 @@ l_6517A:
         bne.w   l_65192                         ; 6518A
         move.b  #$31,d0                         ; 6518E
 l_65192:
-        jsr     (DrawCutout).l                  ; 65192
+        jsr     (DrawCockpitPart).l             ; 65192  (F6: the cockpit on or off)
         move.w  (a7)+,d0                        ; 65198
         addi.b  #$8,d0                          ; 6519A
         cmpi.b  #$a,d0                          ; 6519E
         bne.w   l_651AA                         ; 651A2
         move.b  #$32,d0                         ; 651A6
 l_651AA:
-        jsr     (DrawCutout).l                  ; 651AA
+        jsr     (DrawCockpitPart).l             ; 651AA  (F6: the cockpit on or off)
 l_651B0:
         jsr     (sub_5E508).l                   ; 651B0
         rts                                     ; 651B6
@@ -19584,79 +19513,6 @@ l_66346:
         rts                                     ; 66346
 
 ;-------------------------------------------------------------------------------
-; SetPolygonColour - d0: a colour - the plotting code changed to set or clear each plane (bset
-; / bclr written into PlotPixel and the fill)
-;-------------------------------------------------------------------------------
-SetPolygonColour:
-        lsr.b   #$1,d0                          ; 66348
-        bcs.w   l_66362                         ; 6634A
-        bclr    #$6,(PlotPixelP0Hi+1).l                    ; 6634E
-        bclr    #$6,(PlotPixelP0Lo+1).l                    ; 66356
-        bra.w   l_66372                         ; 6635E
-l_66362:
-        bset    #$6,(PlotPixelP0Hi+1).l                    ; 66362
-        bset    #$6,(PlotPixelP0Lo+1).l                    ; 6636A
-l_66372:
-        lsr.b   #$1,d0                          ; 66372
-        bcs.w   l_6638C                         ; 66374
-        bclr    #$6,(PlotPixelP1Hi+1).l                    ; 66378
-        bclr    #$6,(PlotPixelP1Lo+1).l                    ; 66380
-        bra.w   l_6639C                         ; 66388
-l_6638C:
-        bset    #$6,(PlotPixelP1Hi+1).l                    ; 6638C
-        bset    #$6,(PlotPixelP1Lo+1).l                    ; 66394
-l_6639C:
-        lsr.b   #$1,d0                          ; 6639C
-        bcs.w   l_663B6                         ; 6639E
-        bclr    #$6,(PlotPixelP2Hi+1).l                    ; 663A2
-        bclr    #$6,(PlotPixelP2Lo+1).l                    ; 663AA
-        bra.w   l_663C6                         ; 663B2
-l_663B6:
-        bset    #$6,(PlotPixelP2Hi+1).l                    ; 663B6
-        bset    #$6,(PlotPixelP2Lo+1).l                    ; 663BE
-l_663C6:
-        lsr.b   #$1,d0                          ; 663C6
-        bcs.w   l_663E0                         ; 663C8
-        bclr    #$6,(PlotPixelP3Hi+1).l                    ; 663CC
-        bclr    #$6,(PlotPixelP3Lo+1).l                    ; 663D4
-        bra.w   l_663F0                         ; 663DC
-l_663E0:
-        bset    #$6,(PlotPixelP3Hi+1).l                    ; 663E0
-        bset    #$6,(PlotPixelP3Lo+1).l                    ; 663E8
-l_663F0:
-        rts                                     ; 663F0
-
-;-------------------------------------------------------------------------------
-; PlotPixel - a0, d4: a pixel set in the 4 planes (changed by SetPolygonColour)
-;-------------------------------------------------------------------------------
-PlotPixel:
-        move.b  d4,d0                           ; 663F2
-        andi.w  #$f,d0                          ; 663F4
-        eori.w  #$f,d0                          ; 663F8
-        cmpi.w  #$8,d0                          ; 663FC
-        bge.w   l_66416                         ; 66400
-PlotPixelP0Hi:
-        bset    d0,$1(a0)                       ; 66404  bset/bclr: patched by SetPolygonColour
-PlotPixelP1Hi:
-        bset    d0,$1f41(a0)                    ; 66408  bset/bclr: patched by SetPolygonColour
-PlotPixelP2Hi:
-        bset    d0,$3e81(a0)                    ; 6640C  bset/bclr: patched by SetPolygonColour
-PlotPixelP3Hi:
-        bset    d0,$5dc1(a0)                    ; 66410  bset/bclr: patched by SetPolygonColour
-        rts                                     ; 66414
-l_66416:
-        andi.w  #$7,d0                          ; 66416
-PlotPixelP0Lo:
-        bset    d0,(a0)                         ; 6641A  bset/bclr: patched by SetPolygonColour
-PlotPixelP1Lo:
-        bset    d0,$1f40(a0)                    ; 6641C  bset/bclr: patched by SetPolygonColour
-PlotPixelP2Lo:
-        bset    d0,$3e80(a0)                    ; 66420  bset/bclr: patched by SetPolygonColour
-PlotPixelP3Lo:
-        bset    d0,$5dc0(a0)                    ; 66424  bset/bclr: patched by SetPolygonColour
-        rts                                     ; 66428
-
-;-------------------------------------------------------------------------------
 ; FillRect - d0 a colour, d4, d5, d6: a rectangle filled (probably)
 ;-------------------------------------------------------------------------------
 FillRect:
@@ -19692,7 +19548,8 @@ ClearWordPlanes:
         move.w  d4,d2                           ; 6646E
         not.w   d2                              ; 66470
 ColourWordJump:
-        bra.w   l_66476                         ; 66472  patched: the displacement's low byte = colour * 16 + 2 (PlotWord<colour>)
+        move.l  (ColourWordTarget).l,-(a7)      ; PlotWord<colour> (SetColourWord). The original patched a
+        rts                                     ; bra.w's displacement here: self-modifying code
 l_66476:
         and.w   d2,(a4)+                        ; 66476
         and.w   d2,$1f3e(a4)                    ; 66478
@@ -19710,7 +19567,6 @@ PlotWord1:		; (no references found: found by the code sweep)
         and.w   d2,$3e7e(a4)                    ; 6648C
         and.w   d2,$5dbe(a4)                    ; 66490
         rts                                     ; 66494
-
 ;-------------------------------------------------------------------------------
 ; PlotWord2
 ;-------------------------------------------------------------------------------
@@ -19850,6 +19706,23 @@ PlotWord15:		; (no references found: found by the code sweep)
         or.w    d4,$3e7e(a4)                    ; 6656C
         or.w    d4,$5dbe(a4)                    ; 66570
         rts                                     ; 66574
+	ifne	PlotWord15-l_66476-15*16
+	fail	"the PlotWord routines must be 16 bytes apart: SetColourWord jumps to l_66476 + colour * 16"
+	endc
+
+;-------------------------------------------------------------------------------
+; SetColourWord - d6.b = a colour * 16 + 2: ClearWordPlanes made to draw in that colour -
+; ColourWordTarget set to its PlotWord routine (l_66476 + colour * 16: colour 0 clears)
+;-------------------------------------------------------------------------------
+SetColourWord:
+	move.l	d6,-(a7)
+	andi.l	#$ff,d6
+	addi.l	#l_66476-2,d6
+	move.l	d6,(ColourWordTarget).l
+	move.l	(a7)+,d6
+	rts
+ColourWordTarget:			; where ClearWordPlanes goes on (ColourWordJump): PlotWord<colour>
+	dc.l	l_66476
 sub_66576:
         cmp.w   d4,d5                           ; 66576
         bgt.w   l_6658E                         ; 66578
@@ -21243,7 +21116,7 @@ ColourToMasks:
         move.b  d0,d6                           ; 6770A
         asl.b   #$4,d6                          ; 6770C
         addq.b  #$2,d6                          ; 6770E
-        move.b  d6,(ColourWordJump+3).l                     ; 67710
+        jsr     (SetColourWord).l               ; 67710  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67716
         clr.l   d7                              ; 67718
         lsr.b   #$1,d0                          ; 6771A
@@ -21620,7 +21493,7 @@ DrawOpponentCar:
         move.b  d0,d6                           ; 67B76
         asl.b   #$4,d6                          ; 67B78
         addq.b  #$2,d6                          ; 67B7A
-        move.b  d6,(ColourWordJump+3).l                     ; 67B7C
+        jsr     (SetColourWord).l               ; 67B7C  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67B82
         clr.l   d7                              ; 67B84
         lsr.b   #$1,d0                          ; 67B86
@@ -21673,7 +21546,7 @@ l_67BB8:
         move.b  d0,d6                           ; 67C1A
         asl.b   #$4,d6                          ; 67C1C
         addq.b  #$2,d6                          ; 67C1E
-        move.b  d6,(ColourWordJump+3).l                     ; 67C20
+        jsr     (SetColourWord).l               ; 67C20  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67C26
         clr.l   d7                              ; 67C28
         lsr.b   #$1,d0                          ; 67C2A
@@ -21724,7 +21597,7 @@ l_67C54:
         move.b  d0,d6                           ; 67CB6
         asl.b   #$4,d6                          ; 67CB8
         addq.b  #$2,d6                          ; 67CBA
-        move.b  d6,(ColourWordJump+3).l                     ; 67CBC
+        jsr     (SetColourWord).l               ; 67CBC  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67CC2
         clr.l   d7                              ; 67CC4
         lsr.b   #$1,d0                          ; 67CC6
@@ -21775,7 +21648,7 @@ l_67CF0:
         move.b  d0,d6                           ; 67D52
         asl.b   #$4,d6                          ; 67D54
         addq.b  #$2,d6                          ; 67D56
-        move.b  d6,(ColourWordJump+3).l                     ; 67D58
+        jsr     (SetColourWord).l               ; 67D58  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67D5E
         clr.l   d7                              ; 67D60
         lsr.b   #$1,d0                          ; 67D62
@@ -21826,7 +21699,7 @@ l_67D8C:
         move.b  d0,d6                           ; 67DEE
         asl.b   #$4,d6                          ; 67DF0
         addq.b  #$2,d6                          ; 67DF2
-        move.b  d6,(ColourWordJump+3).l                     ; 67DF4
+        jsr     (SetColourWord).l               ; 67DF4  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67DFA
         clr.l   d7                              ; 67DFC
         lsr.b   #$1,d0                          ; 67DFE
@@ -21877,7 +21750,7 @@ l_67E28:
         move.b  d0,d6                           ; 67E8A
         asl.b   #$4,d6                          ; 67E8C
         addq.b  #$2,d6                          ; 67E8E
-        move.b  d6,(ColourWordJump+3).l                     ; 67E90
+        jsr     (SetColourWord).l               ; 67E90  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67E96
         clr.l   d7                              ; 67E98
         lsr.b   #$1,d0                          ; 67E9A
@@ -21928,7 +21801,7 @@ l_67EC4:
         move.b  d0,d6                           ; 67F26
         asl.b   #$4,d6                          ; 67F28
         addq.b  #$2,d6                          ; 67F2A
-        move.b  d6,(ColourWordJump+3).l                     ; 67F2C
+        jsr     (SetColourWord).l               ; 67F2C  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67F32
         clr.l   d7                              ; 67F34
         lsr.b   #$1,d0                          ; 67F36
@@ -21979,7 +21852,7 @@ l_67F60:
         move.b  d0,d6                           ; 67FC2
         asl.b   #$4,d6                          ; 67FC4
         addq.b  #$2,d6                          ; 67FC6
-        move.b  d6,(ColourWordJump+3).l                     ; 67FC8
+        jsr     (SetColourWord).l               ; 67FC8  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 67FCE
         clr.l   d7                              ; 67FD0
         lsr.b   #$1,d0                          ; 67FD2
@@ -22030,7 +21903,7 @@ l_67FFC:
         move.b  d0,d6                           ; 6805E
         asl.b   #$4,d6                          ; 68060
         addq.b  #$2,d6                          ; 68062
-        move.b  d6,(ColourWordJump+3).l                     ; 68064
+        jsr     (SetColourWord).l               ; 68064  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 6806A
         clr.l   d7                              ; 6806C
         lsr.b   #$1,d0                          ; 6806E
@@ -22081,7 +21954,7 @@ l_68098:
         move.b  d0,d6                           ; 680FA
         asl.b   #$4,d6                          ; 680FC
         addq.b  #$2,d6                          ; 680FE
-        move.b  d6,(ColourWordJump+3).l                     ; 68100
+        jsr     (SetColourWord).l               ; 68100  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 68106
         clr.l   d7                              ; 68108
         lsr.b   #$1,d0                          ; 6810A
@@ -22546,7 +22419,7 @@ l_6869C:
         move.b  d0,d6                           ; 686A6
         asl.b   #$4,d6                          ; 686A8
         addq.b  #$2,d6                          ; 686AA
-        move.b  d6,(ColourWordJump+3).l                     ; 686AC
+        jsr     (SetColourWord).l               ; 686AC  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 686B2
         clr.l   d7                              ; 686B4
         lsr.b   #$1,d0                          ; 686B6
@@ -23337,7 +23210,7 @@ l_691D4:
         move.b  d0,d6                           ; 69234
         asl.b   #$4,d6                          ; 69236
         addq.b  #$2,d6                          ; 69238
-        move.b  d6,(ColourWordJump+3).l                     ; 6923A
+        jsr     (SetColourWord).l               ; 6923A  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 69240
         clr.l   d7                              ; 69242
         lsr.b   #$1,d0                          ; 69244
@@ -23397,7 +23270,7 @@ l_69290:
         move.b  d0,d6                           ; 692F0
         asl.b   #$4,d6                          ; 692F2
         addq.b  #$2,d6                          ; 692F4
-        move.b  d6,(ColourWordJump+3).l                     ; 692F6
+        jsr     (SetColourWord).l               ; 692F6  d6 = colour * 16 + 2: ColourWordTarget
         clr.l   d6                              ; 692FC
         clr.l   d7                              ; 692FE
         lsr.b   #$1,d0                          ; 69300

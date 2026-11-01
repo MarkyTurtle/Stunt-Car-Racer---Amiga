@@ -13,8 +13,15 @@ chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). F
   named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
   track format.
 * ~~Make the source safe to change~~: done - every address in it is a label, checked by
-  `tools/reloc_test.py` (in the workflow). Code can grow by 135 bytes before the screens, at the
-  end of the load, must move (they are followed by the work areas at `$7A01A`).
+  `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
+  code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
+  or goes in the unused `CopylockRoutine`'s 1,318 bytes (now `plotpixel.i` and, in the telemetry
+  build, `telemetry.i`: about 100 bytes left). Freeing the pictures between races (below) is what
+  will make room.
+* ~~Remove the self-modifying code~~: done (`original/docs/RENDER.md`): `PlotPixel`'s colours,
+  `ColourWordJump`, and the helper block's turbo (now assembled from `src/helper_c0.s`). Checked:
+  the enhanced game writes none of its instructions. It costs 2.3% of a frame until `PlotPixel` and
+  the fill are rewritten. Then: try the disk on a 68020/68030 with the caches on (WinUAE A1200).
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
 * Put the 4489_byteloader in the game (as Ghosts'n Goblins and The New Zealand Story did), reading
@@ -59,15 +66,39 @@ keeping them all in memory.
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
-6.47 vertical blanks on an A500 (the limit is 6), 7.7 frames a second; geometry 29%, drawing 47%,
-cockpit 17%. Measure each change with the benchmark (`tools/bench.py --compare
+6.47 vertical blanks on an A500 (the limit is 6), 7.7 frames a second; geometry 31%, drawing 49%,
+cockpit 12%. A word of the view is written 1.87 times a frame (overdraw: moderate - the time goes
+on the work for each line and edge more than on pixels written twice). Measure each change with the benchmark (`tools/bench.py --compare
 bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.
 
 * `ScanEdge`: step a line at a time, not a pixel (15.6% of the frame).
 * The blitter: the background (`DrawHorizon`, 6.4%) and the cockpit (`DrawCutout`, 9.8%) - in
   parallel with the CPU.
 * `FillBetweenEdges` (11.1%): its variables in registers, its runs unrolled; or the blitter's fill.
-* `PlotPixel` / `DrawEdgeLine` (9.7%): inline, word masks.
+* `PlotPixel` / `DrawEdgeLine` (9.7%): inline, word masks (and so the cost of removing the
+  self-modifying code won back).
+* The cockpit (11.7%): ~~F6 turns it off~~ (done: a frame then fits in 6 vertical blanks); the
+  blitter's cookie-cut for its cut-outs; the cut-outs split to skip their transparent parts; the
+  view's drawing stopped above the engine's solid lines (3,478 pixels of the view are under it).
+* The ground under the track: `DrawHorizon` fills the whole view and the track's surfaces are
+  filled over it - the track's area written twice. Fill the ground only between the track's
+  edges, or draw the track's surfaces first and the ground in the gaps.
+* **Half the vertical resolution, stretched by the copper.** Draw the view in 64 lines instead of
+  128 and show each line twice: the copper list sets the bitplane modulos (BPL1MOD, BPL2MOD) to
+  -40 on the first line of each pair (the same line again) and back to 0 on the second, from the
+  view's first line to its last (a WAIT and 2 MOVEs a line: about 1.5K of copper list). Everything
+  that works a line at a time halves: `DrawHorizon`, `FillBetweenEdges`, the edges' stepping
+  (`ScanEdge`, once it steps a line at a time), `DrawEdgeLine`; the projection stays the same.
+  Measured shares: drawing 49% and much of geometry's 31% - perhaps a quarter to a third of the
+  frame. The thought: the faster the game moves, the less the doubled lines are seen. To work out:
+  - the cockpit overlaps the view's bottom 21 lines and its corners at full resolution: stop the
+    stretch above it (full-resolution lines for the bottom of the view - the track drawn at full
+    resolution there, or the doubled lines continued and the cockpit drawn on them), or draw the
+    cockpit's overlapping parts at half resolution too;
+  - the projection's y scaled by half (`ProjectPointY`), the edge buffers a word a pair of lines,
+    the view's 64 lines packed (40 bytes a line, as now, so that the copper's modulo trick works);
+  - the horizon band, where the far rows stack, gains the most and looks the worst: compare;
+  - a key to switch it (as F6 does the cockpit), to compare in play and measure with the telemetry.
 * `ArcTan`, `RollPointXY` (7.3%): tables.
 * The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
 * Then the frame rate: the game is simulated a step a frame, so a limit under 6 vertical blanks

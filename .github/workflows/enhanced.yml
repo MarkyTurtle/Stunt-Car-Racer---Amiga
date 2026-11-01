@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
 
 env:
-  # The disk's SHA-1 while the game is the original's. A change to the game or the bootblock
-  # changes it: update this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: cf5908060f7a410d0dbf348a5ed5f6dd8f2cfce9
+  # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
+  # this line with the new SHA-1 (build_disk.py prints it).
+  ADF_SHA1: 46b160fa3592046874487bfec2eb2976f48c1f28
 
 jobs:
   build:

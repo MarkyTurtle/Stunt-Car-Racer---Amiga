@@ -3,9 +3,9 @@
  "phase_lines": {
   "input": 41624,
   "cars": 27246,
-  "geometry": 357414,
+  "geometry": 357101,
   "drawing": 567264,
-  "cockpit": 200460,
+  "cockpit": 135237,
   "rest": 21467,
   "wait": 1237
  },
@@ -246,8 +246,8 @@
    "input": 77,
    "cars": 53,
    "geometry": 618,
-   "drawing": 1253,
-   "cockpit": 65413,
+   "drawing": 940,
+   "cockpit": 190,
    "rest": 136,
    "wait": 2
   },
@@ -681,9 +681,9 @@
   "phases_ms": {
    "input": 4.690040175516934,
    "cars": 3.0699796901339225,
-   "geometry": 40.27210309658393,
+   "geometry": 40.23683540066482,
    "drawing": 63.91723405065438,
-   "cockpit": 22.58710007649732,
+   "cockpit": 15.238010840293667,
    "rest": 2.41882309359557,
    "wait": 0.1393806385045754
   }

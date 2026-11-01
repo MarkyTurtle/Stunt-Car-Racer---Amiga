@@ -18,7 +18,7 @@ Galahad), disassembled: sources that reassemble byte-identical, and the disk reb
 | [`docs/MEMORY.md`](docs/MEMORY.md) | how the game uses the 512K: measured in the emulator |
 | [`docs/CODE.md`](docs/CODE.md) | how the game's code is put together, how the names were found, what is still to name |
 | [`docs/RENDER.md`](docs/RENDER.md) | the 3D view and the drawing: the pipeline, what each part costs (measured), where the time could be won |
-| [`tools/scremu/`](tools/scremu) | the study emulator (Musashi, adapted from The New Zealand Story's): runs the game, records memory use, calls, variables, where the time goes (`profile`, `callprof`), writes (`writelog`); `run_usage.py` makes the measurements in MEMORY.md; `tools/screen.py` draws its snapshots |
+| [`tools/scremu/`](tools/scremu) | the study emulator (Musashi, adapted from The New Zealand Story's): runs the game, records memory use, calls, variables, where the time goes (`profile`, `callprof`), writes (`writelog`, `writecount`), crashes (`crashwatch`); `run_usage.py` makes the measurements in MEMORY.md, `overdraw.py` those of the overdraw in RENDER.md; `tools/screen.py` draws its snapshots |
 | [`tools/disasm/`](tools/disasm) | the disassembler (the New Zealand Story's engine, `core.py`) and its configs (`*_cfg.py`): `make.py` |
 | [`tools/disk/`](tools/disk) | `extract_files.py` (the ADF -> `disk/files/`, `bin/`), `unpack_loader.py` |
 | [`render/`](render) | `assets.py`: the pictures as PNGs and the samples as WAVs; `loadpic.py`: the loading picture (`render/out/`) |

@@ -42,8 +42,10 @@ class Machine:
 
 
 def files():
-    f = lambda *p: open(os.path.join(ORIG, *p), 'rb').read()
-    return f('disk', 'files', 't010-083_game.bin'), f('bin', 'loadpic_78000.bin'), f('bin', 'lowmem_c0.bin')
+    f = lambda *p: open(os.path.join(*p), 'rb').read()
+    build = os.path.join(ENH, 'build')
+    return (f(build, 'game.bin'), f(ORIG, 'bin', 'loadpic_78000.bin'),       # the game and the helper block as
+            f(build, 'helper_c0.bin'))                                      # tools/build_disk.py made them
 
 
 def boot(adf, unit=0, drives=(0, 1), random_start=False, foreign=False):
