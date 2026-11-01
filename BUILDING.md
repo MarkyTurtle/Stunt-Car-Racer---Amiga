@@ -21,7 +21,7 @@ The GitHub Actions run these steps on Windows and Linux (`.github/workflows/`; v
 |---|---|
 | `capstone` | `original/tools/disasm/make.py` (the disassembler) |
 | `unicorn` | `original/tools/disk/unpack_loader.py` (runs the loader's own decruncher), `enhanced/tools/test_boot.py` (boots the disk) |
-| `pillow` | `original/render/loadpic.py` |
+| `pillow` | `original/render/loadpic.py`, `original/render/assets.py` |
 
 ## The original game
 
@@ -31,6 +31,8 @@ python3 original/build.py                  # assemble, check each against its SH
 python3 original/tools/disasm/make.py      # regenerate the sources from the configs (into
                                            # original/tools/disasm/regen/) and check they reassemble
 ```
+
+`python3 original/render/assets.py` renders the pictures and the samples (`original/render/out/`).
 
 The files in `original/disk/` and `original/bin/` are in the repository. To make them again from
 the Turbo release's ADF (checked against `original/disk/SHA1SUMS`):

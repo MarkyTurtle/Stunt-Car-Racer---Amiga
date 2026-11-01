@@ -4,7 +4,8 @@ The game on an ordinary AmigaDOS-format disk with a file table, loaded through t
 [4489_byteloader](https://github.com/MarkyTurtle/4489_byteloader), as the Ghosts'n Goblins and
 New Zealand Story disks are. The game is assembled from its own source, `src/scr_game.s`,
 forked from `original/scr_game.s`: for now unchanged (the disk's SHA-1 is checked by the
-workflow), and where the improvements go.
+workflow), and where the improvements go. Its data (`sound/`, `gfx/`, `tracks/`) is the
+original's: the build finds it with `-I original`.
 
 ```
 python3 enhanced/tools/build_disk.py     # -> enhanced/build/scr.adf

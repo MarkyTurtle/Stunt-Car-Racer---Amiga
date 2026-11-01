@@ -14,7 +14,8 @@ with the $4489 sync) with no filesystem, read only through the 4489_byteloader:
 
 The files (ids: FID_ in boot_4489.s):
   0  the game: src/scr_game.s (the hand-edited source forked from original/scr_game.s),
-     assembled at $E700; loaded to $E700 and entered there
+     assembled at $E700 (its data - sound/, gfx/, tracks/ - from original/: -I original);
+     loaded to $E700 and entered there
   1  the loading picture: original/bin/loadpic_78000.bin (4 bitplanes), loaded to $78000
   2  the helper block the game calls: original/bin/lowmem_c0.bin, loaded to $C0
 """
@@ -35,7 +36,7 @@ FILES = [GAME_BIN,                                                      # 0 FID_
 
 
 def vasm(src, out, listing=None):
-    cmd = [VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC] + (['-L', listing] if listing else []) + ['-o', out, src]
+    cmd = [VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC, '-I', ORIG] + (['-L', listing] if listing else []) + ['-o', out, src]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True)
     except FileNotFoundError:
