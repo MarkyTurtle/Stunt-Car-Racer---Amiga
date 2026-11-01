@@ -13,3 +13,6 @@ __pycache__/
 /original/tools/scremu/Musashi/
 /original/tools/scremu/scremu
 /original/tools/scremu/conf.h
+
+# the study emulator (built by tools/scremu/build.sh) is ignored above; reloc_test.py's copy of the source:
+/enhanced/src/.reloc_test.s

@@ -8,8 +8,11 @@ workflow), and where the improvements go. Its data (`sound/`, `gfx/`, `tracks/`)
 original's: the build finds it with `-I original`.
 
 ```
-python3 enhanced/tools/build_disk.py     # -> enhanced/build/scr.adf
-python3 enhanced/tools/test_boot.py      # boots it in the emulator harness: every check "ok"
+python3 enhanced/tools/build_disk.py               # -> enhanced/build/scr.adf
+python3 enhanced/tools/test_boot.py                # boots it in the emulator harness: every check "ok"
+python3 enhanced/tools/build_disk.py --telemetry   # -> enhanced/build/scr_telemetry.adf (below)
+python3 enhanced/tools/bench.py --compare enhanced/bench_baseline.json   # the race benchmark
+python3 enhanced/tools/reloc_test.py               # the game still works with its code moved
 ```
 
 ## The disk
@@ -46,10 +49,41 @@ repository): booted from DF0, DF1, DF3 and from a unit of another device, each w
 starting at sector 0 and at a random sector. It checks the game, the picture and the helper block
 in memory against `original/`, the registers and stack at `$E700`, the display and the drive.
 
+## Measuring the speed
+
+**The telemetry build** is the game with each race frame timed: `build_disk.py --telemetry`
+assembles `src/scr_game.s` with `TELEMETRY` defined, which swaps 8 of the game's calls for calls of
+the same size into [`src/telemetry.i`](src/telemetry.i) (its code fills the space of the unused
+`CopylockRoutine`, so no address in the game changes). Each frame is timed in raster lines (64 us)
+from the beam's position and a count of vertical blanks, and split into 7 phases - input, cars,
+geometry, drawing, cockpit, rest, wait ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)).
+The results stay in memory at `$3800-$3C7F` from race to race: the totals of each phase, the
+shortest and longest frame, the frames by length in vertical blanks, and the last 64 frames. The
+timing costs about 3,700 cycles a frame (0.4%; measured in the emulator).
+
+On a real Amiga or in WinUAE (cycle-exact, A500): play a race with the telemetry disk, then in
+WinUAE's debugger (Shift+F12) save the results with `S telemetry.bin 3800 480` and read them:
+
+```
+python3 enhanced/tools/telemetry.py telemetry.bin [--list]
+```
+
+**The benchmark** (`tools/bench.py`) plays the same race the same way every time in the study
+emulator (`original/tools/scremu`): Division 4's first race, a minute of it with the throttle held.
+`--json FILE` keeps its figures and `--compare FILE` shows the change in each phase, so every
+change to the game can be measured against `bench_baseline.json` (the game as it is now). The
+workflow runs it and shows the report on the run's page. The emulator's times are close to an
+A500's (it does not slow the CPU for the display's memory use) and exact from run to run.
+
+**The relocation test** (`tools/reloc_test.py`) assembles the game with 16 bytes put in before its
+code and checks that it plays the benchmark's race exactly as before - that nothing in the source
+holds an address as a number. Run by the workflow: improvements will move code.
+
 ## Releases
 
 Publishing a release on GitHub builds the disk from the release's tag (`.github/workflows/release.yml`)
-and attaches it as `StuntCarRacer_Enhanced_<tag>.adf`.
+and attaches it as `StuntCarRacer_Enhanced_<tag>.adf`, with the telemetry build as
+`StuntCarRacer_Enhanced_<tag>_telemetry.adf`.
 
 Status: boots to the game's entry in the harness; still to try in WinUAE. What is planned:
 [`TODO.md`](TODO.md).

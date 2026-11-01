@@ -780,10 +780,12 @@ PrintOnBothScreens:
         rts                                     ; 1B88C
 JoystickBits:				; the joystick as ReadJoystick left it (a bit low for each direction and fire)
 	dc.b	$FF,$FF
-dat_1B890:
-	dc.b	$00,$01,$B9,$50
-KeyMap:				; raw key codes to characters: the shifted table, then the unshifted one
-	dc.b	$00,$01,$B8,$98,$00
+KeysPlainPtr:				; the key table without shift (GetKeyOrStick)
+	dc.l	KeysPlain
+KeysShiftedPtr:				; the key table with shift (GetKeyOrStick)
+	dc.l	KeysShifted
+KeysShifted:				; raw key codes to characters, with shift
+	dc.b	$00
 	dc.b	'1234567890'
 	dc.b	$00,$00,$00,$00
 	dc.b	'0QWERTYUIOP'
@@ -792,8 +794,9 @@ KeyMap:				; raw key codes to characters: the shifted table, then the unshifted 
 	dc.b	$00,$00,$00,$34,$35,$36,$00
 	dc.b	'ZXCVBNM,./'
 	dc.b	$00,$2E,$37,$38,$39,$20,$08,$00,$0D,$0D
-	dcb.b	116,$00
-	dc.b	'1234567890'
+	dcb.b	115,$00
+KeysPlain:				; raw key codes to characters, without shift
+	dc.b	$00,'1234567890'
 	dc.b	$00,$00,$00,$00
 	dc.b	'0qwertyuiop'
 	dc.b	$00,$00,$00
@@ -1393,7 +1396,7 @@ dat_1BC0E:
 dat_1BC10:
 	dc.b	$00
 	dc.b	$00
-dat_1BC12:
+OpponentRow:				; the row of the row table the opponent's car is drawn in ($FFFF: none)
 	dc.b	$00
 	dc.b	$00
 dat_1BC14:
@@ -1449,7 +1452,7 @@ dat_1BC34:
 dat_1BC36:
 	dc.b	$00
 	dc.b	$00
-dat_1BC38:
+OpponentDistance:				; the distance to the opponent (the instruments show it)
 	dc.b	$00
 dat_1BC39:
 	dc.b	$00
@@ -3170,7 +3173,7 @@ dat_1EF4A:
 	dc.b	'#16,d0'
 	dc.b	$0D,$09,$62,$65,$71,$09,$67,$74,$31,$31,$0D,$09
 	dc.b	'move.b'
-dat_1EF82:
+Data6502:				; the 6502 data as the C64/Atari version had it: 6502 address $B100 is here (the tracks' pointers are 6502 addresses: byte-swapped, - $B100, + Data6502)
 	dc.b	$50,$B2,$A3,$B2,$A9,$FF,$FE,$B2,$59,$B3,$20,$DA,$D8,$B3,$3B,$B4
 	dc.b	$0A,$46,$2E,$20,$9E,$B4,$A9,$80,$85,$2E,$60,$A5,$30,$C9,$81,$90
 PieceShapes:				; the pieces' shapes: a word for each kind
@@ -3467,8 +3470,7 @@ dat_20080:
 	dc.b	$00,$04,$00,$08,$00,$0C,$00,$03,$00,$07,$00,$0B,$00,$0F,$00,$01
 	dc.b	$00,$01,$00,$01,$00,$01,$00,$80,$00,$54,$00,$2A,$00,$00
 PictureTable:				; the pictures ShowTablePicture shows: 0 the loading picture (in memory at $78000), 1 season_win, 2 season_crowd, 3 wreck, 4 champion
-	dc.b	$00,$07,$80,$00,$00,$04,$47,$7C,$00,$04,$AF,$3E,$00,$03,$D7,$B6
-	dc.b	$00,$05,$0E,$4C
+	dc.l	$78000,Pic_SeasonWin,Pic_SeasonCrowd,Pic_Wreck,Pic_Champion
 
 ;-------------------------------------------------------------------------------
 ; LinkSendByte - d0: a byte sent to the other machine, added to LinkSendSum
@@ -3535,7 +3537,9 @@ LinkGetWord:
         asl.w   #$8,d0                          ; 5708E
         move.b  d3,d0                           ; 57090
         rts                                     ; 57092
-	dc.b	$33,$FC,$03,$E8,$00,$05,$7C,$74,$60,$00,$00,$0A
+l_57094:		; (no references found: code nothing reaches - LinkGetByteTimed with a longer wait)
+        move.w  #$3e8,(dat_57C74).l             ; 57094
+        bra.w   l_570A8                         ; 5709C
 
 ;-------------------------------------------------------------------------------
 ; LinkGetByteTimed - d0 = a byte from the other machine, waiting at most 3 short delays; C set
@@ -3980,7 +3984,7 @@ l_57704:
         subq.b  #$1,(dat_1BB76).l               ; 57722
 l_57728:
         move.b  #$80,(LinkBusy).l               ; 57728
-        move.w  #$ffff,(dat_1BC12).l            ; 57730
+        move.w  #$ffff,(OpponentRow).l            ; 57730
         rts                                     ; 57738
 
 ;-------------------------------------------------------------------------------
@@ -5040,9 +5044,9 @@ LinkCheckCollision:
         blt.w   l_58640                         ; 58622
         move.b  #$80,(dat_57C69).l              ; 58626
 l_5862E:
-        move.w  (dat_1BC12).l,d0                ; 5862E
+        move.w  (OpponentRow).l,d0                ; 5862E
         bmi.w   l_58640                         ; 58634
-        addi.w  #$20,(dat_1BC12).l              ; 58638
+        addi.w  #$20,(OpponentRow).l              ; 58638
 l_58640:
         rts                                     ; 58640
 l_58642:
@@ -6260,7 +6264,7 @@ WaitKeyPress:
         rts                                     ; 5985A
 
 ;-------------------------------------------------------------------------------
-; GetKeyOrStick - d0 = the key down (its character from KeyMap, the code in the high byte) or
+; GetKeyOrStick - d0 = the key down (its character from KeysShifted or KeysPlain, the code in the high byte) or
 ; the joystick as cursor keys ($4C00 up, $4D00 down, ...); C clear if none
 ;-------------------------------------------------------------------------------
 GetKeyOrStick:
@@ -6310,10 +6314,10 @@ l_598F4:
         tst.b   $61(a0)                         ; 59902
         beq.w   l_59914                         ; 59906
 l_5990A:
-        movea.l (KeyMap).l,a0                   ; 5990A
+        movea.l (KeysShiftedPtr).l,a0                   ; 5990A
         bra.w   l_5991A                         ; 59910
 l_59914:
-        movea.l (dat_1B890).l,a0                ; 59914
+        movea.l (KeysPlainPtr).l,a0                ; 59914
 l_5991A:
         lea.l   (a0,d0.w),a0                    ; 5991A
         asl.w   #$8,d0                          ; 5991E
@@ -6357,10 +6361,10 @@ l_59992:
         rts                                     ; 59992
 
 ;-------------------------------------------------------------------------------
-; ProjectPiecePoint - d2: a point of the piece - projected (ProjectPointX, ProjectPointY,
+; ProjectCarPoint - d2: a point of the car model - projected (ProjectPointX, ProjectPointY,
 ; RollPoint) with its pair
 ;-------------------------------------------------------------------------------
-ProjectPiecePoint:
+ProjectCarPoint:
         movea.l #PiecePointsX,a0                ; 59994
         move.w  (a0,d2.w),(dat_1BBF6).l         ; 5999A
         move.w  $20(a0,d2.w),(dat_1BBF8).l      ; 599A2
@@ -6377,10 +6381,10 @@ ProjectPiecePoint:
         jmp     (RollPoint).l                   ; 599DC
 
 ;-------------------------------------------------------------------------------
-; DrawPiece - a track piece drawn: its points projected and its polygons added (DrawPieceRoad,
-; DrawPieceSideA, DrawPieceSideB, DrawPieceEdges)
+; DrawCarModel - the opponent's car's model: its points projected (ProjectCarPoint) and its
+; parts' edges stepped (CarModelTop, CarModelSideA, CarModelSideB, CarModelEdges) (probably)
 ;-------------------------------------------------------------------------------
-DrawPiece:
+DrawCarModel:
         move.w  (dat_1BF64).l,d0                ; 599E2
         move.w  (PiecePoints).l,d3              ; 599E8
         addi.w  #$50,d3                         ; 599EE
@@ -6422,19 +6426,19 @@ l_59A6A:
         move.w  d3,(dat_1BF8E).l                ; 59A6A
         move.b  #$a,d2                          ; 59A70
         move.b  #$f4,d1                         ; 59A74
-        jsr     (ProjectPiecePoint).l           ; 59A78
+        jsr     (ProjectCarPoint).l           ; 59A78
         move.b  #$e,d2                          ; 59A7E
         move.b  #$f8,d1                         ; 59A82
-        jsr     (ProjectPiecePoint).l           ; 59A86
+        jsr     (ProjectCarPoint).l           ; 59A86
         move.b  #$10,d2                         ; 59A8C
         move.b  #$f6,d1                         ; 59A90
-        jsr     (ProjectPiecePoint).l           ; 59A94
+        jsr     (ProjectCarPoint).l           ; 59A94
         move.b  #$14,d2                         ; 59A9A
         move.b  #$fa,d1                         ; 59A9E
-        jsr     (ProjectPiecePoint).l           ; 59AA2
+        jsr     (ProjectCarPoint).l           ; 59AA2
         move.b  #$f4,d1                         ; 59AA8
-        jsr     (DrawPieceEdges).l              ; 59AAC
-        jsr     (DrawPieceSideA).l              ; 59AB2
+        jsr     (CarModelEdges).l              ; 59AAC
+        jsr     (CarModelSideA).l              ; 59AB2
         move.w  (dat_1BC66).l,d0                ; 59AB8
         move.w  (dat_1BC6A).l,d3                ; 59ABE
         subq.w  #$1,d3                          ; 59AC4
@@ -6443,40 +6447,40 @@ l_59A6A:
         sub.w   d3,(dat_1C208).l                ; 59AD2
         sub.w   d3,(dat_1C20C).l                ; 59AD8
         move.b  #$f6,d1                         ; 59ADE
-        jsr     (DrawPieceEdges).l              ; 59AE2
-        jsr     (DrawPieceSideB).l              ; 59AE8
+        jsr     (CarModelEdges).l              ; 59AE2
+        jsr     (CarModelSideB).l              ; 59AE8
         move.w  (dat_1BC66).l,d0                ; 59AEE
         move.w  (dat_1BC6A).l,d3                ; 59AF4
         sub.w   d0,(dat_1C0CA).l                ; 59AFA
         sub.w   d0,(dat_1C0CE).l                ; 59B00
         sub.w   d3,(dat_1C20A).l                ; 59B06
         sub.w   d3,(dat_1C20E).l                ; 59B0C
-        jsr     (DrawPieceRoad).l               ; 59B12
+        jsr     (CarModelTop).l               ; 59B12
         rts                                     ; 59B18
 
 ;-------------------------------------------------------------------------------
-; DrawPieceRoad - the road surface of a piece (probably): its polygons (AddPolygon)
+; CarModelTop - the car model's top (probably): its edges (ScanEdge)
 ;-------------------------------------------------------------------------------
-DrawPieceRoad:
+CarModelTop:
         move.w  #$5e0,d0                        ; 59B1A
         addi.w  #$80,d0                         ; 59B1E
-        move.w  d0,(dat_68148).l                ; 59B22
+        move.w  d0,(RowOffset).l                ; 59B22
         move.w  #$118,d1                        ; 59B28
         move.w  #$11c,d2                        ; 59B2C
-        jsr     (AddPolygon).l                  ; 59B30
-        addq.w  #$4,(dat_68148).l               ; 59B36
+        jsr     (ScanEdge).l                  ; 59B30
+        addq.w  #$4,(RowOffset).l               ; 59B36
         move.w  #$118,d1                        ; 59B3C
         move.w  #$11a,d2                        ; 59B40
-        jsr     (AddPolygon).l                  ; 59B44
-        addq.w  #$4,(dat_68148).l               ; 59B4A
+        jsr     (ScanEdge).l                  ; 59B44
+        addq.w  #$4,(RowOffset).l               ; 59B4A
         move.w  #$11a,d1                        ; 59B50
         move.w  #$11e,d2                        ; 59B54
-        jsr     (AddPolygon).l                  ; 59B58
-        addq.w  #$4,(dat_68148).l               ; 59B5E
+        jsr     (ScanEdge).l                  ; 59B58
+        addq.w  #$4,(RowOffset).l               ; 59B5E
         move.w  #$11c,d1                        ; 59B64
         move.w  #$11e,d2                        ; 59B68
-        jsr     (AddPolygon).l                  ; 59B6C
-        addq.w  #$4,(dat_68148).l               ; 59B72
+        jsr     (ScanEdge).l                  ; 59B6C
+        addq.w  #$4,(RowOffset).l               ; 59B72
         rts                                     ; 59B78
 l_59B7A:
         move.w  (dat_1BC64).l,d0                ; 59B7A
@@ -6546,17 +6550,17 @@ l_59C7A:
         rts                                     ; 59C7A
 
 ;-------------------------------------------------------------------------------
-; DrawPieceSideA - one side of a piece (probably)
+; CarModelSideA - one side of the car model (probably)
 ;-------------------------------------------------------------------------------
-DrawPieceSideA:
+CarModelSideA:
         move.w  #$5e0,d0                        ; 59C7C
         addi.w  #$40,d0                         ; 59C80
-        move.w  d0,(dat_68148).l                ; 59C84
-        jsr     (PieceSideEnds).l               ; 59C8A
-        jsr     (DrawPieceSide).l               ; 59C90
+        move.w  d0,(RowOffset).l                ; 59C84
+        jsr     (CarSideEnds).l               ; 59C8A
+        jsr     (CarSide).l               ; 59C90
         move.w  #$5e0,d0                        ; 59C96
         addi.w  #$10,d0                         ; 59C9A
-        move.w  d0,(dat_68148).l                ; 59C9E
+        move.w  d0,(RowOffset).l                ; 59C9E
         move.w  (dat_1BC6C).l,d0                ; 59CA4
         sub.w   (dat_1BC6E).l,d0                ; 59CAA
         move.w  d0,(dat_1C0BE).l                ; 59CB0
@@ -6603,26 +6607,26 @@ DrawPieceSideA:
         addq.w  #$1,(dat_1C1FE).l               ; 59D9E
         move.w  #$108,d1                        ; 59DA4
         move.w  #$10a,d2                        ; 59DA8
-        jsr     (AddPolygon).l                  ; 59DAC
-        addq.w  #$4,(dat_68148).l               ; 59DB2
+        jsr     (ScanEdge).l                  ; 59DAC
+        addq.w  #$4,(RowOffset).l               ; 59DB2
         move.w  #$10a,d1                        ; 59DB8
         move.w  #$10c,d2                        ; 59DBC
-        jsr     (AddPolygon).l                  ; 59DC0
-        addq.w  #$4,(dat_68148).l               ; 59DC6
+        jsr     (ScanEdge).l                  ; 59DC0
+        addq.w  #$4,(RowOffset).l               ; 59DC6
         move.w  #$10c,d1                        ; 59DCC
         move.w  #$10e,d2                        ; 59DD0
-        jsr     (AddPolygon).l                  ; 59DD4
-        addq.w  #$4,(dat_68148).l               ; 59DDA
+        jsr     (ScanEdge).l                  ; 59DD4
+        addq.w  #$4,(RowOffset).l               ; 59DDA
         move.w  #$10e,d1                        ; 59DE0
         move.w  #$108,d2                        ; 59DE4
-        jsr     (AddPolygon).l                  ; 59DE8
-        addq.w  #$4,(dat_68148).l               ; 59DEE
+        jsr     (ScanEdge).l                  ; 59DE8
+        addq.w  #$4,(RowOffset).l               ; 59DEE
         rts                                     ; 59DF4
 
 ;-------------------------------------------------------------------------------
-; DrawPieceSideB - the other side of a piece (probably)
+; CarModelSideB - the other side of the car model (probably)
 ;-------------------------------------------------------------------------------
-DrawPieceSideB:
+CarModelSideB:
         move.w  (dat_1BC6C).l,d0                ; 59DF6
         move.w  d0,(dat_1C0C4).l                ; 59DFC
         sub.w   (dat_1BC6E).l,d0                ; 59E02
@@ -6657,50 +6661,50 @@ DrawPieceSideB:
         addq.w  #$1,(dat_1C206).l               ; 59EA8
         move.w  #$5e0,d0                        ; 59EAE
         addi.w  #$20,d0                         ; 59EB2
-        move.w  d0,(dat_68148).l                ; 59EB6
+        move.w  d0,(RowOffset).l                ; 59EB6
         move.w  #$110,d1                        ; 59EBC
         move.w  #$112,d2                        ; 59EC0
-        jsr     (AddPolygon).l                  ; 59EC4
-        addq.w  #$4,(dat_68148).l               ; 59ECA
+        jsr     (ScanEdge).l                  ; 59EC4
+        addq.w  #$4,(RowOffset).l               ; 59ECA
         move.w  #$112,d1                        ; 59ED0
         move.w  #$114,d2                        ; 59ED4
-        jsr     (AddPolygon).l                  ; 59ED8
-        addq.w  #$4,(dat_68148).l               ; 59EDE
+        jsr     (ScanEdge).l                  ; 59ED8
+        addq.w  #$4,(RowOffset).l               ; 59EDE
         move.w  #$114,d1                        ; 59EE4
         move.w  #$116,d2                        ; 59EE8
-        jsr     (AddPolygon).l                  ; 59EEC
-        addq.w  #$4,(dat_68148).l               ; 59EF2
+        jsr     (ScanEdge).l                  ; 59EEC
+        addq.w  #$4,(RowOffset).l               ; 59EF2
         move.w  #$116,d1                        ; 59EF8
         move.w  #$110,d2                        ; 59EFC
-        jsr     (AddPolygon).l                  ; 59F00
-        addq.w  #$4,(dat_68148).l               ; 59F06
+        jsr     (ScanEdge).l                  ; 59F00
+        addq.w  #$4,(RowOffset).l               ; 59F06
         move.w  #$108,d1                        ; 59F0C
         move.w  #$110,d2                        ; 59F10
-        jsr     (AddPolygon).l                  ; 59F14
-        addq.w  #$4,(dat_68148).l               ; 59F1A
+        jsr     (ScanEdge).l                  ; 59F14
+        addq.w  #$4,(RowOffset).l               ; 59F1A
         move.w  #$10e,d1                        ; 59F20
         move.w  #$116,d2                        ; 59F24
-        jsr     (AddPolygon).l                  ; 59F28
-        addq.w  #$4,(dat_68148).l               ; 59F2E
+        jsr     (ScanEdge).l                  ; 59F28
+        addq.w  #$4,(RowOffset).l               ; 59F2E
         move.w  #$10a,d1                        ; 59F34
         move.w  #$112,d2                        ; 59F38
-        jsr     (AddPolygon).l                  ; 59F3C
-        addq.w  #$4,(dat_68148).l               ; 59F42
+        jsr     (ScanEdge).l                  ; 59F3C
+        addq.w  #$4,(RowOffset).l               ; 59F42
         move.w  #$10c,d1                        ; 59F48
         move.w  #$114,d2                        ; 59F4C
-        jsr     (AddPolygon).l                  ; 59F50
-        addq.w  #$4,(dat_68148).l               ; 59F56
+        jsr     (ScanEdge).l                  ; 59F50
+        addq.w  #$4,(RowOffset).l               ; 59F56
         move.w  #$5e0,d0                        ; 59F5C
         addi.w  #$60,d0                         ; 59F60
-        move.w  d0,(dat_68148).l                ; 59F64
-        jsr     (PieceSideEnds).l               ; 59F6A
-        jsr     (DrawPieceSide).l               ; 59F70
+        move.w  d0,(RowOffset).l                ; 59F64
+        jsr     (CarSideEnds).l               ; 59F6A
+        jsr     (CarSide).l               ; 59F70
         rts                                     ; 59F76
 
 ;-------------------------------------------------------------------------------
-; PieceSideEnds
+; CarSideEnds
 ;-------------------------------------------------------------------------------
-PieceSideEnds:
+CarSideEnds:
         move.w  (dat_1BC64).l,d0                ; 59F78
         neg.w   d0                              ; 59F7E
         move.w  d0,(dat_1BC88).l                ; 59F80
@@ -6710,9 +6714,9 @@ PieceSideEnds:
         bra.w   l_59FBC                         ; 59F94
 
 ;-------------------------------------------------------------------------------
-; DrawPieceSide
+; CarSide
 ;-------------------------------------------------------------------------------
-DrawPieceSide:
+CarSide:
         move.w  (dat_1BC64).l,d0                ; 59F98
         sub.w   (dat_1BC6C).l,d0                ; 59F9E
         move.w  d0,(dat_1BC88).l                ; 59FA4
@@ -6754,26 +6758,26 @@ l_59FBC:
         addq.w  #$1,(dat_1C1F6).l               ; 5A076
         move.w  #$100,d1                        ; 5A07C
         move.w  #$102,d2                        ; 5A080
-        jsr     (AddPolygon).l                  ; 5A084
-        addq.w  #$4,(dat_68148).l               ; 5A08A
+        jsr     (ScanEdge).l                  ; 5A084
+        addq.w  #$4,(RowOffset).l               ; 5A08A
         move.w  #$102,d1                        ; 5A090
         move.w  #$104,d2                        ; 5A094
-        jsr     (AddPolygon).l                  ; 5A098
-        addq.w  #$4,(dat_68148).l               ; 5A09E
+        jsr     (ScanEdge).l                  ; 5A098
+        addq.w  #$4,(RowOffset).l               ; 5A09E
         move.w  #$104,d1                        ; 5A0A4
         move.w  #$106,d2                        ; 5A0A8
-        jsr     (AddPolygon).l                  ; 5A0AC
-        addq.w  #$4,(dat_68148).l               ; 5A0B2
+        jsr     (ScanEdge).l                  ; 5A0AC
+        addq.w  #$4,(RowOffset).l               ; 5A0B2
         move.w  #$106,d1                        ; 5A0B8
         move.w  #$100,d2                        ; 5A0BC
-        jsr     (AddPolygon).l                  ; 5A0C0
-        addq.w  #$4,(dat_68148).l               ; 5A0C6
+        jsr     (ScanEdge).l                  ; 5A0C0
+        addq.w  #$4,(RowOffset).l               ; 5A0C6
         rts                                     ; 5A0CC
 
 ;-------------------------------------------------------------------------------
-; DrawPieceEdges - the edges of a piece (probably: the kerbs)
+; CarModelEdges - the car model's outlines (probably)
 ;-------------------------------------------------------------------------------
-DrawPieceEdges:
+CarModelEdges:
         movea.l #PointScreenX,a4                ; 5A0CE
         movea.l #PointScreenY,a5                ; 5A0D4
         move.w  $4(a4,d1.w),d4                  ; 5A0DA
@@ -6843,13 +6847,13 @@ PlaceCarOnTrack:
         rol.w   #$8,d0                          ; 5A1C2
         subi.w  #$b100,d0                       ; 5A1C4
         andi.l  #$ffff,d0                       ; 5A1C8
-        addi.l  #$1ef82,d0                      ; 5A1CE
+        addi.l  #Data6502,d0                    ; 5A1CE
         movea.l d0,a4                           ; 5A1D4
         move.w  (dat_1BC90).l,d0                ; 5A1D6
         rol.w   #$8,d0                          ; 5A1DC
         subi.w  #$b100,d0                       ; 5A1DE
         andi.l  #$ffff,d0                       ; 5A1E2
-        addi.l  #$1ef82,d0                      ; 5A1E8
+        addi.l  #Data6502,d0                    ; 5A1E8
         movea.l d0,a5                           ; 5A1EE
         move.b  (dat_1BB12).l,d1                ; 5A1F0
         asl.w   #$1,d1                          ; 5A1F6
@@ -6873,13 +6877,13 @@ PlaceCarOnTrack:
         rol.w   #$8,d0                          ; 5A24C
         subi.w  #$b100,d0                       ; 5A24E
         andi.l  #$ffff,d0                       ; 5A252
-        addi.l  #$1ef82,d0                      ; 5A258
+        addi.l  #Data6502,d0                    ; 5A258
         movea.l d0,a4                           ; 5A25E
         move.w  (dat_1BC90).l,d0                ; 5A260
         rol.w   #$8,d0                          ; 5A266
         subi.w  #$b100,d0                       ; 5A268
         andi.l  #$ffff,d0                       ; 5A26C
-        addi.l  #$1ef82,d0                      ; 5A272
+        addi.l  #Data6502,d0                    ; 5A272
         movea.l d0,a5                           ; 5A278
         move.w  #$2,d1                          ; 5A27A
         jsr     (PiecePointHeight).l            ; 5A27E
@@ -6894,13 +6898,13 @@ PlaceCarOnTrack:
         rol.w   #$8,d0                          ; 5A2AC
         subi.w  #$b100,d0                       ; 5A2AE
         andi.l  #$ffff,d0                       ; 5A2B2
-        addi.l  #$1ef82,d0                      ; 5A2B8
+        addi.l  #Data6502,d0                    ; 5A2B8
         movea.l d0,a4                           ; 5A2BE
         move.w  (dat_1BC90).l,d0                ; 5A2C0
         rol.w   #$8,d0                          ; 5A2C6
         subi.w  #$b100,d0                       ; 5A2C8
         andi.l  #$ffff,d0                       ; 5A2CC
-        addi.l  #$1ef82,d0                      ; 5A2D2
+        addi.l  #Data6502,d0                    ; 5A2D2
         movea.l d0,a5                           ; 5A2D8
         bra.w   l_5A2FA                         ; 5A2DA
 l_5A2DE:
@@ -7091,7 +7095,7 @@ sub_5A5B6:
         rol.w   #$8,d0                          ; 5A5BE
         subi.w  #$b100,d0                       ; 5A5C0
         andi.l  #$ffff,d0                       ; 5A5C4
-        addi.l  #$1ef82,d0                      ; 5A5CA
+        addi.l  #Data6502,d0                    ; 5A5CA
         movea.l d0,a3                           ; 5A5D0
         move.b  (a3),d0                         ; 5A5D2
         addq.b  #$7,d0                          ; 5A5D4
@@ -7251,7 +7255,7 @@ l_5A832:
         rol.w   #$8,d0                          ; 5A870
         subi.w  #$b100,d0                       ; 5A872
         andi.l  #$ffff,d0                       ; 5A876
-        addi.l  #$1ef82,d0                      ; 5A87C
+        addi.l  #Data6502,d0                    ; 5A87C
         movea.l d0,a0                           ; 5A882
         move.b  #$f,d1                          ; 5A884
 l_5A888:
@@ -7668,7 +7672,7 @@ BuildTrack:
         rol.w   #$8,d0                          ; 5AE60
         subi.w  #$b100,d0                       ; 5AE62
         andi.l  #$ffff,d0                       ; 5AE66
-        addi.l  #$1ef82,d0                      ; 5AE6C
+        addi.l  #Data6502,d0                    ; 5AE6C
         movea.l d0,a5                           ; 5AE72
         move.w  #$0,d5                          ; 5AE74
 l_5AE78:
@@ -7934,7 +7938,7 @@ sub_5B2D2:
         rol.w   #$8,d0                          ; 5B2D8
         subi.w  #$b100,d0                       ; 5B2DA
         andi.l  #$ffff,d0                       ; 5B2DE
-        addi.l  #$1ef82,d0                      ; 5B2E4
+        addi.l  #Data6502,d0                    ; 5B2E4
         movea.l d0,a0                           ; 5B2EA
         move.b  (dat_1BB79).l,d0                ; 5B2EC
         bpl.w   l_5B314                         ; 5B2F2
@@ -8696,7 +8700,7 @@ sub_5BE44:
         rol.w   #$8,d0                          ; 5BE56
         subi.w  #$b100,d0                       ; 5BE58
         andi.l  #$ffff,d0                       ; 5BE5C
-        addi.l  #$1ef82,d0                      ; 5BE62
+        addi.l  #Data6502,d0                    ; 5BE62
         movea.l d0,a5                           ; 5BE68
         move.w  d1,d0                           ; 5BE6A
         jsr     (PieceGridOffset).l             ; 5BE6C
@@ -9012,13 +9016,13 @@ l_5C2FE:
         rol.w   #$8,d0                          ; 5C304
         subi.w  #$b100,d0                       ; 5C306
         andi.l  #$ffff,d0                       ; 5C30A
-        addi.l  #$1ef82,d0                      ; 5C310
+        addi.l  #Data6502,d0                    ; 5C310
         movea.l d0,a4                           ; 5C316
         move.w  (dat_1BC90).l,d0                ; 5C318
         rol.w   #$8,d0                          ; 5C31E
         subi.w  #$b100,d0                       ; 5C320
         andi.l  #$ffff,d0                       ; 5C324
-        addi.l  #$1ef82,d0                      ; 5C32A
+        addi.l  #Data6502,d0                    ; 5C32A
         movea.l d0,a5                           ; 5C330
         tst.b   (dat_1BC32).l                   ; 5C332
         bmi.w   l_5C37E                         ; 5C338
@@ -9282,7 +9286,7 @@ ReadPiecePoints:
         rol.w   #$8,d0                          ; 5C6CA
         subi.w  #$b100,d0                       ; 5C6CC
         andi.l  #$ffff,d0                       ; 5C6D0
-        addi.l  #$1ef82,d0                      ; 5C6D6
+        addi.l  #Data6502,d0                    ; 5C6D6
         movea.l d0,a5                           ; 5C6DC
         tst.b   (dat_1BBF2).l                   ; 5C6DE
         bmi.w   l_5C770                         ; 5C6E4
@@ -9561,9 +9565,9 @@ l_5CF56:
         dbra    d0,l_5CF56                      ; 5CF58
         move.b  #$0,(LinkMode).l                ; 5CF5C
         move.b  #$40,(LinkFrameType).l          ; 5CF64
-        tst.b   $60fbc.l                        ; 5CF6C
+        tst.b   (RaceFlag60FBC).l                        ; 5CF6C
         bne.w   l_5CF7E                         ; 5CF72
-        move.b  #$80,$60fbc.l                   ; 5CF76
+        move.b  #$80,(RaceFlag60FBC).l                   ; 5CF76
 l_5CF7E:
         jsr     (NewGame).l                     ; 5CF7E
         move.b  #$80,(dat_64530).l              ; 5CF84
@@ -9805,12 +9809,12 @@ l_5D402:
         jsr     (PlaceCarOnPiece).l             ; 5D402
         jsr     (sub_5E778).l                   ; 5D408
         jsr     (sub_60CDE).l                   ; 5D40E
-        jsr     (sub_64E4C).l                   ; 5D414
+        jsr     (RaceView).l                   ; 5D414
         jsr     (sub_5DB34).l                   ; 5D41A
         subq.b  #$1,(dat_1BBAC).l               ; 5D420
         jsr     (FrameLimiter).l                ; 5D426
         jsr     (CarPhysics).l                  ; 5D42C
-        jsr     (sub_64E4C).l                   ; 5D432
+        jsr     (RaceView).l                   ; 5D432
         jsr     (sub_5DB34).l                   ; 5D438
         subq.b  #$1,(dat_1BBAC).l               ; 5D43E
         jsr     (sub_5E23E).l                   ; 5D444
@@ -9828,7 +9832,7 @@ l_5D47E:
         jsr     (sub_5D8A2).l                   ; 5D484
         jsr     (CarPhysics).l                  ; 5D48A
         jsr     (UpdateEngineRevs).l            ; 5D490
-        jsr     (sub_64E4C).l                   ; 5D496
+        jsr     (RaceView).l                   ; 5D496
         jsr     (UpdateDrawBridge).l            ; 5D49C
         jsr     (sub_5E23E).l                   ; 5D4A2
         jsr     (sub_5DFB4).l                   ; 5D4A8
@@ -10658,7 +10662,7 @@ l_5E13A:
         move.b  #$0,d1                          ; 5E13A
         move.b  d1,d5                           ; 5E13E
         move.b  #$0,d2                          ; 5E140
-        move.w  (dat_1BC38).l,d0                ; 5E144
+        move.w  (OpponentDistance).l,d0                ; 5E144
         move.w  d0,d3                           ; 5E14A
         lsr.w   #$2,d3                          ; 5E14C
         add.w   d3,d0                           ; 5E14E
@@ -12503,13 +12507,13 @@ LoadPiece:
         move.b  d0,(dat_1BB86).l                ; 5FEEC
         asl.b   #$1,d0                          ; 5FEF2
         move.b  d0,d2                           ; 5FEF4
-        movea.l #dat_1EF82,a2                   ; 5FEF6
+        movea.l #Data6502,a2                   ; 5FEF6
         move.w  (a2,d2.w),(dat_1BCBC).l         ; 5FEFC
         move.w  (dat_1BCBC).l,d0                ; 5FF04
         rol.w   #$8,d0                          ; 5FF0A
         subi.w  #$b100,d0                       ; 5FF0C
         andi.l  #$ffff,d0                       ; 5FF10
-        addi.l  #$1ef82,d0                      ; 5FF16
+        addi.l  #Data6502,d0                    ; 5FF16
         movea.l d0,a0                           ; 5FF1C
         move.b  $1(a0),(dat_1BB4D).l            ; 5FF1E
         move.b  $0(a0),d2                       ; 5FF26
@@ -12815,7 +12819,7 @@ l_6038A:
         move.b  #$80,d0                         ; 603C6
         move.b  d0,(dat_1BC14).l                ; 603CA
         move.b  d0,(dat_1BC16).l                ; 603D0
-        jsr     (sub_6521C).l                   ; 603D6
+        jsr     (ProjectNearPiece).l                   ; 603D6
         move.b  #$e0,(dat_1BB9A).l              ; 603DC
         move.b  #$80,(dat_1BC5C).l              ; 603E4
         movea.l #PointScreenY,a0                ; 603EC
@@ -12844,15 +12848,15 @@ l_6044C:
         movea.l #dat_1BDD0,a0                   ; 60452
         move.b  #$0,(a0)                        ; 60458
         move.b  #$0,(a0,d1.w)                   ; 6045C
-        move.w  (dat_1BC1E).l,(dat_68148).l     ; 60462
+        move.w  (dat_1BC1E).l,(RowOffset).l     ; 60462
         move.w  #$0,d1                          ; 6046C
         move.b  #$0,(dat_69ADA).l               ; 60470
         move.b  #$0,(dat_1BC14).l               ; 60478
         move.b  #$0,(dat_1BBE4).l               ; 60480
-        addi.w  #$10,(dat_68148).l              ; 60488
-        move.l  #$3d80,(dat_68144).l            ; 60490
+        addi.w  #$10,(RowOffset).l              ; 60488
+        move.l  #$3d80,(EdgeBufferNext).l            ; 60490
         jsr     (sub_672CC).l                   ; 6049A
-        jsr     (sub_68F28).l                   ; 604A0
+        jsr     (DrawNearRows).l                   ; 604A0
 l_604A6:
         move.b  (dat_1BB8B).l,d1                ; 604A6
         move.b  (dat_1BB8D).l,d2                ; 604AC
@@ -13042,7 +13046,7 @@ l_607A8:
         move.w  d0,d4                           ; 607B6
         eori.w  #$8000,d5                       ; 607B8
 l_607BC:
-        move.w  d4,(dat_1BC38).l                ; 607BC
+        move.w  d4,(OpponentDistance).l                ; 607BC
         eori.w  #$8000,d5                       ; 607C2
         lsr.w   #$8,d5                          ; 607C6
         move.b  d5,(dat_1BBB8).l                ; 607C8
@@ -13581,11 +13585,11 @@ sub_60F5A:
         lsr.b   #$1,d2                          ; 60F5C
         add.b   (dat_1BBAC).l,d2                ; 60F5E
         andi.w  #$f,d2                          ; 60F64
-        movea.l #l_60FAC,a0                     ; 60F68
+        movea.l #Sequence60FAC,a0                     ; 60F68
         move.b  (a0,d2.w),d2                    ; 60F6E
         asl.b   #$1,d2                          ; 60F72
         move.w  (a4,d1.w),d4                    ; 60F74
-        movea.l #sub_60F9C,a0                   ; 60F78
+        movea.l #Offsets60F9C,a0                   ; 60F78
         sub.w   (a0,d2.w),d4                    ; 60F7E
         addi.w  #$20,d4                         ; 60F82
         move.w  $40(a4,d1.w),d5                 ; 60F86
@@ -13594,19 +13598,12 @@ sub_60F5A:
         lsr.b   #$1,d0                          ; 60F90
         addi.b  #$1d,d0                         ; 60F92
         jmp     (l_6A0BE).l                     ; 60F96
-sub_60F9C:		; (no references found: found by the code sweep)
-        ori.b   #$20,-(a0)                      ; 60F9C
-        ori.b   #$28,-(a0)                      ; 60FA0
-        ori.b   #$20,(a0)+                      ; 60FA4
-        ori.b   #$20,-(a0)                      ; 60FA8
-l_60FAC:
-        btst    d1,d6                           ; 60FAC
-        btst    d3,d2                           ; 60FAE
-        btst    d0,d5                           ; 60FB0
-        ori.b   #$5,d4                          ; 60FB2
-        btst    d0,d2                           ; 60FB6
-        btst    d3,d6                           ; 60FB8
-        andi.b  #$0,d7                          ; 60FBA
+Offsets60F9C:				; 8 words: x offsets, picked through Sequence60FAC (sub_60F5A; data the code sweep took for code)
+	dc.b	$00,$20,$00,$20,$00,$20,$00,$28,$00,$18,$00,$20,$00,$20,$00,$20
+Sequence60FAC:				; 16 bytes 0-7: which of Offsets60F9C, by frame (sub_60F5A)
+	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06,$02,$07
+RaceFlag60FBC:				; a flag: tested and set to $80 by the game loop ($5CF6C)
+	dc.b	$00,$00
 sub_60FBE:
         move.w  (dat_1BD30).l,d0                ; 60FBE
         bpl.w   l_60FCA                         ; 60FC4
@@ -13753,7 +13750,7 @@ l_611D4:
         andi.l  #$f,d2                          ; 611DE
         lsr.w   d2,d0                           ; 611E4
         sub.w   d0,d4                           ; 611E6
-        movea.l #$79360,a0                      ; 611E8
+        movea.l #dat_64AEC+dat_14874,a0         ; 611E8  (= $79360: written as a sum so that it moves with the code)
         suba.l  #dat_14874,a0                   ; 611EE
         move.l  #$667b379f,d3                   ; 611F4
         addi.l  #$36729563,d3                   ; 611FA
@@ -16595,7 +16592,7 @@ sub_636C0:
 l_636EA:
         move.b  d0,(dat_1BBF7).l                ; 636EA
         move.b  d2,(dat_1BBF6).l                ; 636F0
-        move.b  (dat_1BC38).l,d0                ; 636F6
+        move.b  (OpponentDistance).l,d0                ; 636F6
         beq.w   l_63706                         ; 636FC
         jmp     (l_6383E).l                     ; 63700
 l_63706:
@@ -17906,7 +17903,9 @@ dat_64AF0:
 dat_64AF4:
 	dc.b	$0D,$10,$13,$16,$10,$13,$10,$0F,$14,$17,$0A,$0E,$12,$16
 dat_64B02:
-	dc.b	$0E,$0B,$11,$0C,$13,$FC,$00,$03,$00,$06,$4C,$18
+	dc.b	$0E,$0B,$11,$0C
+l_64B06:		; (no references found: an instruction no code reaches)
+        move.b  #$3,(dat_64C18).l               ; 64B06
 sub_64B0E:
         move.b  #$2,d0                          ; 64B0E
 sub_64B12:
@@ -18187,11 +18186,19 @@ sub_64E18:
         move.b  d0,(dat_1BBAE).l                ; 64E22
         move.b  d0,(dat_1BB5C).l                ; 64E28
         move.b  d0,(dat_1BB7F).l                ; 64E2E
-        move.w  #$ffff,(dat_1BC12).l            ; 64E34
+        move.w  #$ffff,(OpponentRow).l            ; 64E34
         move.b  #$0,(dat_1BBBA).l               ; 64E3C
         jsr     (ClearPolygonList).l            ; 64E44
         rts                                     ; 64E4A
-sub_64E4C:
+
+;-------------------------------------------------------------------------------
+; RaceView - the view each race frame: the cars placed on their pieces (or, off the track, the
+; fallback), the pieces in view projected and their edges stepped (ProjectNearPiece,
+; ProjectFarPieces, EdgesFirstPiece, EdgesNextPiece, EdgesFarPieces), the sky and ground
+; (DrawHorizon), the mountains, the rows of the track drawn far to near (DrawFarRows,
+; DrawNearRows), then the cockpit (DrawCutout) and the chains
+;-------------------------------------------------------------------------------
+RaceView:
         jsr     (sub_64E18).l                   ; 64E4C
         move.b  #$0,d0                          ; 64E52
         move.b  d0,(dat_1BBD5).l                ; 64E56
@@ -18222,10 +18229,10 @@ l_64EBC:
         bra.w   l_64F80                         ; 64EDA
 
 ;-------------------------------------------------------------------------------
-; RaceFrame - one frame of the race: the cars moved, the track's pieces in view drawn, the
-; cockpit and the instruments
+; RaceViewUnused - (no references: code nothing reaches) the view with no track - the sky and
+; ground, the mountains, then the cockpit
 ;-------------------------------------------------------------------------------
-RaceFrame:		; (no references found: found by the code sweep)
+RaceViewUnused:		; (no references found: found by the code sweep)
         jsr     (Delay).l                       ; 64EDE
         jsr     (DrawHorizon).l                 ; 64EE4
         jsr     (DrawMountains).l               ; 64EEA
@@ -18271,51 +18278,51 @@ l_64FBA:
         jsr     (PreviousPiece).l               ; 64FC4
         cmp.b   (dat_1BBA6).l,d1                ; 64FCA
         bne.w   l_64FDC                         ; 64FD0
-        move.w  #$0,(dat_1BC12).l               ; 64FD4
+        move.w  #$0,(OpponentRow).l               ; 64FD4
 l_64FDC:
         jsr     (NextPiece).l                   ; 64FDC
 l_64FE2:
-        jsr     (sub_6521C).l                   ; 64FE2
+        jsr     (ProjectNearPiece).l                   ; 64FE2
         jsr     (sub_655EA).l                   ; 64FE8
         jsr     (sub_65A18).l                   ; 64FEE
-        jsr     (sub_6702E).l                   ; 64FF4
+        jsr     (EdgesFirstPiece).l                   ; 64FF4
         move.b  #$0,(dat_1BBE5).l               ; 64FFA
         move.b  #$0,(dat_1BB60).l               ; 65002
         move.b  #$4,(dat_1BBC5).l               ; 6500A
         jsr     (sub_65564).l                   ; 65012
         jsr     (NextPiece).l                   ; 65018
-        jsr     (sub_6521C).l                   ; 6501E
+        jsr     (ProjectNearPiece).l                   ; 6501E
         jsr     (sub_655EA).l                   ; 65024
-        jsr     (sub_67092).l                   ; 6502A
+        jsr     (EdgesNextPiece).l                   ; 6502A
         jsr     (sub_65564).l                   ; 65030
         move.b  #$1,(dat_1BB7F).l               ; 65036
         jsr     (NextPiece).l                   ; 6503E
-        jsr     (sub_6521C).l                   ; 65044
+        jsr     (ProjectNearPiece).l                   ; 65044
         jsr     (sub_655EA).l                   ; 6504A
-        jsr     (sub_67092).l                   ; 65050
+        jsr     (EdgesNextPiece).l                   ; 65050
         jsr     (sub_65564).l                   ; 65056
         jsr     (NextPiece).l                   ; 6505C
-        move.w  (dat_68148).l,(dat_6932C).l     ; 65062
+        move.w  (RowOffset).l,(FarRowsEnd).l     ; 65062
         move.w  (dat_1C0A0).l,(dat_660FC).l     ; 6506C
         move.w  (dat_1C0A2).l,(dat_660FE).l     ; 65076
-        jsr     (sub_65EC4).l                   ; 65080
-        jsr     (sub_67460).l                   ; 65086
+        jsr     (ProjectFarPieces).l                   ; 65080
+        jsr     (EdgesFarPieces).l                   ; 65086
         tst.b   (dat_1CA22).l                   ; 6508C
         bmi.w   l_6509E                         ; 65092
-        move.w  #$ffff,(dat_1BC12).l            ; 65096
+        move.w  #$ffff,(OpponentRow).l            ; 65096
 l_6509E:
         tst.b   (LinkMode).l                    ; 6509E
         beq.w   l_650AE                         ; 650A4
         jsr     (LinkReceiveCarState).l         ; 650A8
 l_650AE:
-        move.w  (dat_68148).l,-(a7)             ; 650AE
+        move.w  (RowOffset).l,-(a7)             ; 650AE
         jsr     (DrawHorizon).l                 ; 650B4
         jsr     (DrawMountains).l               ; 650BA
-        move.w  (a7)+,(dat_68148).l             ; 650C0
+        move.w  (a7)+,(RowOffset).l             ; 650C0
         jsr     (LinkCheckCollision).l          ; 650C6
-        jsr     (sub_690BC).l                   ; 650CC
-        move.w  (dat_6932C).l,(dat_68148).l     ; 650D2
-        jsr     (sub_68F28).l                   ; 650DC
+        jsr     (DrawFarRows).l                   ; 650CC
+        move.w  (FarRowsEnd).l,(RowOffset).l     ; 650D2
+        jsr     (DrawNearRows).l                   ; 650DC
 l_650E2:
         tst.b   (DropCountdown).l               ; 650E2
         bne.w   l_650FC                         ; 650E8
@@ -18391,7 +18398,13 @@ l_65210:
         move.w  #$1,d1                          ; 65210
         jsr     (SpriteFromCutout).l            ; 65214
         rts                                     ; 6521A
-sub_6521C:
+
+;-------------------------------------------------------------------------------
+; ProjectNearPiece - the piece at PieceIndex: its points read (ReadPiecePoints), turned by the
+; view (RollPoint) and projected (ProjectPointX, ProjectPointY) into PointScreenX/Y; the cars
+; on it placed
+;-------------------------------------------------------------------------------
+ProjectNearPiece:
         movea.l #PointHeights,a6                ; 6521C
         move.b  (PieceIndex).l,d1               ; 65222
         jsr     (LoadPiece).l                   ; 65228
@@ -18445,7 +18458,7 @@ l_6530E:
         rol.w   #$8,d0                          ; 65314
         subi.w  #$b100,d0                       ; 65316
         andi.l  #$ffff,d0                       ; 6531A
-        addi.l  #$1ef82,d0                      ; 65320
+        addi.l  #Data6502,d0                    ; 65320
         movea.l d0,a0                           ; 65326
         move.b  (a0),d0                         ; 65328
         addq.b  #$7,d0                          ; 6532A
@@ -18488,7 +18501,7 @@ l_653BC:
         rol.w   #$8,d0                          ; 653C2
         subi.w  #$b100,d0                       ; 653C4
         andi.l  #$ffff,d0                       ; 653C8
-        addi.l  #$1ef82,d0                      ; 653CE
+        addi.l  #Data6502,d0                    ; 653CE
         movea.l d0,a0                           ; 653D4
         move.b  (a0),d0                         ; 653D6
         addq.b  #$7,d0                          ; 653D8
@@ -18693,7 +18706,7 @@ l_656D0:
         subq.b  #$4,d1                          ; 656E2
         bpl.w   l_65694                         ; 656E4
         addq.b  #$4,d1                          ; 656E8
-        move.w  (dat_68148).l,d3                ; 656EA
+        move.w  (RowOffset).l,d3                ; 656EA
         cmpi.w  #$20,d3                         ; 656F0
         beq.w   l_6571E                         ; 656F4
         move.w  d3,-(a7)                        ; 656F8
@@ -18702,11 +18715,11 @@ l_656D0:
         beq.w   l_65706                         ; 65700
         addq.w  #$4,d3                          ; 65704
 l_65706:
-        move.w  d3,(dat_68148).l                ; 65706
+        move.w  d3,(RowOffset).l                ; 65706
         move.w  d1,d2                           ; 6570C
         addi.b  #$78,d1                         ; 6570E
-        jsr     (AddPolygon).l                  ; 65712
-        move.w  (a7)+,(dat_68148).l             ; 65718
+        jsr     (ScanEdge).l                  ; 65712
+        move.w  (a7)+,(RowOffset).l             ; 65718
 l_6571E:
         rts                                     ; 6571E
 sub_65720:
@@ -18728,13 +18741,13 @@ sub_65756:
         rol.w   #$8,d0                          ; 6575C
         subi.w  #$b100,d0                       ; 6575E
         andi.l  #$ffff,d0                       ; 65762
-        addi.l  #$1ef82,d0                      ; 65768
+        addi.l  #Data6502,d0                    ; 65768
         movea.l d0,a4                           ; 6576E
         move.w  (dat_1BC90).l,d0                ; 65770
         rol.w   #$8,d0                          ; 65776
         subi.w  #$b100,d0                       ; 65778
         andi.l  #$ffff,d0                       ; 6577C
-        addi.l  #$1ef82,d0                      ; 65782
+        addi.l  #Data6502,d0                    ; 65782
         movea.l d0,a5                           ; 65788
         movea.l #dat_1BDD0,a3                   ; 6578A
         move.w  #$2e,d7                         ; 65790
@@ -18941,11 +18954,11 @@ l_65A24:
         addi.b  #$7a,d1                         ; 65A5A
         move.w  #$b,d3                          ; 65A5E
         jsr     (sub_65A72).l                   ; 65A62
-        move.w  #$20,(dat_68148).l              ; 65A68
+        move.w  #$20,(RowOffset).l              ; 65A68
         rts                                     ; 65A70
 sub_65A72:
         asl.w   #$2,d3                          ; 65A72
-        move.w  d3,(dat_68148).l                ; 65A74
+        move.w  d3,(RowOffset).l                ; 65A74
         movea.l #PointScreenX,a4                ; 65A7A
         movea.l #PointScreenY,a5                ; 65A80
         move.b  d1,(dat_1BBE4).l                ; 65A86
@@ -18964,11 +18977,11 @@ l_65A9C:
         move.b  (dat_1BBE4).l,d1                ; 65ABA
         move.w  d1,d2                           ; 65AC0
         subq.b  #$4,d2                          ; 65AC2
-        jsr     (AddPolygon).l                  ; 65AC4
+        jsr     (ScanEdge).l                  ; 65AC4
         rts                                     ; 65ACA
 l_65ACC:
         movea.l #$7b08a,a1                      ; 65ACC
-        move.w  (dat_68148).l,d3                ; 65AD2
+        move.w  (RowOffset).l,d3                ; 65AD2
         move.l  #$80000000,(a1,d3.w)            ; 65AD8
         rts                                     ; 65AE0
 sub_65AE2:
@@ -19085,7 +19098,7 @@ l_65C66:
         rol.w   #$8,d0                          ; 65CA8
         subi.w  #$b100,d0                       ; 65CAA
         andi.l  #$ffff,d0                       ; 65CAE
-        addi.l  #$1ef82,d0                      ; 65CB4
+        addi.l  #Data6502,d0                    ; 65CB4
         movea.l d0,a0                           ; 65CBA
         move.b  (a0),d0                         ; 65CBC
         addq.b  #$7,d0                          ; 65CBE
@@ -19213,7 +19226,12 @@ dat_65EC0:
 	dc.b	$00,$00
 dat_65EC2:
 	dc.b	$00,$00
-sub_65EC4:
+
+;-------------------------------------------------------------------------------
+; ProjectFarPieces - the pieces seen from the one the car is on (their list: $7AA1A, a pointer
+; a piece), each one's points projected for the distance (ProjectPointXFar, ProjectPointYFar)
+;-------------------------------------------------------------------------------
+ProjectFarPieces:
         clr.w   d0                              ; 65EC4
         move.b  (PieceIndex).l,d0               ; 65EC6
         movea.l #$7aa1a,a0                      ; 65ECC
@@ -19532,39 +19550,39 @@ l_66346:
 SetPolygonColour:
         lsr.b   #$1,d0                          ; 66348
         bcs.w   l_66362                         ; 6634A
-        bclr    #$6,$66405.l                    ; 6634E
-        bclr    #$6,$6641b.l                    ; 66356
+        bclr    #$6,(PlotPixelP0Hi+1).l                    ; 6634E
+        bclr    #$6,(PlotPixelP0Lo+1).l                    ; 66356
         bra.w   l_66372                         ; 6635E
 l_66362:
-        bset    #$6,$66405.l                    ; 66362
-        bset    #$6,$6641b.l                    ; 6636A
+        bset    #$6,(PlotPixelP0Hi+1).l                    ; 66362
+        bset    #$6,(PlotPixelP0Lo+1).l                    ; 6636A
 l_66372:
         lsr.b   #$1,d0                          ; 66372
         bcs.w   l_6638C                         ; 66374
-        bclr    #$6,$66409.l                    ; 66378
-        bclr    #$6,$6641d.l                    ; 66380
+        bclr    #$6,(PlotPixelP1Hi+1).l                    ; 66378
+        bclr    #$6,(PlotPixelP1Lo+1).l                    ; 66380
         bra.w   l_6639C                         ; 66388
 l_6638C:
-        bset    #$6,$66409.l                    ; 6638C
-        bset    #$6,$6641d.l                    ; 66394
+        bset    #$6,(PlotPixelP1Hi+1).l                    ; 6638C
+        bset    #$6,(PlotPixelP1Lo+1).l                    ; 66394
 l_6639C:
         lsr.b   #$1,d0                          ; 6639C
         bcs.w   l_663B6                         ; 6639E
-        bclr    #$6,$6640d.l                    ; 663A2
-        bclr    #$6,$66421.l                    ; 663AA
+        bclr    #$6,(PlotPixelP2Hi+1).l                    ; 663A2
+        bclr    #$6,(PlotPixelP2Lo+1).l                    ; 663AA
         bra.w   l_663C6                         ; 663B2
 l_663B6:
-        bset    #$6,$6640d.l                    ; 663B6
-        bset    #$6,$66421.l                    ; 663BE
+        bset    #$6,(PlotPixelP2Hi+1).l                    ; 663B6
+        bset    #$6,(PlotPixelP2Lo+1).l                    ; 663BE
 l_663C6:
         lsr.b   #$1,d0                          ; 663C6
         bcs.w   l_663E0                         ; 663C8
-        bclr    #$6,$66411.l                    ; 663CC
-        bclr    #$6,$66425.l                    ; 663D4
+        bclr    #$6,(PlotPixelP3Hi+1).l                    ; 663CC
+        bclr    #$6,(PlotPixelP3Lo+1).l                    ; 663D4
         bra.w   l_663F0                         ; 663DC
 l_663E0:
-        bset    #$6,$66411.l                    ; 663E0
-        bset    #$6,$66425.l                    ; 663E8
+        bset    #$6,(PlotPixelP3Hi+1).l                    ; 663E0
+        bset    #$6,(PlotPixelP3Lo+1).l                    ; 663E8
 l_663F0:
         rts                                     ; 663F0
 
@@ -19577,17 +19595,25 @@ PlotPixel:
         eori.w  #$f,d0                          ; 663F8
         cmpi.w  #$8,d0                          ; 663FC
         bge.w   l_66416                         ; 66400
-        bset    d0,$1(a0)                       ; 66404
-        bset    d0,$1f41(a0)                    ; 66408
-        bset    d0,$3e81(a0)                    ; 6640C
-        bset    d0,$5dc1(a0)                    ; 66410
+PlotPixelP0Hi:
+        bset    d0,$1(a0)                       ; 66404  bset/bclr: patched by SetPolygonColour
+PlotPixelP1Hi:
+        bset    d0,$1f41(a0)                    ; 66408  bset/bclr: patched by SetPolygonColour
+PlotPixelP2Hi:
+        bset    d0,$3e81(a0)                    ; 6640C  bset/bclr: patched by SetPolygonColour
+PlotPixelP3Hi:
+        bset    d0,$5dc1(a0)                    ; 66410  bset/bclr: patched by SetPolygonColour
         rts                                     ; 66414
 l_66416:
         andi.w  #$7,d0                          ; 66416
-        bset    d0,(a0)                         ; 6641A
-        bset    d0,$1f40(a0)                    ; 6641C
-        bset    d0,$3e80(a0)                    ; 66420
-        bset    d0,$5dc0(a0)                    ; 66424
+PlotPixelP0Lo:
+        bset    d0,(a0)                         ; 6641A  bset/bclr: patched by SetPolygonColour
+PlotPixelP1Lo:
+        bset    d0,$1f40(a0)                    ; 6641C  bset/bclr: patched by SetPolygonColour
+PlotPixelP2Lo:
+        bset    d0,$3e80(a0)                    ; 66420  bset/bclr: patched by SetPolygonColour
+PlotPixelP3Lo:
+        bset    d0,$5dc0(a0)                    ; 66424  bset/bclr: patched by SetPolygonColour
         rts                                     ; 66428
 
 ;-------------------------------------------------------------------------------
@@ -19625,7 +19651,8 @@ l_66466:
 ClearWordPlanes:
         move.w  d4,d2                           ; 6646E
         not.w   d2                              ; 66470
-        bra.w   l_66476                         ; 66472
+ColourWordJump:
+        bra.w   l_66476                         ; 66472  patched: the displacement's low byte = colour * 16 + 2 (PlotWord<colour>)
 l_66476:
         and.w   d2,(a4)+                        ; 66476
         and.w   d2,$1f3e(a4)                    ; 66478
@@ -20027,14 +20054,19 @@ dat_668A6:
 	dc.b	$00,$00
 
 ;-------------------------------------------------------------------------------
-; AddPolygon - a polygon of the view added to the list at $7B08A (unless the list is full)
+; ScanEdge - d1, d2: two projected points (PointScreenX/Y) - the edge between them clipped to
+; the view (256 x 128, outcodes) and stepped a line at a time (Bresenham), its x on each line
+; written to the next edge buffer (EdgeBufferNext: from the race work area, up to $60A8; 8
+; bytes of top, bottom, x0, x1, then a word a line, $8000 at the end); its address put in the
+; row table ($7B08A + RowOffset). The most expensive routine of a race frame: it steps every
+; pixel of x-major edges
 ;-------------------------------------------------------------------------------
-AddPolygon:
+ScanEdge:
         movea.l #$7b08a,a1                      ; 668A8
         move.w  #$0,(dat_668A6).l               ; 668AE
         move.w  #$ffff,(dat_668A2).l            ; 668B6
-        move.w  (dat_68148).l,d0                ; 668BE
-        movea.l (dat_68144).l,a0                ; 668C4
+        move.w  (RowOffset).l,d0                ; 668BE
+        movea.l (EdgeBufferNext).l,a0                ; 668C4
         cmpa.l  #$60a8,a0                       ; 668CA
         blt.w   l_668EC                         ; 668D0
         tst.b   (dat_1BB77).l                   ; 668D4
@@ -20108,7 +20140,7 @@ l_66992:
         and.b   d2,d0                           ; 669A6
         andi.b  #$f,d0                          ; 669A8
         beq.w   l_669BC                         ; 669AC
-        jsr     (sub_67740).l                   ; 669B0
+        jsr     (EdgeOffSide).l                   ; 669B0
         clr.w   d1                              ; 669B6
         clr.w   d2                              ; 669B8
         rts                                     ; 669BA
@@ -20222,7 +20254,7 @@ l_66AAE:
         and.b   d2,d0                           ; 66ABE
         andi.b  #$f,d0                          ; 66AC0
         beq.w   l_66AD4                         ; 66AC4
-        jsr     (sub_67740).l                   ; 66AC8
+        jsr     (EdgeOffSide).l                   ; 66AC8
         clr.w   d1                              ; 66ACE
         clr.w   d2                              ; 66AD0
         rts                                     ; 66AD2
@@ -20337,7 +20369,7 @@ l_66BC6:
         and.b   d2,d0                           ; 66BD6
         andi.b  #$f,d0                          ; 66BD8
         beq.w   l_66BEC                         ; 66BDC
-        jsr     (sub_67740).l                   ; 66BE0
+        jsr     (EdgeOffSide).l                   ; 66BE0
         clr.w   d1                              ; 66BE6
         clr.w   d2                              ; 66BE8
         rts                                     ; 66BEA
@@ -20613,7 +20645,7 @@ l_66E8A:
         dbra    d0,l_66E8A                      ; 66E90
 l_66E94:
         move.w  #$8000,(a0)+                    ; 66E94
-        move.l  a0,(dat_68144).l                ; 66E98
+        move.l  a0,(EdgeBufferNext).l                ; 66E98
         clr.w   d1                              ; 66E9E
         clr.w   d2                              ; 66EA0
         rts                                     ; 66EA2
@@ -20646,7 +20678,7 @@ l_66EE4:
         dbra    d0,l_66EE4                      ; 66EEA
 l_66EEE:
         move.w  #$8000,(a0)+                    ; 66EEE
-        move.l  a0,(dat_68144).l                ; 66EF2
+        move.l  a0,(EdgeBufferNext).l                ; 66EF2
         clr.w   d1                              ; 66EF8
         clr.w   d2                              ; 66EFA
         rts                                     ; 66EFC
@@ -20681,7 +20713,7 @@ l_66F44:
         dbra    d0,l_66F44                      ; 66F4A
 l_66F4E:
         move.w  #$8000,(a0)+                    ; 66F4E
-        move.l  a0,(dat_68144).l                ; 66F52
+        move.l  a0,(EdgeBufferNext).l                ; 66F52
         clr.w   d1                              ; 66F58
         clr.w   d2                              ; 66F5A
         rts                                     ; 66F5C
@@ -20714,7 +20746,7 @@ l_66F9E:
         dbra    d0,l_66F9E                      ; 66FA4
 l_66FA8:
         move.w  #$8000,(a0)+                    ; 66FA8
-        move.l  a0,(dat_68144).l                ; 66FAC
+        move.l  a0,(EdgeBufferNext).l                ; 66FAC
         clr.w   d1                              ; 66FB2
         clr.w   d2                              ; 66FB4
         rts                                     ; 66FB6
@@ -20735,12 +20767,12 @@ ClearPolygonList:
         move.l  d0,(a3)+                        ; 66FD6
         move.l  d0,(a3)+                        ; 66FD8
         move.b  #$0,$1e(a1)                     ; 66FDA
-        move.l  a0,(dat_68144).l                ; 66FE0
-        move.w  #$20,(dat_68148).l              ; 66FE6
+        move.l  a0,(EdgeBufferNext).l                ; 66FE0
+        move.w  #$20,(RowOffset).l              ; 66FE6
         rts                                     ; 66FEE
 sub_66FF0:
         move.b  #$ff,(dat_1BB7C).l              ; 66FF0
-        move.w  (dat_68148).l,d0                ; 66FF8
+        move.w  (RowOffset).l,d0                ; 66FF8
 sub_66FFE:
         movea.l #$7b08a,a0                      ; 66FFE
         subi.w  #$20,d0                         ; 67004
@@ -20751,9 +20783,14 @@ sub_66FFE:
         subi.w  #$20,d0                         ; 6701E
 l_67022:
         andi.w  #$ffe0,d0                       ; 67022
-        move.w  d0,(dat_1BC12).l                ; 67026
+        move.w  d0,(OpponentRow).l                ; 67026
         rts                                     ; 6702C
-sub_6702E:
+
+;-------------------------------------------------------------------------------
+; EdgesFirstPiece - the edges of the piece the car is on stepped into edge buffers (ScanEdge),
+; the row table started (RowOffset $30)
+;-------------------------------------------------------------------------------
+EdgesFirstPiece:
         move.b  #$ff,d4                         ; 6702E
         move.b  (dat_1BBA6).l,d0                ; 67032
         cmp.b   (PieceIndex).l,d0               ; 67038
@@ -20763,7 +20800,7 @@ sub_6702E:
 l_6704A:
         move.b  d4,(dat_1BB7C).l                ; 6704A
         move.b  #$0,(dat_1BC14).l               ; 67050
-        move.w  #$30,(dat_68148).l              ; 67058
+        move.w  #$30,(RowOffset).l              ; 67058
         move.b  (dat_1BB60).l,d1                ; 67060
         beq.w   l_67114                         ; 67066
         movea.l #dat_1BDD0,a3                   ; 6706A
@@ -20779,9 +20816,14 @@ l_6707C:
         subq.b  #$1,d0                          ; 67086
         add.b   d0,(dat_1BB58).l                ; 67088
         bra.w   l_67114                         ; 6708E
-sub_67092:
+
+;-------------------------------------------------------------------------------
+; EdgesNextPiece - the edges of the next near piece stepped into edge buffers (ScanEdge), a row
+; each cross-section
+;-------------------------------------------------------------------------------
+EdgesNextPiece:
         movea.l #dat_1BDD0,a3                   ; 67092
-        cmpi.w  #$5e0,(dat_68148).l             ; 67098
+        cmpi.w  #$5e0,(RowOffset).l             ; 67098
         bcc.w   l_6745E                         ; 670A0
         move.b  #$ff,d4                         ; 670A4
         move.b  (dat_1BBA6).l,d0                ; 670A8
@@ -20822,7 +20864,7 @@ l_67114:
         movea.l #dat_1BDD0,a3                   ; 67134
         move.b  (a3,d1.w),(dat_69ADA).l         ; 6713A
         jsr     (sub_617D0).l                   ; 67142
-        cmpi.w  #$30,(dat_68148).l              ; 67148
+        cmpi.w  #$30,(RowOffset).l              ; 67148
         beq.w   l_67284                         ; 67150
         tst.w   (a6,d2.w)                       ; 67154
         bmi.w   l_67184                         ; 67158
@@ -20831,16 +20873,16 @@ l_67114:
         move.b  d2,d2                           ; 67164
         addi.b  #$0,d2                          ; 67166
         addi.b  #$0,d1                          ; 6716A
-        jsr     (AddPolygon).l                  ; 6716E
+        jsr     (ScanEdge).l                  ; 6716E
         move.b  (dat_1BBE4).l,d1                ; 67174
         move.b  (dat_1BC14).l,d2                ; 6717A
         bra.w   l_67198                         ; 67180
 l_67184:
-        move.w  (dat_68148).l,d0                ; 67184
+        move.w  (RowOffset).l,d0                ; 67184
         movea.l #$7b08a,a1                      ; 6718A
         move.l  #$80000000,(a1,d0.w)            ; 67190
 l_67198:
-        addi.w  #$4,(dat_68148).l               ; 67198
+        addi.w  #$4,(RowOffset).l               ; 67198
         tst.w   $2(a6,d2.w)                     ; 671A0
         bmi.w   l_671D0                         ; 671A4
         tst.w   $2(a6,d1.w)                     ; 671A8
@@ -20848,16 +20890,16 @@ l_67198:
         move.b  d2,d2                           ; 671B0
         addi.b  #$2,d2                          ; 671B2
         addi.b  #$2,d1                          ; 671B6
-        jsr     (AddPolygon).l                  ; 671BA
+        jsr     (ScanEdge).l                  ; 671BA
         move.b  (dat_1BBE4).l,d1                ; 671C0
         move.b  (dat_1BC14).l,d2                ; 671C6
         bra.w   l_671E4                         ; 671CC
 l_671D0:
-        move.w  (dat_68148).l,d0                ; 671D0
+        move.w  (RowOffset).l,d0                ; 671D0
         movea.l #$7b08a,a1                      ; 671D6
         move.l  #$80000000,(a1,d0.w)            ; 671DC
 l_671E4:
-        addi.w  #$4,(dat_68148).l               ; 671E4
+        addi.w  #$4,(RowOffset).l               ; 671E4
         tst.w   $78(a6,d2.w)                    ; 671EC
         bmi.w   l_6721C                         ; 671F0
         tst.w   $78(a6,d1.w)                    ; 671F4
@@ -20865,16 +20907,16 @@ l_671E4:
         move.b  d2,d2                           ; 671FC
         addi.b  #$78,d2                         ; 671FE
         addi.b  #$78,d1                         ; 67202
-        jsr     (AddPolygon).l                  ; 67206
+        jsr     (ScanEdge).l                  ; 67206
         move.b  (dat_1BBE4).l,d1                ; 6720C
         move.b  (dat_1BC14).l,d2                ; 67212
         bra.w   l_67230                         ; 67218
 l_6721C:
-        move.w  (dat_68148).l,d0                ; 6721C
+        move.w  (RowOffset).l,d0                ; 6721C
         movea.l #$7b08a,a1                      ; 67222
         move.l  #$80000000,(a1,d0.w)            ; 67228
 l_67230:
-        addi.w  #$4,(dat_68148).l               ; 67230
+        addi.w  #$4,(RowOffset).l               ; 67230
         tst.w   $7a(a6,d2.w)                    ; 67238
         bmi.w   l_67268                         ; 6723C
         tst.w   $7a(a6,d1.w)                    ; 67240
@@ -20882,16 +20924,16 @@ l_67230:
         move.b  d2,d2                           ; 67248
         addi.b  #$7a,d2                         ; 6724A
         addi.b  #$7a,d1                         ; 6724E
-        jsr     (AddPolygon).l                  ; 67252
+        jsr     (ScanEdge).l                  ; 67252
         move.b  (dat_1BBE4).l,d1                ; 67258
         move.b  (dat_1BC14).l,d2                ; 6725E
         bra.w   l_6727C                         ; 67264
 l_67268:
-        move.w  (dat_68148).l,d0                ; 67268
+        move.w  (RowOffset).l,d0                ; 67268
         movea.l #$7b08a,a1                      ; 6726E
         move.l  #$80000000,(a1,d0.w)            ; 67274
 l_6727C:
-        addi.w  #$4,(dat_68148).l               ; 6727C
+        addi.w  #$4,(RowOffset).l               ; 6727C
 l_67284:
         tst.b   (dat_69AD8).l                   ; 67284
         beq.w   sub_672CC                       ; 6728A
@@ -20899,11 +20941,11 @@ l_67284:
         bpl.w   sub_672CC                       ; 67294
         btst    #$6,(dat_69ADA).l               ; 67298
         bne.w   sub_672CC                       ; 672A0
-        move.w  (dat_68148).l,d3                ; 672A4
+        move.w  (RowOffset).l,d3                ; 672A4
         movea.l #$7b08a,a1                      ; 672AA
         move.l  #$80000000,(a1,d3.w)            ; 672B0
         move.l  #$80000000,$4(a1,d3.w)          ; 672B8
-        addi.w  #$8,(dat_68148).l               ; 672C0
+        addi.w  #$8,(RowOffset).l               ; 672C0
         bra.w   l_67364                         ; 672C8
 sub_672CC:
         tst.w   $78(a6,d1.w)                    ; 672CC
@@ -20913,16 +20955,16 @@ sub_672CC:
         move.b  d1,d2                           ; 672DC
         addi.b  #$78,d2                         ; 672DE
         addi.b  #$0,d1                          ; 672E2
-        jsr     (AddPolygon).l                  ; 672E6
+        jsr     (ScanEdge).l                  ; 672E6
         move.b  (dat_1BBE4).l,d1                ; 672EC
         move.b  (dat_1BC14).l,d2                ; 672F2
         bra.w   l_67310                         ; 672F8
 l_672FC:
-        move.w  (dat_68148).l,d0                ; 672FC
+        move.w  (RowOffset).l,d0                ; 672FC
         movea.l #$7b08a,a1                      ; 67302
         move.l  #$80000000,(a1,d0.w)            ; 67308
 l_67310:
-        addi.w  #$4,(dat_68148).l               ; 67310
+        addi.w  #$4,(RowOffset).l               ; 67310
         tst.w   $2(a6,d1.w)                     ; 67318
         bmi.w   l_67348                         ; 6731C
         tst.w   $7a(a6,d1.w)                    ; 67320
@@ -20930,23 +20972,23 @@ l_67310:
         move.b  d1,d2                           ; 67328
         addi.b  #$2,d2                          ; 6732A
         addi.b  #$7a,d1                         ; 6732E
-        jsr     (AddPolygon).l                  ; 67332
+        jsr     (ScanEdge).l                  ; 67332
         move.b  (dat_1BBE4).l,d1                ; 67338
         move.b  (dat_1BC14).l,d2                ; 6733E
         bra.w   l_6735C                         ; 67344
 l_67348:
-        move.w  (dat_68148).l,d0                ; 67348
+        move.w  (RowOffset).l,d0                ; 67348
         movea.l #$7b08a,a1                      ; 6734E
         move.l  #$80000000,(a1,d0.w)            ; 67354
 l_6735C:
-        addi.w  #$4,(dat_68148).l               ; 6735C
+        addi.w  #$4,(RowOffset).l               ; 6735C
 l_67364:
         tst.b   (dat_69ADA).l                   ; 67364
         bpl.w   l_6738C                         ; 6736A
-        move.w  (dat_68148).l,d3                ; 6736E
+        move.w  (RowOffset).l,d3                ; 6736E
         movea.l #$7b08a,a1                      ; 67374
         move.l  #$80000000,(a1,d3.w)            ; 6737A
-        addq.w  #$4,(dat_68148).l               ; 67382
+        addq.w  #$4,(RowOffset).l               ; 67382
         bra.w   l_673D8                         ; 67388
 l_6738C:
         tst.w   (a6,d1.w)                       ; 6738C
@@ -20956,18 +20998,18 @@ l_6738C:
         move.b  d1,d2                           ; 6739C
         addi.b  #$0,d2                          ; 6739E
         addi.b  #$2,d1                          ; 673A2
-        jsr     (AddPolygon).l                  ; 673A6
+        jsr     (ScanEdge).l                  ; 673A6
         move.b  (dat_1BBE4).l,d1                ; 673AC
         move.b  (dat_1BC14).l,d2                ; 673B2
         bra.w   l_673D0                         ; 673B8
 l_673BC:
-        move.w  (dat_68148).l,d0                ; 673BC
+        move.w  (RowOffset).l,d0                ; 673BC
         movea.l #$7b08a,a1                      ; 673C2
         move.l  #$80000000,(a1,d0.w)            ; 673C8
 l_673D0:
-        addi.w  #$4,(dat_68148).l               ; 673D0
+        addi.w  #$4,(RowOffset).l               ; 673D0
 l_673D8:
-        move.w  (dat_68148).l,d3                ; 673D8
+        move.w  (RowOffset).l,d3                ; 673D8
         move.b  (PieceIndex).l,(a1,d3.w)        ; 673DE
         move.b  (dat_1BB4D).l,$3(a1,d3.w)       ; 673E6
         move.b  #$9,d0                          ; 673EE
@@ -20988,20 +21030,25 @@ l_67426:
 l_67434:
         move.b  d0,$1(a1,d3.w)                  ; 67434
         move.b  (dat_69ADA).l,$2(a1,d3.w)       ; 67438
-        addq.w  #$4,(dat_68148).l               ; 67440
+        addq.w  #$4,(RowOffset).l               ; 67440
         movea.l #dat_1BDD0,a3                   ; 67446
         move.b  d1,(dat_1BC14).l                ; 6744C
-        cmpi.w  #$5e0,(dat_68148).l             ; 67452
+        cmpi.w  #$5e0,(RowOffset).l             ; 67452
         bcs.w   l_670EA                         ; 6745A
 l_6745E:
         rts                                     ; 6745E
-sub_67460:
+
+;-------------------------------------------------------------------------------
+; EdgesFarPieces - the edges of the far pieces stepped into edge buffers (ScanEdge), point
+; pairs along the track, until the row table is full ($5E0)
+;-------------------------------------------------------------------------------
+EdgesFarPieces:
         move.b  #$0,(dat_1BB67).l               ; 67460
         movea.l #PointHeights,a6                ; 67468
         move.b  #$0,d2                          ; 6746E
         move.b  #$4,d1                          ; 67472
 l_67476:
-        cmpi.w  #$5e0,(dat_68148).l             ; 67476
+        cmpi.w  #$5e0,(RowOffset).l             ; 67476
         bcc.w   l_67708                         ; 6747E
         move.b  d1,(dat_1BBE4).l                ; 67482
         move.b  d2,(dat_1BC14).l                ; 67488
@@ -21012,16 +21059,16 @@ l_67476:
         move.b  d2,d2                           ; 6749E
         addi.b  #$0,d2                          ; 674A0
         addi.b  #$0,d1                          ; 674A4
-        jsr     (AddPolygon).l                  ; 674A8
+        jsr     (ScanEdge).l                  ; 674A8
         move.b  (dat_1BBE4).l,d1                ; 674AE
         move.b  (dat_1BC14).l,d2                ; 674B4
         bra.w   l_674D2                         ; 674BA
 l_674BE:
-        move.w  (dat_68148).l,d0                ; 674BE
+        move.w  (RowOffset).l,d0                ; 674BE
         movea.l #$7b08a,a1                      ; 674C4
         move.l  #$80000000,(a1,d0.w)            ; 674CA
 l_674D2:
-        addi.w  #$4,(dat_68148).l               ; 674D2
+        addi.w  #$4,(RowOffset).l               ; 674D2
         tst.w   $2(a6,d2.w)                     ; 674DA
         bmi.w   l_6750A                         ; 674DE
         tst.w   $2(a6,d1.w)                     ; 674E2
@@ -21029,16 +21076,16 @@ l_674D2:
         move.b  d2,d2                           ; 674EA
         addi.b  #$2,d2                          ; 674EC
         addi.b  #$2,d1                          ; 674F0
-        jsr     (AddPolygon).l                  ; 674F4
+        jsr     (ScanEdge).l                  ; 674F4
         move.b  (dat_1BBE4).l,d1                ; 674FA
         move.b  (dat_1BC14).l,d2                ; 67500
         bra.w   l_6751E                         ; 67506
 l_6750A:
-        move.w  (dat_68148).l,d0                ; 6750A
+        move.w  (RowOffset).l,d0                ; 6750A
         movea.l #$7b08a,a1                      ; 67510
         move.l  #$80000000,(a1,d0.w)            ; 67516
 l_6751E:
-        addi.w  #$4,(dat_68148).l               ; 6751E
+        addi.w  #$4,(RowOffset).l               ; 6751E
         tst.w   $78(a6,d2.w)                    ; 67526
         bmi.w   l_67556                         ; 6752A
         tst.w   $78(a6,d1.w)                    ; 6752E
@@ -21046,16 +21093,16 @@ l_6751E:
         move.b  d2,d2                           ; 67536
         addi.b  #$78,d2                         ; 67538
         addi.b  #$78,d1                         ; 6753C
-        jsr     (AddPolygon).l                  ; 67540
+        jsr     (ScanEdge).l                  ; 67540
         move.b  (dat_1BBE4).l,d1                ; 67546
         move.b  (dat_1BC14).l,d2                ; 6754C
         bra.w   l_6756A                         ; 67552
 l_67556:
-        move.w  (dat_68148).l,d0                ; 67556
+        move.w  (RowOffset).l,d0                ; 67556
         movea.l #$7b08a,a1                      ; 6755C
         move.l  #$80000000,(a1,d0.w)            ; 67562
 l_6756A:
-        addi.w  #$4,(dat_68148).l               ; 6756A
+        addi.w  #$4,(RowOffset).l               ; 6756A
         tst.w   $7a(a6,d2.w)                    ; 67572
         bmi.w   l_675A2                         ; 67576
         tst.w   $7a(a6,d1.w)                    ; 6757A
@@ -21063,16 +21110,16 @@ l_6756A:
         move.b  d2,d2                           ; 67582
         addi.b  #$7a,d2                         ; 67584
         addi.b  #$7a,d1                         ; 67588
-        jsr     (AddPolygon).l                  ; 6758C
+        jsr     (ScanEdge).l                  ; 6758C
         move.b  (dat_1BBE4).l,d1                ; 67592
         move.b  (dat_1BC14).l,d2                ; 67598
         bra.w   l_675B6                         ; 6759E
 l_675A2:
-        move.w  (dat_68148).l,d0                ; 675A2
+        move.w  (RowOffset).l,d0                ; 675A2
         movea.l #$7b08a,a1                      ; 675A8
         move.l  #$80000000,(a1,d0.w)            ; 675AE
 l_675B6:
-        addi.w  #$4,(dat_68148).l               ; 675B6
+        addi.w  #$4,(RowOffset).l               ; 675B6
         tst.w   $78(a6,d1.w)                    ; 675BE
         bmi.w   l_675EE                         ; 675C2
         tst.w   (a6,d1.w)                       ; 675C6
@@ -21080,16 +21127,16 @@ l_675B6:
         move.b  d1,d2                           ; 675CE
         addi.b  #$78,d2                         ; 675D0
         addi.b  #$0,d1                          ; 675D4
-        jsr     (AddPolygon).l                  ; 675D8
+        jsr     (ScanEdge).l                  ; 675D8
         move.b  (dat_1BBE4).l,d1                ; 675DE
         move.b  (dat_1BC14).l,d2                ; 675E4
         bra.w   l_67602                         ; 675EA
 l_675EE:
-        move.w  (dat_68148).l,d0                ; 675EE
+        move.w  (RowOffset).l,d0                ; 675EE
         movea.l #$7b08a,a1                      ; 675F4
         move.l  #$80000000,(a1,d0.w)            ; 675FA
 l_67602:
-        addi.w  #$4,(dat_68148).l               ; 67602
+        addi.w  #$4,(RowOffset).l               ; 67602
         tst.w   $2(a6,d1.w)                     ; 6760A
         bmi.w   l_6763A                         ; 6760E
         tst.w   $7a(a6,d1.w)                    ; 67612
@@ -21097,16 +21144,16 @@ l_67602:
         move.b  d1,d2                           ; 6761A
         addi.b  #$2,d2                          ; 6761C
         addi.b  #$7a,d1                         ; 67620
-        jsr     (AddPolygon).l                  ; 67624
+        jsr     (ScanEdge).l                  ; 67624
         move.b  (dat_1BBE4).l,d1                ; 6762A
         move.b  (dat_1BC14).l,d2                ; 67630
         bra.w   l_6764E                         ; 67636
 l_6763A:
-        move.w  (dat_68148).l,d0                ; 6763A
+        move.w  (RowOffset).l,d0                ; 6763A
         movea.l #$7b08a,a1                      ; 67640
         move.l  #$80000000,(a1,d0.w)            ; 67646
 l_6764E:
-        addi.w  #$4,(dat_68148).l               ; 6764E
+        addi.w  #$4,(RowOffset).l               ; 6764E
         tst.w   (a6,d1.w)                       ; 67656
         bmi.w   l_67686                         ; 6765A
         tst.w   $2(a6,d1.w)                     ; 6765E
@@ -21114,18 +21161,18 @@ l_6764E:
         move.b  d1,d2                           ; 67666
         addi.b  #$0,d2                          ; 67668
         addi.b  #$2,d1                          ; 6766C
-        jsr     (AddPolygon).l                  ; 67670
+        jsr     (ScanEdge).l                  ; 67670
         move.b  (dat_1BBE4).l,d1                ; 67676
         move.b  (dat_1BC14).l,d2                ; 6767C
         bra.w   l_6769A                         ; 67682
 l_67686:
-        move.w  (dat_68148).l,d0                ; 67686
+        move.w  (RowOffset).l,d0                ; 67686
         movea.l #$7b08a,a1                      ; 6768C
         move.l  #$80000000,(a1,d0.w)            ; 67692
 l_6769A:
-        addi.w  #$4,(dat_68148).l               ; 6769A
+        addi.w  #$4,(RowOffset).l               ; 6769A
         movea.l #$7b08a,a0                      ; 676A2
-        move.w  (dat_68148).l,d3                ; 676A8
+        move.w  (RowOffset).l,d3                ; 676A8
         movea.l #$7ab5a,a3                      ; 676AE
         move.w  (a3,d1.w),(dat_1BB1A).l         ; 676B4
         move.b  (dat_1BB1B).l,d0                ; 676BC
@@ -21140,7 +21187,7 @@ l_6769A:
         jsr     (sub_66FFE).l                   ; 676E6
         move.b  #$80,(dat_1BB67).l              ; 676EC
 l_676F4:
-        addq.w  #$4,(dat_68148).l               ; 676F4
+        addq.w  #$4,(RowOffset).l               ; 676F4
         move.b  d1,d2                           ; 676FA
         addq.b  #$4,d1                          ; 676FC
         cmp.b   (dat_660FA).l,d1                ; 676FE
@@ -21156,7 +21203,7 @@ ColourToMasks:
         move.b  d0,d6                           ; 6770A
         asl.b   #$4,d6                          ; 6770C
         addq.b  #$2,d6                          ; 6770E
-        move.b  d6,$66475.l                     ; 67710
+        move.b  d6,(ColourWordJump+3).l                     ; 67710
         clr.l   d6                              ; 67716
         clr.l   d7                              ; 67718
         lsr.b   #$1,d0                          ; 6771A
@@ -21178,8 +21225,13 @@ l_67734:
         not.w   d7                              ; 6773C
 l_6773E:
         rts                                     ; 6773E
-sub_67740:
-        move.w  (dat_68148).l,d3                ; 67740
+
+;-------------------------------------------------------------------------------
+; EdgeOffSide - an edge wholly off one side of the view: kept as the view's side (x 0 or 255)
+; over the lines it spans, so that the fill still closes (probably)
+;-------------------------------------------------------------------------------
+EdgeOffSide:
+        move.w  (RowOffset).l,d3                ; 67740
         ori.b   #$80,d0                         ; 67746
         or.b    d0,(a1,d3.w)                    ; 6774A
         tst.w   d4                              ; 6774E
@@ -21205,7 +21257,7 @@ l_6777A:
         move.w  d4,$4(a2)                       ; 6778A
         move.w  d6,$6(a2)                       ; 6778E
         move.w  #$8000,(a0)+                    ; 67792
-        move.l  a0,(dat_68144).l                ; 67796
+        move.l  a0,(EdgeBufferNext).l                ; 67796
         rts                                     ; 6779C
 l_6779E:
         lsr.b   #$1,d0                          ; 6779E
@@ -21214,7 +21266,7 @@ l_6779E:
         move.w  d4,$4(a2)                       ; 677AA
         move.w  d6,$6(a2)                       ; 677AE
         move.w  #$8000,(a0)+                    ; 677B2
-        move.l  a0,(dat_68144).l                ; 677B6
+        move.l  a0,(EdgeBufferNext).l                ; 677B6
         rts                                     ; 677BC
 l_677BE:
         cmp.w   d7,d5                           ; 677BE
@@ -21253,7 +21305,7 @@ l_67816:
         dbra    d5,l_67814                      ; 67816
 l_6781A:
         move.w  #$8000,(a0)+                    ; 6781A
-        move.l  a0,(dat_68144).l                ; 6781E
+        move.l  a0,(EdgeBufferNext).l                ; 6781E
         rts                                     ; 67824
 l_67826:
         lsr.b   #$1,d0                          ; 67826
@@ -21288,7 +21340,7 @@ l_67876:
         dbra    d5,l_67874                      ; 67876
 l_6787A:
         move.w  #$8000,(a0)+                    ; 6787A
-        move.l  a0,(dat_68144).l                ; 6787E
+        move.l  a0,(EdgeBufferNext).l                ; 6787E
         rts                                     ; 67884
 l_67886:
         rts                                     ; 67886
@@ -21314,13 +21366,13 @@ l_678B0:
         jsr     (RollPointNow).l                ; 678C0
         move.w  #$6,d1                          ; 678C6
         jsr     (RollPointNow).l                ; 678CA
-        move.w  #$0,(dat_68148).l               ; 678D0
+        move.w  #$0,(RowOffset).l               ; 678D0
         move.w  #$4,d1                          ; 678D8
         move.w  #$6,d2                          ; 678DC
         move.b  #$80,(dat_1BB77).l              ; 678E0
-        jsr     (AddPolygon).l                  ; 678E8
+        jsr     (ScanEdge).l                  ; 678E8
         move.b  #$0,(dat_1BB77).l               ; 678EE
-        movea.l (dat_68144).l,a3                ; 678F6
+        movea.l (EdgeBufferNext).l,a3                ; 678F6
         movea.l a3,a4                           ; 678FC
         move.l  (a1),d0                         ; 678FE
         andi.l  #$ffffff,d0                     ; 67900
@@ -21476,31 +21528,32 @@ sub_67A8C:
         rts                                     ; 67AA4
 
 ;-------------------------------------------------------------------------------
-; DrawView - the view drawn: the pieces of track in view (DrawPiece), then the polygons filled
-; (FillPolygon)
+; DrawOpponentCar - the opponent's car, when its distance (OpponentDistance) is 10-3199: its
+; model's points projected and its edges stepped (DrawCarModel, in rows from $5E0), then its
+; surfaces filled (FillPolygon)
 ;-------------------------------------------------------------------------------
-DrawView:
+DrawOpponentCar:
         tst.b   (dat_1BBB8).l                   ; 67AA6
         bmi.w   l_68142                         ; 67AAC
-        move.w  (dat_1BC38).l,d0                ; 67AB0
+        move.w  (OpponentDistance).l,d0                ; 67AB0
         cmpi.w  #$a,d0                          ; 67AB6
         bcs.w   l_68142                         ; 67ABA
         cmpi.w  #$c80,d0                        ; 67ABE
         bge.w   l_68142                         ; 67AC2
-        move.w  (dat_68148).l,-(a7)             ; 67AC6
-        move.w  #$5e0,(dat_68148).l             ; 67ACC
-        jsr     (DrawPiece).l                   ; 67AD4
+        move.w  (RowOffset).l,-(a7)             ; 67AC6
+        move.w  #$5e0,(RowOffset).l             ; 67ACC
+        jsr     (DrawCarModel).l                   ; 67AD4
         move.b  #$80,(dat_1BB38).l              ; 67ADA
-        move.w  #$5e0,(dat_68148).l             ; 67AE2
+        move.w  #$5e0,(RowOffset).l             ; 67AE2
         tst.b   (dat_1BBBA).l                   ; 67AEA
         bne.w   l_67BB8                         ; 67AF0
         cmpi.w  #$1c,(dat_1BBEC).l              ; 67AF4
         blt.w   l_67BB8                         ; 67AFC
         cmpi.w  #$e4,(dat_1BBEC).l              ; 67B00
         bgt.w   l_67BB8                         ; 67B08
-        addi.w  #$80,(dat_68148).l              ; 67B0C
+        addi.w  #$80,(RowOffset).l              ; 67B0C
         movea.l #$7b08a,a4                      ; 67B14
-        move.w  (dat_68148).l,d3                ; 67B1A
+        move.w  (RowOffset).l,d3                ; 67B1A
         move.l  (a4,d3.w),d0                    ; 67B20
         move.l  d0,d4                           ; 67B24
         andi.l  #$ffffff,d0                     ; 67B26
@@ -21527,7 +21580,7 @@ DrawView:
         move.b  d0,d6                           ; 67B76
         asl.b   #$4,d6                          ; 67B78
         addq.b  #$2,d6                          ; 67B7A
-        move.b  d6,$66475.l                     ; 67B7C
+        move.b  d6,(ColourWordJump+3).l                     ; 67B7C
         clr.l   d6                              ; 67B82
         clr.l   d7                              ; 67B84
         lsr.b   #$1,d0                          ; 67B86
@@ -21550,10 +21603,10 @@ l_67BA0:
 l_67BAA:
         jsr     (FillPolygon).l                 ; 67BAA
 l_67BB0:
-        subi.w  #$80,(dat_68148).l              ; 67BB0
+        subi.w  #$80,(RowOffset).l              ; 67BB0
 l_67BB8:
         movea.l #$7b08a,a4                      ; 67BB8
-        move.w  (dat_68148).l,d3                ; 67BBE
+        move.w  (RowOffset).l,d3                ; 67BBE
         move.l  $60(a4,d3.w),d0                 ; 67BC4
         move.l  d0,d4                           ; 67BC8
         andi.l  #$ffffff,d0                     ; 67BCA
@@ -21580,7 +21633,7 @@ l_67BB8:
         move.b  d0,d6                           ; 67C1A
         asl.b   #$4,d6                          ; 67C1C
         addq.b  #$2,d6                          ; 67C1E
-        move.b  d6,$66475.l                     ; 67C20
+        move.b  d6,(ColourWordJump+3).l                     ; 67C20
         clr.l   d6                              ; 67C26
         clr.l   d7                              ; 67C28
         lsr.b   #$1,d0                          ; 67C2A
@@ -21604,7 +21657,7 @@ l_67C4E:
         jsr     (FillPolygon).l                 ; 67C4E
 l_67C54:
         movea.l #$7b08a,a4                      ; 67C54
-        move.w  (dat_68148).l,d3                ; 67C5A
+        move.w  (RowOffset).l,d3                ; 67C5A
         move.l  $70(a4,d3.w),d0                 ; 67C60
         move.l  d0,d4                           ; 67C64
         andi.l  #$ffffff,d0                     ; 67C66
@@ -21631,7 +21684,7 @@ l_67C54:
         move.b  d0,d6                           ; 67CB6
         asl.b   #$4,d6                          ; 67CB8
         addq.b  #$2,d6                          ; 67CBA
-        move.b  d6,$66475.l                     ; 67CBC
+        move.b  d6,(ColourWordJump+3).l                     ; 67CBC
         clr.l   d6                              ; 67CC2
         clr.l   d7                              ; 67CC4
         lsr.b   #$1,d0                          ; 67CC6
@@ -21655,7 +21708,7 @@ l_67CEA:
         jsr     (FillPolygon).l                 ; 67CEA
 l_67CF0:
         movea.l #$7b08a,a4                      ; 67CF0
-        move.w  (dat_68148).l,d3                ; 67CF6
+        move.w  (RowOffset).l,d3                ; 67CF6
         move.l  $20(a4,d3.w),d0                 ; 67CFC
         move.l  d0,d4                           ; 67D00
         andi.l  #$ffffff,d0                     ; 67D02
@@ -21682,7 +21735,7 @@ l_67CF0:
         move.b  d0,d6                           ; 67D52
         asl.b   #$4,d6                          ; 67D54
         addq.b  #$2,d6                          ; 67D56
-        move.b  d6,$66475.l                     ; 67D58
+        move.b  d6,(ColourWordJump+3).l                     ; 67D58
         clr.l   d6                              ; 67D5E
         clr.l   d7                              ; 67D60
         lsr.b   #$1,d0                          ; 67D62
@@ -21706,7 +21759,7 @@ l_67D86:
         jsr     (FillPolygon).l                 ; 67D86
 l_67D8C:
         movea.l #$7b08a,a4                      ; 67D8C
-        move.w  (dat_68148).l,d3                ; 67D92
+        move.w  (RowOffset).l,d3                ; 67D92
         move.l  $18(a4,d3.w),d0                 ; 67D98
         move.l  d0,d4                           ; 67D9C
         andi.l  #$ffffff,d0                     ; 67D9E
@@ -21733,7 +21786,7 @@ l_67D8C:
         move.b  d0,d6                           ; 67DEE
         asl.b   #$4,d6                          ; 67DF0
         addq.b  #$2,d6                          ; 67DF2
-        move.b  d6,$66475.l                     ; 67DF4
+        move.b  d6,(ColourWordJump+3).l                     ; 67DF4
         clr.l   d6                              ; 67DFA
         clr.l   d7                              ; 67DFC
         lsr.b   #$1,d0                          ; 67DFE
@@ -21757,7 +21810,7 @@ l_67E22:
         jsr     (FillPolygon).l                 ; 67E22
 l_67E28:
         movea.l #$7b08a,a4                      ; 67E28
-        move.w  (dat_68148).l,d3                ; 67E2E
+        move.w  (RowOffset).l,d3                ; 67E2E
         move.l  $10(a4,d3.w),d0                 ; 67E34
         move.l  d0,d4                           ; 67E38
         andi.l  #$ffffff,d0                     ; 67E3A
@@ -21784,7 +21837,7 @@ l_67E28:
         move.b  d0,d6                           ; 67E8A
         asl.b   #$4,d6                          ; 67E8C
         addq.b  #$2,d6                          ; 67E8E
-        move.b  d6,$66475.l                     ; 67E90
+        move.b  d6,(ColourWordJump+3).l                     ; 67E90
         clr.l   d6                              ; 67E96
         clr.l   d7                              ; 67E98
         lsr.b   #$1,d0                          ; 67E9A
@@ -21808,7 +21861,7 @@ l_67EBE:
         jsr     (FillPolygon).l                 ; 67EBE
 l_67EC4:
         movea.l #$7b08a,a4                      ; 67EC4
-        move.w  (dat_68148).l,d3                ; 67ECA
+        move.w  (RowOffset).l,d3                ; 67ECA
         move.l  $38(a4,d3.w),d0                 ; 67ED0
         move.l  d0,d4                           ; 67ED4
         andi.l  #$ffffff,d0                     ; 67ED6
@@ -21835,7 +21888,7 @@ l_67EC4:
         move.b  d0,d6                           ; 67F26
         asl.b   #$4,d6                          ; 67F28
         addq.b  #$2,d6                          ; 67F2A
-        move.b  d6,$66475.l                     ; 67F2C
+        move.b  d6,(ColourWordJump+3).l                     ; 67F2C
         clr.l   d6                              ; 67F32
         clr.l   d7                              ; 67F34
         lsr.b   #$1,d0                          ; 67F36
@@ -21859,7 +21912,7 @@ l_67F5A:
         jsr     (FillPolygon).l                 ; 67F5A
 l_67F60:
         movea.l #$7b08a,a4                      ; 67F60
-        move.w  (dat_68148).l,d3                ; 67F66
+        move.w  (RowOffset).l,d3                ; 67F66
         move.l  $30(a4,d3.w),d0                 ; 67F6C
         move.l  d0,d4                           ; 67F70
         andi.l  #$ffffff,d0                     ; 67F72
@@ -21886,7 +21939,7 @@ l_67F60:
         move.b  d0,d6                           ; 67FC2
         asl.b   #$4,d6                          ; 67FC4
         addq.b  #$2,d6                          ; 67FC6
-        move.b  d6,$66475.l                     ; 67FC8
+        move.b  d6,(ColourWordJump+3).l                     ; 67FC8
         clr.l   d6                              ; 67FCE
         clr.l   d7                              ; 67FD0
         lsr.b   #$1,d0                          ; 67FD2
@@ -21910,7 +21963,7 @@ l_67FF6:
         jsr     (FillPolygon).l                 ; 67FF6
 l_67FFC:
         movea.l #$7b08a,a4                      ; 67FFC
-        move.w  (dat_68148).l,d3                ; 68002
+        move.w  (RowOffset).l,d3                ; 68002
         move.l  $40(a4,d3.w),d0                 ; 68008
         move.l  d0,d4                           ; 6800C
         andi.l  #$ffffff,d0                     ; 6800E
@@ -21937,7 +21990,7 @@ l_67FFC:
         move.b  d0,d6                           ; 6805E
         asl.b   #$4,d6                          ; 68060
         addq.b  #$2,d6                          ; 68062
-        move.b  d6,$66475.l                     ; 68064
+        move.b  d6,(ColourWordJump+3).l                     ; 68064
         clr.l   d6                              ; 6806A
         clr.l   d7                              ; 6806C
         lsr.b   #$1,d0                          ; 6806E
@@ -21961,7 +22014,7 @@ l_68092:
         jsr     (FillPolygon).l                 ; 68092
 l_68098:
         movea.l #$7b08a,a4                      ; 68098
-        move.w  (dat_68148).l,d3                ; 6809E
+        move.w  (RowOffset).l,d3                ; 6809E
         move.l  $50(a4,d3.w),d0                 ; 680A4
         move.l  d0,d4                           ; 680A8
         andi.l  #$ffffff,d0                     ; 680AA
@@ -21988,7 +22041,7 @@ l_68098:
         move.b  d0,d6                           ; 680FA
         asl.b   #$4,d6                          ; 680FC
         addq.b  #$2,d6                          ; 680FE
-        move.b  d6,$66475.l                     ; 68100
+        move.b  d6,(ColourWordJump+3).l                     ; 68100
         clr.l   d6                              ; 68106
         clr.l   d7                              ; 68108
         lsr.b   #$1,d0                          ; 6810A
@@ -22012,19 +22065,19 @@ l_6812E:
         jsr     (FillPolygon).l                 ; 6812E
 l_68134:
         move.b  #$0,(dat_1BB38).l               ; 68134
-        move.w  (a7)+,(dat_68148).l             ; 6813C
+        move.w  (a7)+,(RowOffset).l             ; 6813C
 l_68142:
         rts                                     ; 68142
-dat_68144:
+EdgeBufferNext:				; where ScanEdge writes the next edge buffer (in the race work area, from $3D80 up to $60A8)
 	dc.b	$00,$00,$00,$00
-dat_68148:
+RowOffset:				; the row table's current row ($7B08A + this: 32 bytes a row - 7 edge pointers, then flags at +$1C and +$1E)
 	dc.b	$00,$00
 sub_6814A:
         cmp.w   d2,d1                           ; 6814A
         bge.w   l_68152                         ; 6814C
         exg.l   d1,d2                           ; 68150
 l_68152:
-        movea.l (dat_68144).l,a0                ; 68152
+        movea.l (EdgeBufferNext).l,a0                ; 68152
         cmpa.l  #$60a8,a0                       ; 68158
         bgt.w   l_681B2                         ; 6815E
         cmpi.w  #$81,d2                         ; 68162
@@ -22044,12 +22097,12 @@ l_68182:
         move.w  #$8000,(a0)+                    ; 68186
         tst.b   (dat_684A6).l                   ; 6818A
         bmi.w   l_6819E                         ; 68190
-        move.l  (dat_68144).l,(a1)+             ; 68194
+        move.l  (EdgeBufferNext).l,(a1)+             ; 68194
         bra.w   l_681A4                         ; 6819A
 l_6819E:
-        move.l  (dat_68144).l,-(a2)             ; 6819E
+        move.l  (EdgeBufferNext).l,-(a2)             ; 6819E
 l_681A4:
-        move.l  a0,(dat_68144).l                ; 681A4
+        move.l  a0,(EdgeBufferNext).l                ; 681A4
         move.w  #$0,d1                          ; 681AA
         move.w  d1,d2                           ; 681AE
         rts                                     ; 681B0
@@ -22348,7 +22401,14 @@ l_68532:
 l_6853C:
         move.w  #$8000,(a4,d1.w)                ; 6853C
         rts                                     ; 68542
-sub_68544:
+
+;-------------------------------------------------------------------------------
+; FillBetweenEdges - a1, a2: a surface's edge buffers - the topmost found, then each line
+; filled between the left and right edges: partial words through
+; ClearWordPlanes/PlotWord<colour> (ColourWordJump), whole words with 4 move.w (one a plane);
+; the colour's plane masks in d6/d7
+;-------------------------------------------------------------------------------
+FillBetweenEdges:
         move.b  #$0,(dat_69ACA).l               ; 68544
         move.l  a1,(dat_69AF4).l                ; 6854C
         move.l  a2,(dat_69AF0).l                ; 68552
@@ -22446,7 +22506,7 @@ l_6869C:
         move.b  d0,d6                           ; 686A6
         asl.b   #$4,d6                          ; 686A8
         addq.b  #$2,d6                          ; 686AA
-        move.b  d6,$66475.l                     ; 686AC
+        move.b  d6,(ColourWordJump+3).l                     ; 686AC
         clr.l   d6                              ; 686B2
         clr.l   d7                              ; 686B4
         lsr.b   #$1,d0                          ; 686B6
@@ -22634,19 +22694,19 @@ l_688D2:
         bra.w   l_688D2                         ; 688F8
 sub_688FC:
         movea.l #$7b08a,a4                      ; 688FC
-        move.w  (dat_68148).l,d3                ; 68902
+        move.w  (RowOffset).l,d3                ; 68902
         move.b  #$f,d0                          ; 68908
         jsr     (SetPolygonColour).l            ; 6890C
         move.l  $18(a4,d3.w),d0                 ; 68912
         andi.l  #$ffffff,d0                     ; 68916
         beq.w   l_68928                         ; 6891C
         movea.l d0,a3                           ; 68920
-        jsr     (sub_6932E).l                   ; 68922
+        jsr     (DrawEdgeLine).l                   ; 68922
 l_68928:
         rts                                     ; 68928
 sub_6892A:
         movea.l #$7b08a,a4                      ; 6892A
-        move.w  (dat_68148).l,d3                ; 68930
+        move.w  (RowOffset).l,d3                ; 68930
         bra.w   l_68970                         ; 68936
 l_6893A:
         move.b  $1d(a4,d3.w),d0                 ; 6893A
@@ -22659,7 +22719,7 @@ l_6893A:
         andi.l  #$ffffff,d0                     ; 6895A
         beq.w   l_6896C                         ; 68960
         movea.l d0,a3                           ; 68964
-        jsr     (sub_6932E).l                   ; 68966
+        jsr     (DrawEdgeLine).l                   ; 68966
 l_6896C:
         subi.w  #$20,d3                         ; 6896C
 l_68970:
@@ -22668,7 +22728,7 @@ l_68970:
         rts                                     ; 6897A
 sub_6897C:
         movea.l #$7b08a,a4                      ; 6897C
-        move.w  (dat_68148).l,d3                ; 68982
+        move.w  (RowOffset).l,d3                ; 68982
         bra.w   l_689C2                         ; 68988
 l_6898C:
         move.b  $1d(a4,d3.w),d0                 ; 6898C
@@ -22681,7 +22741,7 @@ l_6898C:
         andi.l  #$ffffff,d0                     ; 689AC
         beq.w   l_689BE                         ; 689B2
         movea.l d0,a3                           ; 689B6
-        jsr     (sub_6932E).l                   ; 689B8
+        jsr     (DrawEdgeLine).l                   ; 689B8
 l_689BE:
         subi.w  #$20,d3                         ; 689BE
 l_689C2:
@@ -22690,7 +22750,7 @@ l_689C2:
         rts                                     ; 689CC
 sub_689CE:
         movea.l #$7b08a,a4                      ; 689CE
-        move.w  (dat_68148).l,d3                ; 689D4
+        move.w  (RowOffset).l,d3                ; 689D4
         bra.w   l_68A06                         ; 689DA
 l_689DE:
         move.b  $1d(a4,d3.w),d0                 ; 689DE
@@ -22700,7 +22760,7 @@ l_689DE:
         andi.l  #$ffffff,d0                     ; 689F0
         beq.w   l_68A02                         ; 689F6
         movea.l d0,a3                           ; 689FA
-        jsr     (sub_6932E).l                   ; 689FC
+        jsr     (DrawEdgeLine).l                   ; 689FC
 l_68A02:
         subi.w  #$20,d3                         ; 68A02
 l_68A06:
@@ -22709,7 +22769,7 @@ l_68A06:
         rts                                     ; 68A10
 sub_68A12:
         movea.l #$7b08a,a4                      ; 68A12
-        move.w  (dat_68148).l,d3                ; 68A18
+        move.w  (RowOffset).l,d3                ; 68A18
         bra.w   l_68A4A                         ; 68A1E
 l_68A22:
         move.b  $1d(a4,d3.w),d0                 ; 68A22
@@ -22719,7 +22779,7 @@ l_68A22:
         andi.l  #$ffffff,d0                     ; 68A34
         beq.w   l_68A46                         ; 68A3A
         movea.l d0,a3                           ; 68A3E
-        jsr     (sub_6932E).l                   ; 68A40
+        jsr     (DrawEdgeLine).l                   ; 68A40
 l_68A46:
         subi.w  #$20,d3                         ; 68A46
 l_68A4A:
@@ -22729,7 +22789,7 @@ l_68A4A:
 sub_68A56:
         move.b  #$80,(dat_684A9).l              ; 68A56
         movea.l #$7b08a,a4                      ; 68A5E
-        move.w  (dat_68148).l,d3                ; 68A64
+        move.w  (RowOffset).l,d3                ; 68A64
 l_68A6A:
         move.w  d3,(dat_69AE8).l                ; 68A6A
         move.l  $10(a4,d3.w),d0                 ; 68A70
@@ -22787,7 +22847,7 @@ l_68AFA:
 l_68B48:
         subq.l  #$4,a1                          ; 68B48
 l_68B4A:
-        cmp.w   (dat_68148).l,d3                ; 68B4A
+        cmp.w   (RowOffset).l,d3                ; 68B4A
         beq.w   l_68BEA                         ; 68B50
 l_68B54:
         move.l  $10(a4,d3.w),d0                 ; 68B54
@@ -22827,13 +22887,13 @@ l_68BBA:
 l_68BDA:
         andi.l  #$f000000,d4                    ; 68BDA
         bne.w   l_68BEA                         ; 68BE0
-        jsr     (sub_68544).l                   ; 68BE4
+        jsr     (FillBetweenEdges).l                   ; 68BE4
 l_68BEA:
         rts                                     ; 68BEA
 sub_68BEC:
         move.b  #$2,(dat_684A9).l               ; 68BEC
         movea.l #$7b08a,a4                      ; 68BF4
-        move.w  (dat_68148).l,d3                ; 68BFA
+        move.w  (RowOffset).l,d3                ; 68BFA
 l_68C00:
         move.w  d3,(dat_69AE8).l                ; 68C00
         move.l  $14(a4,d3.w),d0                 ; 68C06
@@ -22891,7 +22951,7 @@ l_68C90:
 l_68CDE:
         subq.l  #$4,a1                          ; 68CDE
 l_68CE0:
-        cmp.w   (dat_68148).l,d3                ; 68CE0
+        cmp.w   (RowOffset).l,d3                ; 68CE0
         beq.w   l_68D80                         ; 68CE6
 l_68CEA:
         move.l  $14(a4,d3.w),d0                 ; 68CEA
@@ -22931,15 +22991,20 @@ l_68D50:
 l_68D70:
         andi.l  #$f000000,d4                    ; 68D70
         bne.w   l_68D80                         ; 68D76
-        jsr     (sub_68544).l                   ; 68D7A
+        jsr     (FillBetweenEdges).l                   ; 68D7A
 l_68D80:
         rts                                     ; 68D80
-sub_68D82:
+
+;-------------------------------------------------------------------------------
+; FillRowSurface - the surface between this row and the next (the row table at $7B08A,
+; RowOffset): its edges gathered into a list (dat_69B7C) and filled (FillBetweenEdges)
+;-------------------------------------------------------------------------------
+FillRowSurface:
         move.b  #$0,(dat_684A9).l               ; 68D82
         move.b  #$0,(dat_1BB61).l               ; 68D8A
         move.b  #$80,(dat_1BBD2).l              ; 68D92
         movea.l #$7b08a,a4                      ; 68D9A
-        move.w  (dat_68148).l,d3                ; 68DA0
+        move.w  (RowOffset).l,d3                ; 68DA0
         move.w  d3,(dat_69AE8).l                ; 68DA6
         move.l  $18(a4,d3.w),d0                 ; 68DAC
         move.l  d0,d4                           ; 68DB0
@@ -22988,7 +23053,7 @@ l_68E1C:
 l_68E6A:
         subq.l  #$4,a1                          ; 68E6A
 l_68E6C:
-        cmp.w   (dat_68148).l,d3                ; 68E6C
+        cmp.w   (RowOffset).l,d3                ; 68E6C
         beq.w   l_68F0C                         ; 68E72
 l_68E76:
         move.l  $18(a4,d3.w),d0                 ; 68E76
@@ -23028,7 +23093,7 @@ l_68EDC:
 l_68EFC:
         andi.l  #$f000000,d4                    ; 68EFC
         bne.w   l_68F0C                         ; 68F02
-        jsr     (sub_68544).l                   ; 68F06
+        jsr     (FillBetweenEdges).l                   ; 68F06
 l_68F0C:
         move.b  #$0,(dat_1BBD2).l               ; 68F0C
         btst    #$0,(dat_1BB61).l               ; 68F14
@@ -23036,13 +23101,19 @@ l_68F0C:
         jsr     (sub_688FC).l                   ; 68F20
 l_68F26:
         rts                                     ; 68F26
-sub_68F28:
-        subi.w  #$20,(dat_68148).l              ; 68F28
-        cmpi.w  #$40,(dat_68148).l              ; 68F30
+
+;-------------------------------------------------------------------------------
+; DrawNearRows - the rows of the near pieces (the one the car is on and the next two) drawn
+; back to front: their surfaces, sides and lines in the order the view needs, the opponent's
+; car in its row
+;-------------------------------------------------------------------------------
+DrawNearRows:
+        subi.w  #$20,(RowOffset).l              ; 68F28
+        cmpi.w  #$40,(RowOffset).l              ; 68F30
         blt.w   l_690BA                         ; 68F38
 l_68F3C:
         movea.l #$7b08a,a4                      ; 68F3C
-        move.w  (dat_68148).l,d3                ; 68F42
+        move.w  (RowOffset).l,d3                ; 68F42
 l_68F48:
         subi.w  #$20,d3                         ; 68F48
         beq.w   l_68F58                         ; 68F4C
@@ -23060,10 +23131,10 @@ l_68F58:
         jsr     (sub_6897C).l                   ; 68F84
         jsr     (sub_6916C).l                   ; 68F8A
         jsr     (sub_6917C).l                   ; 68F90
-        jsr     (sub_68D82).l                   ; 68F96
+        jsr     (FillRowSurface).l                   ; 68F96
         jsr     (sub_689CE).l                   ; 68F9C
         jsr     (sub_68A12).l                   ; 68FA2
-        jsr     (sub_69188).l                   ; 68FA8
+        jsr     (DrawCarAtRow).l                   ; 68FA8
         bra.w   l_690AC                         ; 68FAE
 l_68FB2:
         tst.b   (dat_1BC5C).l                   ; 68FB2
@@ -23071,20 +23142,20 @@ l_68FB2:
         jsr     (sub_6916C).l                   ; 68FBC
         jsr     (sub_68BEC).l                   ; 68FC2
         jsr     (sub_6897C).l                   ; 68FC8
-        jsr     (sub_68D82).l                   ; 68FCE
+        jsr     (FillRowSurface).l                   ; 68FCE
         jsr     (sub_68A12).l                   ; 68FD4
-        jsr     (sub_69188).l                   ; 68FDA
+        jsr     (DrawCarAtRow).l                   ; 68FDA
         jsr     (sub_68A56).l                   ; 68FE0
         jsr     (sub_6892A).l                   ; 68FE6
-        move.w  (dat_68148).l,d3                ; 68FEC
+        move.w  (RowOffset).l,d3                ; 68FEC
         cmp.w   (dat_69AE8).l,d3                ; 68FF2
         beq.w   l_69026                         ; 68FF8
         tst.b   (DropCountdown).l               ; 68FFC
         bne.w   l_69026                         ; 69002
-        move.w  (dat_68148).l,-(a7)             ; 69006
-        move.w  (dat_69AE8).l,(dat_68148).l     ; 6900C
+        move.w  (RowOffset).l,-(a7)             ; 69006
+        move.w  (dat_69AE8).l,(RowOffset).l     ; 6900C
         jsr     (sub_689CE).l                   ; 69016
-        move.w  (a7)+,(dat_68148).l             ; 6901C
+        move.w  (a7)+,(RowOffset).l             ; 6901C
         bra.w   l_6902C                         ; 69022
 l_69026:
         jsr     (sub_689CE).l                   ; 69026
@@ -23095,34 +23166,39 @@ l_69036:
         jsr     (sub_6917C).l                   ; 69036
         jsr     (sub_68A56).l                   ; 6903C
         jsr     (sub_6892A).l                   ; 69042
-        jsr     (sub_68D82).l                   ; 69048
+        jsr     (FillRowSurface).l                   ; 69048
         jsr     (sub_689CE).l                   ; 6904E
-        jsr     (sub_69188).l                   ; 69054
+        jsr     (DrawCarAtRow).l                   ; 69054
         jsr     (sub_68BEC).l                   ; 6905A
         jsr     (sub_6897C).l                   ; 69060
-        move.w  (dat_68148).l,d3                ; 69066
+        move.w  (RowOffset).l,d3                ; 69066
         cmp.w   (dat_69AE8).l,d3                ; 6906C
         beq.w   l_690A0                         ; 69072
         tst.b   (DropCountdown).l               ; 69076
         bne.w   l_690A0                         ; 6907C
-        move.w  (dat_68148).l,-(a7)             ; 69080
-        move.w  (dat_69AE8).l,(dat_68148).l     ; 69086
+        move.w  (RowOffset).l,-(a7)             ; 69080
+        move.w  (dat_69AE8).l,(RowOffset).l     ; 69086
         jsr     (sub_68A12).l                   ; 69090
-        move.w  (a7)+,(dat_68148).l             ; 69096
+        move.w  (a7)+,(RowOffset).l             ; 69096
         bra.w   l_690A6                         ; 6909C
 l_690A0:
         jsr     (sub_68A12).l                   ; 690A0
 l_690A6:
         jsr     (sub_6916C).l                   ; 690A6
 l_690AC:
-        move.w  (dat_69AE6).l,(dat_68148).l     ; 690AC
+        move.w  (dat_69AE6).l,(RowOffset).l     ; 690AC
         bne.w   l_68F3C                         ; 690B6
 l_690BA:
         rts                                     ; 690BA
-sub_690BC:
-        subi.w  #$20,(dat_68148).l              ; 690BC
-        move.w  (dat_68148).l,d3                ; 690C4
-        cmp.w   (dat_6932C).l,d3                ; 690CA
+
+;-------------------------------------------------------------------------------
+; DrawFarRows - the rows of the far pieces drawn back to front, down to FarRowsEnd: each row's
+; surfaces (FillRowSurface), its sides and lines, the opponent's car in its row (DrawCarAtRow)
+;-------------------------------------------------------------------------------
+DrawFarRows:
+        subi.w  #$20,(RowOffset).l              ; 690BC
+        move.w  (RowOffset).l,d3                ; 690C4
+        cmp.w   (FarRowsEnd).l,d3                ; 690CA
         blt.w   l_6916A                         ; 690D0
         subi.w  #$20,d3                         ; 690D4
         move.w  d3,(dat_69AE6).l                ; 690D8
@@ -23132,28 +23208,28 @@ sub_690BC:
         jsr     (sub_691B4).l                   ; 690EE
         jsr     (sub_6916C).l                   ; 690F4
         jsr     (sub_6917C).l                   ; 690FA
-        jsr     (sub_68D82).l                   ; 69100
-        jsr     (sub_69188).l                   ; 69106
+        jsr     (FillRowSurface).l                   ; 69100
+        jsr     (DrawCarAtRow).l                   ; 69106
         bra.w   l_69166                         ; 6910C
 l_69110:
         tst.b   (dat_1BC5C).l                   ; 69110
         bpl.w   l_69142                         ; 69116
         jsr     (sub_6916C).l                   ; 6911A
         jsr     (sub_691B4).l                   ; 69120
-        jsr     (sub_68D82).l                   ; 69126
-        jsr     (sub_69188).l                   ; 6912C
+        jsr     (FillRowSurface).l                   ; 69126
+        jsr     (DrawCarAtRow).l                   ; 6912C
         jsr     (sub_69270).l                   ; 69132
         jsr     (sub_6917C).l                   ; 69138
         bra.w   l_69166                         ; 6913E
 l_69142:
         jsr     (sub_6917C).l                   ; 69142
         jsr     (sub_69270).l                   ; 69148
-        jsr     (sub_68D82).l                   ; 6914E
-        jsr     (sub_69188).l                   ; 69154
+        jsr     (FillRowSurface).l                   ; 6914E
+        jsr     (DrawCarAtRow).l                   ; 69154
         jsr     (sub_691B4).l                   ; 6915A
         jsr     (sub_6916C).l                   ; 69160
 l_69166:
-        bra.w   sub_690BC                       ; 69166
+        bra.w   DrawFarRows                       ; 69166
 l_6916A:
         rts                                     ; 6916A
 sub_6916C:
@@ -23165,15 +23241,20 @@ sub_6917C:
         tst.b   (dat_57C69).l                   ; 6917C
         bmi.w   l_69192                         ; 69182
         rts                                     ; 69186
-sub_69188:
+
+;-------------------------------------------------------------------------------
+; DrawCarAtRow - the opponent's car drawn (DrawOpponentCar) when this row is its row
+; (OpponentRow)
+;-------------------------------------------------------------------------------
+DrawCarAtRow:
         tst.b   (dat_57C69).l                   ; 69188
         bne.w   l_691B0                         ; 6918E
 l_69192:
         move.w  (dat_69AE6).l,d3                ; 69192
-        cmp.w   (dat_1BC12).l,d3                ; 69198
+        cmp.w   (OpponentRow).l,d3                ; 69198
         bgt.w   l_691B0                         ; 6919E
-        jsr     (DrawView).l                    ; 691A2
-        move.w  #$ffff,(dat_1BC12).l            ; 691A8
+        jsr     (DrawOpponentCar).l                    ; 691A2
+        move.w  #$ffff,(OpponentRow).l            ; 691A8
 l_691B0:
         rts                                     ; 691B0
 dat_691B2:
@@ -23182,14 +23263,14 @@ dat_691B3:
 	dc.b	$09
 sub_691B4:
         movea.l #$7b08a,a4                      ; 691B4
-        move.w  (dat_68148).l,d3                ; 691BA
+        move.w  (RowOffset).l,d3                ; 691BA
         move.b  #$f,d7                          ; 691C0
         btst    #$0,$1c(a4,d3.w)                ; 691C4
         beq.w   l_691D4                         ; 691CA
         move.b  (dat_691B2).l,d7                ; 691CE
 l_691D4:
         movea.l #$7b08a,a4                      ; 691D4
-        move.w  (dat_68148).l,d3                ; 691DA
+        move.w  (RowOffset).l,d3                ; 691DA
         move.l  $c(a4,d3.w),d0                  ; 691E0
         move.l  d0,d4                           ; 691E4
         andi.l  #$ffffff,d0                     ; 691E6
@@ -23216,7 +23297,7 @@ l_691D4:
         move.b  d0,d6                           ; 69234
         asl.b   #$4,d6                          ; 69236
         addq.b  #$2,d6                          ; 69238
-        move.b  d6,$66475.l                     ; 6923A
+        move.b  d6,(ColourWordJump+3).l                     ; 6923A
         clr.l   d6                              ; 69240
         clr.l   d7                              ; 69242
         lsr.b   #$1,d0                          ; 69244
@@ -23242,14 +23323,14 @@ l_6926E:
         rts                                     ; 6926E
 sub_69270:
         movea.l #$7b08a,a4                      ; 69270
-        move.w  (dat_68148).l,d3                ; 69276
+        move.w  (RowOffset).l,d3                ; 69276
         move.b  #$f,d7                          ; 6927C
         btst    #$0,$1c(a4,d3.w)                ; 69280
         beq.w   l_69290                         ; 69286
         move.b  (dat_691B2).l,d7                ; 6928A
 l_69290:
         movea.l #$7b08a,a4                      ; 69290
-        move.w  (dat_68148).l,d3                ; 69296
+        move.w  (RowOffset).l,d3                ; 69296
         move.l  $8(a4,d3.w),d0                  ; 6929C
         move.l  d0,d4                           ; 692A0
         andi.l  #$ffffff,d0                     ; 692A2
@@ -23276,7 +23357,7 @@ l_69290:
         move.b  d0,d6                           ; 692F0
         asl.b   #$4,d6                          ; 692F2
         addq.b  #$2,d6                          ; 692F4
-        move.b  d6,$66475.l                     ; 692F6
+        move.b  d6,(ColourWordJump+3).l                     ; 692F6
         clr.l   d6                              ; 692FC
         clr.l   d7                              ; 692FE
         lsr.b   #$1,d0                          ; 69300
@@ -23300,9 +23381,14 @@ l_69324:
         jsr     (FillPolygon).l                 ; 69324
 l_6932A:
         rts                                     ; 6932A
-dat_6932C:
+FarRowsEnd:				; the row table's last row of the far pieces (DrawFarRows stops there)
 	dc.b	$00,$00
-sub_6932E:
+
+;-------------------------------------------------------------------------------
+; DrawEdgeLine - an edge buffer drawn as a line of single pixels (PlotPixel, colour set by
+; SetPolygonColour): the lines along the track (probably)
+;-------------------------------------------------------------------------------
+DrawEdgeLine:
         cmpi.w  #$80,$2(a3)                     ; 6932E
         bcc.w   l_6950A                         ; 69334
         movea.l a3,a2                           ; 69338
@@ -23553,15 +23639,15 @@ l_69604:
         subq.b  #$2,d1                          ; 6960A
         bpl.w   l_69604                         ; 6960C
         movea.l (a7)+,a6                        ; 69610
-        move.w  #$0,(dat_68148).l               ; 69612
+        move.w  #$0,(RowOffset).l               ; 69612
         move.b  (a6)+,(dat_69797).l             ; 6961A
 l_69620:
         move.b  (a6)+,d1                        ; 69620
         move.b  (a6)+,d2                        ; 69622
         move.l  a6,-(a7)                        ; 69624
-        jsr     (AddPolygon).l                  ; 69626
+        jsr     (ScanEdge).l                  ; 69626
         movea.l (a7)+,a6                        ; 6962C
-        addq.w  #$4,(dat_68148).l               ; 6962E
+        addq.w  #$4,(RowOffset).l               ; 6962E
         subq.b  #$1,(dat_69797).l               ; 69634
         bne.w   l_69620                         ; 6963A
         move.b  (a6)+,(dat_69798).l             ; 6963E
@@ -23687,22 +23773,23 @@ dat_6979C:
 	dc.b	$00,$10,$00,$18,$00,$3C,$00,$10,$00,$3C,$00,$18,$00,$3C,$00,$28
 	dc.b	$00,$3C,$00,$39,$00,$28,$00,$39,$00,$3C,$00,$39,$00,$69,$00,$7D
 	dc.b	$00,$2A,$00,$69,$00,$2A,$00,$7D,$00,$2A,$00,$00
-dat_699B8:
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$8A,$00,$06,$97,$9E,$00,$06,$98,$94
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$9E,$00,$06,$97,$9E,$00,$06,$98,$A8
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$B2,$00,$06,$97,$9E,$00,$06,$98,$BC
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$C6,$00,$06,$97,$9E,$00,$06,$98,$D0
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$DA,$00,$06,$97,$9E,$00,$06,$98,$E4
-	dc.b	$00,$06,$97,$9E,$00,$06,$98,$EE,$00,$06,$97,$9E,$00,$06,$98,$F8
-	dc.b	$00,$06,$97,$9E,$00,$06,$99,$02,$00,$06,$97,$9E,$00,$06,$99,$0C
-	dc.b	$00,$06,$97,$C0,$00,$06,$99,$02,$00,$06,$97,$C0,$00,$06,$99,$0C
-	dc.b	$00,$06,$97,$E8,$00,$06,$99,$36,$00,$06,$97,$E8,$00,$06,$99,$48
-	dc.b	$00,$06,$97,$E8,$00,$06,$99,$5A,$00,$06,$97,$E8,$00,$06,$99,$6C
-	dc.b	$00,$06,$98,$32,$00,$06,$99,$7E,$00,$06,$98,$32,$00,$06,$99,$8C
-	dc.b	$00,$06,$98,$32,$00,$06,$99,$9A,$00,$06,$98,$32,$00,$06,$99,$A8
-	dc.b	$00,$06,$98,$68,$00,$06,$99,$B6
+dat_699B8:				; 25 pairs of pointers into dat_6979C
+	dc.l	dat_6979C+$2,dat_6979C+$EE,dat_6979C+$2,dat_6979C+$F8
+	dc.l	dat_6979C+$2,dat_6979C+$102,dat_6979C+$2,dat_6979C+$10C
+	dc.l	dat_6979C+$2,dat_6979C+$116,dat_6979C+$2,dat_6979C+$120
+	dc.l	dat_6979C+$2,dat_6979C+$12A,dat_6979C+$2,dat_6979C+$134
+	dc.l	dat_6979C+$2,dat_6979C+$13E,dat_6979C+$2,dat_6979C+$148
+	dc.l	dat_6979C+$2,dat_6979C+$152,dat_6979C+$2,dat_6979C+$15C
+	dc.l	dat_6979C+$2,dat_6979C+$166,dat_6979C+$2,dat_6979C+$170
+	dc.l	dat_6979C+$24,dat_6979C+$166,dat_6979C+$24,dat_6979C+$170
+	dc.l	dat_6979C+$4C,dat_6979C+$19A,dat_6979C+$4C,dat_6979C+$1AC
+	dc.l	dat_6979C+$4C,dat_6979C+$1BE,dat_6979C+$4C,dat_6979C+$1D0
+	dc.l	dat_6979C+$96,dat_6979C+$1E2,dat_6979C+$96,dat_6979C+$1F0
+	dc.l	dat_6979C+$96,dat_6979C+$1FE,dat_6979C+$96,dat_6979C+$20C
+	dc.l	dat_6979C+$CC,dat_6979C+$21A
 dat_69A80:
-	dc.b	$00,$06,$9A,$88,$00,$06,$9A,$88,$20,$05,$00,$0F,$0D,$15,$0A,$1F
+	dc.l	dat_69A80+$8,dat_69A80+$8
+	dc.b	$20,$05,$00,$0F,$0D,$15,$0A,$1F
 	dc.b	$0B,$25,$0C,$2F,$05,$35,$02,$3F,$03,$45,$00,$4F,$01,$55,$04,$5F
 	dc.b	$05,$65,$02,$6F,$01,$75,$00,$7F,$05,$85,$02,$8F,$03,$95,$04,$9F
 	dc.b	$05,$A5,$00,$AF,$09,$B5,$06,$BF,$07,$C5,$08,$CF,$05,$D5,$00,$DF

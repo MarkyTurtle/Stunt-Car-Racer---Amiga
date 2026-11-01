@@ -2,6 +2,10 @@
 # BUILDING.md describes), check its SHA-1, boot it in the emulator harness, and keep the disk as
 # the run's artifact (downloadable from the run's page). The disk uses the loading picture and the
 # helper block from original/, so changes there run it too.
+# Then its performance (Linux): the telemetry build's disk, the check that the game still works
+# when its code moves (enhanced/tools/reloc_test.py), and the race benchmark
+# (enhanced/tools/bench.py) against enhanced/bench_baseline.json - its report on the run's
+# summary page, the disk and the figures as the run's artifact.
 name: enhanced
 
 on:
@@ -49,3 +53,33 @@ jobs:
         with:
           name: enhanced-disk-${{ matrix.os }}-py${{ matrix.python }}
           path: enhanced/build/scr.adf
+
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: ./.github/actions/vasm
+      - name: Build the telemetry disk (enhanced/tools/build_disk.py --telemetry)
+        run: python enhanced/tools/build_disk.py --telemetry
+      - name: Build scremu (original/tools/scremu/build.sh)
+        run: sh original/tools/scremu/build.sh
+      - name: The game works with its code moved (enhanced/tools/reloc_test.py)
+        run: python enhanced/tools/reloc_test.py
+      - name: The race benchmark (enhanced/tools/bench.py)
+        run: |
+          python enhanced/tools/bench.py --json bench.json --compare enhanced/bench_baseline.json | tee bench.txt
+          { echo '### The race benchmark (scremu, against enhanced/bench_baseline.json)'; echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The checkout is unchanged
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"; mv bench.json bench.txt "$RUNNER_TEMP/out/"
+          test -z "$(git status --porcelain)" || { git status --porcelain | sed 's/^/::error::changed by the build - /'; exit 1; }
+      - uses: actions/upload-artifact@v5
+        with:
+          name: enhanced-telemetry
+          path: |
+            enhanced/build/scr_telemetry.adf
+            ${{ runner.temp }}/out/bench.json
+            ${{ runner.temp }}/out/bench.txt

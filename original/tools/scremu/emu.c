@@ -23,7 +23,7 @@
  *   scremu GAME.bin HELPER.bin LOADPIC.bin SCRIPT
  *
  * SCRIPT, one command a line (# comments):
- *   frames N              run N frames (PAL: 312 lines of 455 CPU cycles)
+ *   frames N              run N frames (PAL, not interlaced: 313 lines of 454 CPU cycles - 227 colour clocks)
  *   joy [u][d][l][r][f]   hold these joystick directions / fire; "joy" alone: none
  *   random N SEED         N frames with a random joystick (held 8-40 frames at a time)
  *   key CODE              press and release a raw key (hex)
@@ -46,6 +46,10 @@
  *   trace ADDR            log the frame, line and registers each time the PC reaches ADDR
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
+ *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
+ *   callprof 1 / 0        time the call tree, from now / stop: each jsr/bsr's time, its callees' included
+ *   callprofdump FILE     write it: "caller callee calls cycles", one line a caller -> callee (caller 0:
+ *                         the top: called by no routine being timed)
  *   blittime 1            the blitter busy (DMACONR bit 14) for 2 CPU cycles a memory cycle
  *   watchpc LO HI         log each instruction's first write to each 256-byte block of LO-HI
  *   watch LO HI           log the first write to each 256-byte block of LO-HI, with the PC
@@ -59,6 +63,8 @@
 #include "m68k.h"
 
 #define RAM 0x80000                   /* chip RAM: 512K */
+#define LINE_CYCLES 454               /* a line: 227 colour clocks, 454 CPU cycles */
+#define FRAME_LINES 313               /* a frame: a PAL long frame (no interlace) */
 #define SNAP 0x80000                  /* what a snapshot / the coverage holds: the first 512K */
 #define SLOW_LO 0xC00000              /* slow RAM ("trapdoor"), the CPU's only */
 #define SLOW_SIZE 0x80000
@@ -232,8 +238,8 @@ done:
 
 /* ---- memory */
 static unsigned beam(void) {
-    unsigned cyc = 455 - m68k_cycles_remaining();
-    if ((int)cyc < 0) cyc = 0; if (cyc > 454) cyc = 454;
+    unsigned cyc = LINE_CYCLES - m68k_cycles_remaining();
+    if ((int)cyc < 0) cyc = 0; if (cyc > LINE_CYCLES - 1) cyc = LINE_CYCLES - 1;
     return (line_no << 8 | (cyc / 2)) & 0xFFFF;
 }
 static unsigned custom_read(unsigned r) {
@@ -335,9 +341,14 @@ unsigned int m68k_read_memory_16(unsigned int a) {
     return m68k_read_memory_8(a) << 8 | m68k_read_memory_8(a + 1);
 }
 unsigned int m68k_read_memory_32(unsigned int a) { return m68k_read_memory_16(a) << 16 | m68k_read_memory_16(a + 2); }
+static unsigned wlog_lo = 1, wlog_hi = 0; static FILE *wlogf;   /* writelog: every CPU write to LO-HI */
+static void wlog(unsigned a, unsigned v, int size) {
+    if (a + size > wlog_lo && a < wlog_hi && wlogf)
+        fprintf(wlogf, "%lu %lu %X %X %X/%d\n", frame, line_no, m68k_get_reg(NULL, M68K_REG_PPC), a, v, size);
+}
 void m68k_write_memory_8(unsigned int a, unsigned int v) {
     a &= 0xFFFFFF;
-    if (a < RAM) { watch(a); usage[a] |= 2; ram[a] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFF, 1); watch(a); usage[a] |= 2; ram[a] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v; return; }
     if ((a & 0xFFF000) == 0xBFE000 && (a & 1)) { cia_write(&ciaa, (a >> 8) & 15, v); return; }
     if ((a & 0xFFF000) == 0xBFD000 && !(a & 1)) { cia_write(&ciab, (a >> 8) & 15, v); return; }
@@ -345,7 +356,7 @@ void m68k_write_memory_8(unsigned int a, unsigned int v) {
 }
 void m68k_write_memory_16(unsigned int a, unsigned int v) {
     a &= 0xFFFFFF;
-    if (a < RAM) { watch(a); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v >> 8; slow[a - SLOW_LO + 1] = v; return; }
     if ((a & 0xFFF000) == 0xDFF000) { custom_write(a & 0x1FE, v); return; }
     m68k_write_memory_8(a, v >> 8); m68k_write_memory_8(a + 1, v);
@@ -356,8 +367,37 @@ unsigned int m68k_read_disassembler_16(unsigned int a) { return m68k_read_memory
 unsigned int m68k_read_disassembler_32(unsigned int a) { return m68k_read_memory_32(a); }
 
 static unsigned *prof; static unsigned prof_pc; static long prof_cyc;   /* profile: CPU cycles by pc */
+
+/* callprof: the call tree's time. Each jsr/bsr pushes a frame (its target, the cycle and the stack
+ * pointer it returns to); a frame ends when the stack pointer is back above it (rts, or the
+ * routine dropping its return address). Each caller -> callee edge adds up its calls and its
+ * cycles, the callee's own and those of everything it calls (interrupts included). */
+#define CP_DEPTH 256
+#define CP_EDGES 65536
+static int callprof; static unsigned cp_pending;               /* the jsr/bsr just executed: its stack pointer */
+static struct { unsigned target, sp; long start; } cp_stack[CP_DEPTH]; static int cp_n;
+static struct { unsigned from, to; unsigned long n; long long cyc; } cp_edge[CP_EDGES];
+static void cp_add(unsigned from, unsigned to, long cyc) {
+    unsigned h = (from * 2654435761u ^ to * 40503u) & (CP_EDGES - 1);
+    while (cp_edge[h].n && (cp_edge[h].from != from || cp_edge[h].to != to)) h = (h + 1) & (CP_EDGES - 1);
+    cp_edge[h].from = from; cp_edge[h].to = to; cp_edge[h].n++; cp_edge[h].cyc += cyc;
+}
+static void cp_hook(unsigned pc) {
+    unsigned sp = m68k_get_reg(NULL, M68K_REG_A7); long c = cyc_now();
+    while (cp_n && sp >= cp_stack[cp_n - 1].sp) {           /* returned (or the return address dropped) */
+        cp_n--; cp_add(cp_n ? cp_stack[cp_n - 1].target : 0, cp_stack[cp_n].target, c - cp_stack[cp_n].start);
+    }
+    if (cp_pending && sp == cp_pending - 4 && cp_n < CP_DEPTH) {
+        cp_stack[cp_n].target = pc; cp_stack[cp_n].sp = cp_pending; cp_stack[cp_n].start = c; cp_n++;
+    }
+    cp_pending = 0;
+    unsigned op = m68k_read_memory_16(pc);
+    if ((op & 0xFFC0) == 0x4E80 || (op & 0xFF00) == 0x6100) cp_pending = sp;
+}
+
 void instr_hook(unsigned int pc) {
     pc &= 0xFFFFFF;
+    if (callprof) cp_hook(pc);
     if (prof) {
         long c = cyc_now();
         if (prof_pc < RAM) prof[prof_pc >> 1] += (unsigned)(c - prof_cyc);
@@ -378,7 +418,8 @@ void instr_hook(unsigned int pc) {
                 m68k_get_reg(NULL, M68K_REG_A5), m68k_get_reg(NULL, M68K_REG_A6));
 }
 
-/* ---- timing: a frame of 312 lines of 455 cycles */
+/* ---- timing: a frame of 313 lines (a PAL long frame, as the Amiga shows without interlace) of
+ * 454 CPU cycles (227 colour clocks; the CPU at 7.09 MHz): 142,102 cycles, 49.92 frames a second */
 static void cia_tick_timers(cia_t *c, int eclocks) {
     for (int i = 0; i < eclocks; i++) {
         int ta_under = 0;
@@ -395,10 +436,10 @@ static void cia_tick_timers(cia_t *c, int eclocks) {
         }
     }
 }
-static long cyc_now(void) { long c = 455 - m68k_cycles_remaining(); if (c < 0) c = 0; if (c > 455) c = 455; return cyc_total + c; }
+static long cyc_now(void) { long c = LINE_CYCLES - m68k_cycles_remaining(); if (c < 0) c = 0; if (c > LINE_CYCLES) c = LINE_CYCLES; return cyc_total + c; }
 static void run_line(void) {
-    m68k_execute(455);
-    cyc_total += 455;
+    m68k_execute(LINE_CYCLES);
+    cyc_total += LINE_CYCLES;
     cia_tick_timers(&ciaa, 45); cia_tick_timers(&ciab, 45);
     /* CIA-B TOD counts lines (HSYNC) */
     if (!ciab.tod_halt) { ciab.tod = (ciab.tod + 1) & 0xFFFFFF; if (ciab.tod == ciab.alarm) cia_irq(&ciab, 4); }
@@ -444,7 +485,7 @@ static void run_frame(void) {
     ciaa.tod = (ciaa.tod + 1) & 0xFFFFFF;
     intreq |= 0x0020; update_irq();                           /* VERTB */
     keyboard_tick();
-    for (int l = 0; l < 312 && !until_hit; l++) {
+    for (int l = 0; l < FRAME_LINES && !until_hit; l++) {
         for (int k = 0; k < cop_irq_n; k++)                     /* the copper's interrupts at their line */
             if (cop_irq_line[k] == line_no && (dmacon & 0x280) == 0x280) {
                 unsigned v = cop_irq_val[k]; intreq = v & 0x8000 ? intreq | (v & 0x7FFF) : intreq & ~v; update_irq(); }
@@ -525,13 +566,13 @@ int main(int argc, char **argv) {
             m68k_set_reg(M68K_REG_SR, strcmp(cmd, "calli") ? 0x2700 : 0x2000); m68k_set_reg(M68K_REG_PC, strtoul(a1, 0, 0));
             until_pc = 0x1F0; until_hit = 0;
             for (long n = 0; n < 2000000 && !until_hit; n++) {
-                if (strcmp(cmd, "calli")) { run_line(); if (line_no >= 312) { line_no = 0; frame++; } }
-                else { run_frame(); n += 311; }                 /* (calli: whole frames, interrupts and all) */
+                if (strcmp(cmd, "calli")) { run_line(); if (line_no >= FRAME_LINES) { line_no = 0; frame++; } }
+                else { run_frame(); n += FRAME_LINES - 1; }                 /* (calli: whole frames, interrupts and all) */
             }
             if (!until_hit) printf("%s $%s: did not return\n", cmd, a1);
             until_pc = 0xFFFFFFFF; until_hit = 0;
             m68k_set_reg(M68K_REG_SR, sr);
-            if (reps > 1) { while (line_no < 312) run_line(); line_no = 0; frame++; }
+            if (reps > 1) { while (line_no < FRAME_LINES) run_line(); line_no = 0; frame++; }
           }
         }
         else if (!strcmp(cmd, "trace")) { trace_pc = strtoul(a1, 0, 0); }
@@ -544,6 +585,12 @@ int main(int argc, char **argv) {
         else if (!strcmp(cmd, "profdump")) {                 /* profdump FILE: "pc cycles" for each */
             FILE *o = fopen(a1, "w");
             if (o && prof) for (unsigned i = 0; i < RAM / 2; i++) if (prof[i]) fprintf(o, "%X %u\n", i * 2, prof[i]);
+            if (o) fclose(o); }
+        else if (!strcmp(cmd, "writelog")) { wlog_lo = strtoul(a1, 0, 0); wlog_hi = strtoul(a2, 0, 0); if (!wlogf) wlogf = logf ? logf : stdout; }
+        else if (!strcmp(cmd, "callprof")) { callprof = atoi(a1); cp_n = 0; cp_pending = 0; if (callprof) memset(cp_edge, 0, sizeof cp_edge); }
+        else if (!strcmp(cmd, "callprofdump")) {             /* callprofdump FILE: "caller callee calls cycles" */
+            FILE *o = fopen(a1, "w");
+            for (int i = 0; o && i < CP_EDGES; i++) if (cp_edge[i].n) fprintf(o, "%X %X %lu %lld\n", cp_edge[i].from, cp_edge[i].to, cp_edge[i].n, cp_edge[i].cyc);
             if (o) fclose(o); }
         else if (!strcmp(cmd, "watchpc")) { watch_pcs = 1; watch_lo = strtoul(a1, 0, 0); watch_hi = strtoul(a2, 0, 0); seen_n = 0; }
         else if (!strcmp(cmd, "watch")) { watch_pcs = 0; watch_lo = strtoul(a1, 0, 0); watch_hi = strtoul(a2, 0, 0); memset(watched, 0, sizeof watched); }

@@ -16,13 +16,16 @@ is left out.
 | `$00000-$000FF` | 256 | exception vectors; the release's helper block at `$C0` | |
 | `$00100-$0015B` | 92 | | a few bytes read |
 | `$0015C-$03D79` | 15,390 | **free**: nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
-| `$03D80-$0648F` | 10,000 | the race's work area: cleared at the start of each race (`$5D83A`) | read and written |
+| `$03D80-$0648F` | 10,000 | the race's work area: cleared at the start of each race (`$5D83A`); the 3D view's edge buffers (`$3D80-$60A8`, [RENDER.md](RENDER.md)) | read and written |
 | `$06490-$0E297` | 32,264 | the cut-out graphics: 52 pieces of the pictures (the cockpit's parts, the chains, ...) masked by `MakeCutouts` at start-up; their addresses at `CutoutPointers` | written once, read |
 | `$0E298-$0E729` | 1,170 | free (no use found) | untouched |
 | `$0E700-$730FF` | 412,160 | **the game as loaded** (below) | |
 | `$73100-$79F93` | 28,308 | the rest of the second screen (`$72294-$79F93`) | DMA, written |
 | `$7A01A-$7B6F9` | 5,856 | work areas: cleared at start-up (`Main`); the save-slot names (`$7A21A`), the league sent over the link (`$7A41A`), the piece models (`$7AA1A`), the polygon list (`$7B08A`) | read and written |
 | `$7B6FA-$7FFFF` | 18,694 | the user stack (from `$7FFFC`, grows down) and, until the game's first screen flip, the loading picture still on show at `$78000` | DMA at the start only |
+
+The telemetry build (`enhanced/src/telemetry.i`) keeps its results at `$3800-$3C7F`, in the free
+15K: above the save routine's MFM buffer, below the supervisor stack.
 
 So of the 512K, about 17K is free while the game runs (most of it the 15K at `$015C-$3D79`, which
 the save routine borrows for a moment), and the game itself is the rest.
@@ -58,4 +61,5 @@ cockpit is needed for every race.
 
 * The blitter: the game draws everything with the CPU. Its only blits are the save routine's MFM
   encoding (`BlitMFMEncode`) when a game position is written.
-* `CopylockRoutine` (`$5C984`, 1,340 bytes) and the 6502 bytes after the tracks (`$1FDC4-$1FE2B`).
+* `CopylockRoutine` (`$5C984`, 1,318 bytes; the telemetry build's code goes there) and the 6502
+  bytes after the tracks (`$1FDC4-$1FE2B`).

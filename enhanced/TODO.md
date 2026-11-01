@@ -9,9 +9,12 @@ chip RAM (the free part mostly `$015C-$3D79`, which the save routine borrows). F
 ## Groundwork
 
 * Try the disk in WinUAE: A500 512K, expanded A500, A1200.
-* Annotate the rest of the game's source: 210 routines and most of the race's variables are not
-  named yet (`original/docs/CODE.md`, `original/tools/names.py`): the physics, the opponent, the 3D
-  view's internals, the track format.
+* Annotate the rest of the game's source: 196 routines and most of the race's variables are not
+  named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
+  track format.
+* ~~Make the source safe to change~~: done - every address in it is a label, checked by
+  `tools/reloc_test.py` (in the workflow). Code can grow by 135 bytes before the screens, at the
+  end of the load, must move (they are followed by the work areas at `$7A01A`).
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
 * Put the 4489_byteloader in the game (as Ghosts'n Goblins and The New Zealand Story did), reading
@@ -55,9 +58,19 @@ keeping them all in memory.
 
 ## Performance
 
-* `FrameLimiter` (`$5DAC0`) caps the race at a frame every 6 vertical blanks (8.3 a second); the
-  release's turbo removes the cap. Measure how long a frame really takes on an A500 (scremu's
-  `profile`, `blittime`) to see whether the cap or the drawing is the limit.
-* Find where the time goes - the drawing is all CPU (the blitter is unused): the polygon filling
-  (`FillPolygon`, the PlotWord routines), the projection - and improve it in `src/scr_game.s`;
-  the blitter could fill the polygons (line mode and fill mode) while the CPU does the next piece.
+Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
+6.47 vertical blanks on an A500 (the limit is 6), 7.7 frames a second; geometry 29%, drawing 47%,
+cockpit 17%. Measure each change with the benchmark (`tools/bench.py --compare
+bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.
+
+* `ScanEdge`: step a line at a time, not a pixel (15.6% of the frame).
+* The blitter: the background (`DrawHorizon`, 6.4%) and the cockpit (`DrawCutout`, 9.8%) - in
+  parallel with the CPU.
+* `FillBetweenEdges` (11.1%): its variables in registers, its runs unrolled; or the blitter's fill.
+* `PlotPixel` / `DrawEdgeLine` (9.7%): inline, word masks.
+* `ArcTan`, `RollPointXY` (7.3%): tables.
+* The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
+* Then the frame rate: the game is simulated a step a frame, so a limit under 6 vertical blanks
+  speeds the game up. Keep the physics at a step every 6 vertical blanks and draw more often (the
+  cars' positions interpolated), or shorten the physics' step. The release's turbo (F3) removes the
+  limit: it should become a choice of the limit instead.

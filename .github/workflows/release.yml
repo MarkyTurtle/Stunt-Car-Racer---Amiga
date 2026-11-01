@@ -1,6 +1,7 @@
 # When a release is published on GitHub: build the enhanced disk from the release's tag, boot it in
-# the emulator harness, and attach it to the release (StuntCarRacer_Enhanced_<tag>.adf), so it no
-# longer needs uploading by hand. It can also be run by hand for an existing release (Actions ->
+# the emulator harness, and attach it to the release (StuntCarRacer_Enhanced_<tag>.adf), with the
+# telemetry build's disk (StuntCarRacer_Enhanced_<tag>_telemetry.adf: enhanced/src/telemetry.i),
+# so they no longer need uploading by hand. It can also be run by hand for an existing release (Actions ->
 # release -> Run workflow, with the release's tag); a disk already attached under that name is
 # replaced.
 name: release
@@ -36,9 +37,12 @@ jobs:
         run: python enhanced/tools/build_disk.py
       - name: Boot it in the emulator harness (enhanced/tools/test_boot.py)
         run: python enhanced/tools/test_boot.py
-      - name: Attach it to the release
+      - name: Build the telemetry disk (enhanced/tools/build_disk.py --telemetry)
+        run: python enhanced/tools/build_disk.py --telemetry
+      - name: Attach them to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp enhanced/build/scr.adf "StuntCarRacer_Enhanced_${TAG}.adf"
-          gh release upload "$TAG" "StuntCarRacer_Enhanced_${TAG}.adf" --clobber
+          cp enhanced/build/scr_telemetry.adf "StuntCarRacer_Enhanced_${TAG}_telemetry.adf"
+          gh release upload "$TAG" "StuntCarRacer_Enhanced_${TAG}.adf" "StuntCarRacer_Enhanced_${TAG}_telemetry.adf" --clobber

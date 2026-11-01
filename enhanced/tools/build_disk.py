@@ -11,6 +11,8 @@ with the $4489 sync) with no filesystem, read only through the 4489_byteloader:
   $600  the files, one after another in id order
 
   python3 enhanced/tools/build_disk.py --check SHA1    (fails unless the disk's SHA-1 is SHA1)
+  python3 enhanced/tools/build_disk.py --telemetry     (the telemetry build: the game assembled with
+      TELEMETRY defined - src/telemetry.i times each race frame - to enhanced/build/scr_telemetry.adf)
 
 The files (ids: FID_ in boot_4489.s):
   0  the game: src/scr_game.s (the hand-edited source forked from original/scr_game.s),
@@ -25,18 +27,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ENH = os.path.normpath(os.path.join(HERE, '..'))
 ORIG = os.path.normpath(os.path.join(ENH, '..', 'original'))
 SRC, OUT = os.path.join(ENH, 'src'), os.path.join(ENH, 'build')
-ADF = os.path.join(OUT, 'scr.adf')
+TELEMETRY = '--telemetry' in sys.argv
+ADF = os.path.join(OUT, 'scr_telemetry.adf' if TELEMETRY else 'scr.adf')
 VASM = os.environ.get('VASM', 'vasmm68k_mot')
 DISK = 901120
 FT_OFFSET, FT_VERSION, FT_ENTRIES, DATA_START = 0x400, 1, 16, 0x600
-GAME_BIN = os.path.join(OUT, 'game.bin')
+GAME_BIN = os.path.join(OUT, 'game_telemetry.bin' if TELEMETRY else 'game.bin')
 FILES = [GAME_BIN,                                                      # 0 FID_GAME (src/scr_game.s)
          os.path.join(ORIG, 'bin', 'loadpic_78000.bin'),               # 1 FID_LOADPIC
          os.path.join(ORIG, 'bin', 'lowmem_c0.bin')]                   # 2 FID_LOWMEM
 
 
-def vasm(src, out, listing=None):
-    cmd = [VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC, '-I', ORIG] + (['-L', listing] if listing else []) + ['-o', out, src]
+def vasm(src, out, listing=None, defines=()):
+    cmd = ([VASM, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', SRC, '-I', ORIG] + [f'-D{d}' for d in defines] +
+           (['-L', listing] if listing else []) + ['-o', out, src])
     try:
         r = subprocess.run(cmd, capture_output=True, text=True)
     except FileNotFoundError:
@@ -59,7 +63,7 @@ def build():
     os.makedirs(OUT, exist_ok=True)
     bin_ = os.path.join(OUT, 'boot_4489.bin')
     vasm(os.path.join(SRC, 'boot_4489.s'), bin_, os.path.join(OUT, 'boot_4489.lst'))
-    vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN)
+    vasm(os.path.join(SRC, 'scr_game.s'), GAME_BIN, defines=['TELEMETRY=1'] if TELEMETRY else [])
     boot = open(bin_, 'rb').read()
     if len(boot) != 1024: sys.exit(f'the bootblock is {len(boot)} bytes, not 1024')
     adf = bytearray(DISK)

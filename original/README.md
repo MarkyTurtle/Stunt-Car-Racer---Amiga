@@ -17,8 +17,8 @@ Galahad), disassembled: sources that reassemble byte-identical, and the disk reb
 | [`docs/BOOT.md`](docs/BOOT.md) | the boot chain step by step, the helper block at `$C0`, the game's own disk access |
 | [`docs/MEMORY.md`](docs/MEMORY.md) | how the game uses the 512K: measured in the emulator |
 | [`docs/CODE.md`](docs/CODE.md) | how the game's code is put together, how the names were found, what is still to name |
-| `tools/names.py`, `tools/annotate.py` | the routines', variables' and data's names and descriptions, and the tool that applies them to the sources (checked: the game assembles the same) |
-| [`tools/scremu/`](tools/scremu) | the study emulator (Musashi, adapted from The New Zealand Story's): runs the game, records memory use, calls, variables; `run_usage.py` makes the measurements in MEMORY.md; `tools/screen.py` draws its snapshots |
+| [`docs/RENDER.md`](docs/RENDER.md) | the 3D view and the drawing: the pipeline, what each part costs (measured), where the time could be won |
+| [`tools/scremu/`](tools/scremu) | the study emulator (Musashi, adapted from The New Zealand Story's): runs the game, records memory use, calls, variables, where the time goes (`profile`, `callprof`), writes (`writelog`); `run_usage.py` makes the measurements in MEMORY.md; `tools/screen.py` draws its snapshots |
 | [`tools/disasm/`](tools/disasm) | the disassembler (the New Zealand Story's engine, `core.py`) and its configs (`*_cfg.py`): `make.py` |
 | [`tools/disk/`](tools/disk) | `extract_files.py` (the ADF -> `disk/files/`, `bin/`), `unpack_loader.py` |
 | [`render/`](render) | `assets.py`: the pictures as PNGs and the samples as WAVs; `loadpic.py`: the loading picture (`render/out/`) |
@@ -28,7 +28,6 @@ Galahad), disassembled: sources that reassemble byte-identical, and the disk reb
 python3 original/build.py                    # assemble, check, rebuild the disk
 python3 original/tools/disasm/make.py        # regenerate the sources into tools/disasm/regen/ and check them
 python3 original/render/assets.py            # the pictures and samples as PNG and WAV
-python3 original/tools/annotate.py           # apply tools/names.py to the sources
 original/tools/scremu/build.sh               # (once) the study emulator; then:
 python3 original/tools/scremu/run_usage.py OUT   # the memory measurements
 ```
@@ -42,8 +41,9 @@ the rest is data: the sound, the pictures, the screens and the tracks are in the
 `scr_game.s`. The trace follows the
 code from the entry, the vectors it sets (levels 1-7, trap 0) and the sweep for code nothing
 references; untraced bytes are `dc.b`. Labels are `sub_`/`l_`/`dat_` and the run address until
-named. 301 of the 511 routines are named so far, with a header saying what each does, and the
-known variables (`tools/names.py`, [`docs/CODE.md`](docs/CODE.md)).
+named. 332 routines are named so far (196 are still `sub_`), with a header saying what each does, and the
+known variables and tables, with a comment ([`docs/CODE.md`](docs/CODE.md)). The names are in the
+source: name things by editing it.
 
 `CopylockRoutine` (`$5C984`) is the game's copy-protection check as it was sold; nothing in this
 release calls it, and it is kept as data.

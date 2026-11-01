@@ -1,8 +1,7 @@
 # The original game: assemble its programs on Windows and Linux (original/build.py, as BUILDING.md
 # describes), check them against the originals' SHA-1, rebuild the source disk (the "Turbo"
 # release's ADF) and check its SHA-1, check that the disassembly configs still generate sources
-# that reassemble byte-identical (original/tools/disasm/make.py), check that the names in
-# original/tools/names.py are applied and change no byte (original/tools/annotate.py), and keep the rebuilt disk as the
+# that reassemble byte-identical (original/tools/disasm/make.py), and keep the rebuilt disk as the
 # run's artifact (downloadable from the run's page).
 name: original
 
@@ -38,8 +37,6 @@ jobs:
         run: python original/build.py
       - name: The disassembly configs (original/tools/disasm/make.py)
         run: python original/tools/disasm/make.py
-      - name: The names are applied (original/tools/annotate.py)
-        run: python original/tools/annotate.py
       - name: The checkout is unchanged
         shell: bash
         run: |

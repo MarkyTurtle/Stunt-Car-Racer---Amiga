@@ -1,8 +1,10 @@
 # The code
 
-How the game is put together, as far as it is known, and how its names were found. The names and
-their descriptions are in [`../tools/names.py`](../tools/names.py); `tools/annotate.py` applies them
-to the sources (each routine gets a header with its description; each variable a comment).
+How the game is put together, as far as it is known, and how its names were found. The names are
+in the source itself, `scr_game.s` (and its fork, `enhanced/src/scr_game.s`): each named routine
+has a header saying what it does, each named variable or table a comment on its line. A name is
+changed by editing the source - in both files while they are kept alike. The 3D view and the
+drawing have their own page: [RENDER.md](RENDER.md).
 
 ## Start-up
 
@@ -23,18 +25,16 @@ and a picture (`ShowRaceResultPicture`, `ShowChampionPicture`).
 
 ## A race frame
 
-`RaceFrame` (`$64EDE`) for each frame: the car's physics (`CarPhysics`: `BuildViewMatrix`, the forces,
-`WheelsOnTrack`), the opponent (`MoveOpponent`), the cars placed on their pieces
-(`PlaceCarOnTrack`), the track's pieces in view projected (`ProjectPointX`, `ProjectPointY`,
-`RollPoint`) and turned into polygons (`DrawPiece`, `AddPolygon`), the horizon (`DrawHorizon`,
-`DrawMountains`), the polygons filled (`DrawView`, `FillPolygon`: the CPU, a line at a time), the
-cockpit's moving parts (`DrawCutout`, the chains: `MoveChains`), the instruments, then
-`FrameLimiter`.
+The race loop (`$5D47E`) for each frame: the controls, `CarPhysics`, the engine's sound,
+`RaceView` (the cars placed, the track's pieces in view projected and their edges stepped, the sky
+and ground, the mountains, the track's rows filled far to near, the opponent's car, the cockpit's
+parts), the drawbridge, the instruments, then `FrameLimiter`. [RENDER.md](RENDER.md) has the
+pipeline and what each part costs.
 
 `FrameLimiter` (`$5DAC0`) waits until `Countdown1` reaches 0 and sets it to 6 again: a race frame
-at most every 6 vertical blanks (8.3 a second). The release's turbo (F3) makes the wait a `NOP`
-(`Helper_Wait`). How long a frame really takes - and so how much the limit matters on an A500 -
-is the first thing to measure for the performance work (scremu's `profile`).
+at most every 6 vertical blanks (8.33 a second). Measured, a frame's work on an A500 takes 6.5
+vertical blanks on average, so the limit rarely waits and the release's turbo (F3: the wait made a
+`NOP`, `Helper_Wait`) changes nothing there. The game is simulated a step a frame.
 
 ## The hardware
 
@@ -64,15 +64,20 @@ is the first thing to measure for the performance work (scremu's `profile`).
 * `tools/scremu`, the game run on a minimal Amiga: how often each routine is called in play
   (`calls`), which memory each part touches (`usage`, `watch`), how variables change with the
   controls (`record`: speed, the pieces the cars are on, the laps, the rotation matrix);
+* where the time goes: scremu's `profile` (cycles by instruction) and `callprof` (by routine,
+  with all it calls), the telemetry build (`enhanced/src/telemetry.i`, by phase of a frame), and
+  `writelog` (every write to a variable, with the instruction that wrote it);
 * the screens: `tools/screen.py` draws scremu's snapshots by following the copper list.
 
 ## Status
 
-Named: 301 of the 511 routines and 120 or so variables and tables (`tools/names.py`). Named fully:
-the start-up, the interrupts and the hardware, the sound, the input, the text, the pictures, the
-menus and the league, the save disk, the computer link, the maths, the projection. Named by what
-they work on, not yet understood in detail (their descriptions say "probably"): the car's physics,
-the opponent's driving, the track's format, the parts of the 3D view. Not named yet: the remaining
-210 routines - mostly the 3D view's internals (the polygon list's drawing, `$688FC-$69270`), the
-physics (`$61950-$62424`), the opponent (`$636C0-$63EE2`) - and most of the race's variables
-(`$1BAF8-$1CA35`).
+Named: the start-up, the interrupts and the hardware, the sound, the input, the text, the pictures,
+the menus and the league, the save disk, the computer link, the maths, the projection, and the 3D
+view's pipeline ([RENDER.md](RENDER.md): `RaceView`, `ProjectNearPiece`, `ProjectFarPieces`, the
+`Edges...` routines, `ScanEdge`, `DrawFarRows`, `DrawNearRows`, `FillRowSurface`,
+`FillBetweenEdges`, `DrawEdgeLine`, `DrawOpponentCar`, the row table and the edge buffers). Named by
+what they work on, not yet understood in detail (their descriptions say "probably"): the car's
+physics, the opponent's driving, the track's format, the opponent's car's model. Not named yet:
+196 routines - the rows' sides and lines (`sub_688FC`-`sub_68BEC`, `sub_691B4`,
+`sub_69270`), the physics (`$61950-$62424`), the opponent (`$636C0-$63EE2`) - and most of the
+race's variables (`$1BAF8-$1CA35`).
