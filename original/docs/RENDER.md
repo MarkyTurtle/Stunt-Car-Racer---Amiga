@@ -5,16 +5,18 @@ here was measured with the telemetry build and the study emulator: the race benc
 (`enhanced/tools/bench.py`: Division 4's first race, Little Ramp, against Jumpin' Jack, a minute
 of it with the throttle held) timed by phase (`enhanced/src/telemetry.i`), and the same race
 profiled by routine (scremu's `profile` and `callprof`). The emulator counts each instruction's
-68000 cycles at 7.09 MHz; it does not slow the CPU for the chip memory it shares with the display,
-which with 4 low-resolution bitplanes costs the 68000 little - so these are close to an A500's
-figures, and exact for comparing one version of the game with another.
+68000 cycles at 7.09 MHz and takes 6 cycles of each raster line for the display's DMA - fitted to
+an A500, whose calibration run (`enhanced/src/calibrate.i`) it matches within 1.2%
+(`enhanced/measurements/`) - so these are an A500's figures, and exact for comparing one version
+of the game with another. (The routines' shares below were profiled before the fit; the fit
+moved the phases' shares by less than 1%.)
 
 ## What limits the frame rate
 
 `FrameLimiter` lets a race frame start at most every 6 vertical blanks (8.33 a second). On an A500
-the work of a frame takes longer than that: **6.47 vertical blanks on average (129.6 ms)**, so the
-race runs at **7.7 frames a second** and `FrameLimiter` almost never waits (0.1 ms a frame). Of 568
-frames, 405 took 6 vertical blanks, 104 took 7, 58 took 8 and 1 took 9 - the longer ones when the
+the work of a frame takes longer than that: **6.65 vertical blanks on average (133.3 ms)**, so the
+race runs at **7.5 frames a second** and `FrameLimiter` almost never waits (0.1 ms a frame). Of 552
+frames, 270 took 6 vertical blanks, 187 took 7, 87 took 8 and 8 took 9 - the longer ones when the
 opponent's car is in view (its drawing adds up to 300 lines) and every 4th frame, when the
 instruments' digits are printed (130 lines).
 
@@ -30,12 +32,12 @@ a shorter step.
 
 | Phase | ms | Share | What |
 |---|---:|---:|---|
-| input | 4.7 | 3.6% | the controls, `CarPhysics`, the engine's sound |
-| cars | 3.1 | 2.4% | the cars placed on their pieces, the opponent |
-| geometry | 40.2 | 31.0% | the pieces in view: points rotated and projected, the edges clipped and stepped |
-| drawing | 63.9 | 49.3% | the sky and ground, the mountains, the track's surfaces and lines, the opponent's car |
-| cockpit | 15.2 | 11.7% | the cockpit's parts drawn over the view (`DrawCutout`), the chains |
-| rest | 2.4 | 1.9% | the drawbridge, the instruments |
+| input | 4.8 | 3.6% | the controls, `CarPhysics`, the engine's sound |
+| cars | 3.2 | 2.4% | the cars placed on their pieces, the opponent |
+| geometry | 42.1 | 31.6% | the pieces in view: points rotated and projected, the edges clipped and stepped |
+| drawing | 65.0 | 48.7% | the sky and ground, the mountains, the track's surfaces and lines, the opponent's car |
+| cockpit | 15.6 | 11.7% | the cockpit's parts drawn over the view (`DrawCutout`), the chains |
+| rest | 2.5 | 1.9% | the drawbridge, the instruments |
 | wait | 0.1 | 0.1% | `FrameLimiter` |
 
 (The first version of the telemetry now and then read its clock a frame ahead - the beam read on a

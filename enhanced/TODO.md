@@ -12,11 +12,13 @@ they are shown: about 89K of chip memory is free now.
 * ~~Try the disk on an A500 and an A1200~~: done (November 2026, the disk of 6ea8ff7): the game,
   the pictures loaded from the disk after races and in the Hall of Fame, on both. (The disk before
   it crashed after a race on a 68000: an address error, fixed - the tests now catch them.)
-* ~~A race measured on an A500~~ (`measurements/`): 7.55 vertical blanks a frame of work, 6.6
-  frames a second - more than the emulator's 6.5 for its benchmark (another race, so not directly
-  comparable). Next: the calibration run (F7) on the A500, to fit the emulator's timing to it
-  (scremu's `chipbus`, `bench.py --calibrate --calibration`), so that the benchmark's figures are
-  an A500's.
+* ~~A race measured on an A500~~ (`measurements/`): 7.3-7.55 vertical blanks a frame of work,
+  6.6-6.8 frames a second (races played by hand, so not the benchmark's race).
+* ~~Fit the emulator to the A500~~: done (`measurements/README.md`): the A500's calibration run
+  (F7) matched within 1.2% - scremu's 68000 timing corrected (`add.l`/`adda.l` from a register: 8
+  cycles, Musashi had 6), each line's overrun carried into the next, and 6 CPU cycles a line lost
+  to the display's DMA (`cpulost`). The benchmark's figures are now an A500's: 6.65 vertical
+  blanks of work for the released game, 7.5 frames a second.
 * Record a race's inputs on a real Amiga (the controls each race frame, the random number's seed at
   the start: in the free memory under the telemetry) and replay them in the emulator: the same
   race, frame by frame, on both - the real machine's costs and the emulator's side by side, and
@@ -32,7 +34,7 @@ they are shown: about 89K of chip memory is free now.
   from the disk (below), anywhere: the screens move up with the code, into the 89K freed.
 * ~~Remove the self-modifying code~~: done (`original/docs/RENDER.md`): `PlotPixel`'s colours,
   `ColourWordJump`, and the helper block's turbo (now assembled from `src/helper_c0.s`). Checked:
-  the enhanced game writes none of its instructions. It costs 2.3% of a frame until `PlotPixel` and
+  the enhanced game writes none of its instructions. It costs 2.5% of a frame until `PlotPixel` and
   the fill are rewritten. Runs on an A1200.
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
@@ -83,7 +85,7 @@ keeping them all in memory.
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
-6.47 vertical blanks on an A500 (the limit is 6), 7.7 frames a second; geometry 31%, drawing 49%,
+6.65 vertical blanks on an A500 (the limit is 6), 7.5 frames a second; geometry 32%, drawing 49%,
 cockpit 12%. A word of the view is written 1.87 times a frame (overdraw: moderate - the time goes
 on the work for each line and edge more than on pixels written twice). Measure each change with the benchmark (`tools/bench.py --compare
 bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.

@@ -102,14 +102,15 @@ Measurements made so far are in [`measurements/`](measurements).
 **The benchmark** (`tools/bench.py`) plays the same race the same way every time in the study
 emulator (`original/tools/scremu`): Division 4's first race, a minute of it with the throttle held.
 `--opponent` keeps the opponent's car in view all the race (`bench_opponent.json`); `--calibrate`
-runs the calibration run in it (the emulator's figures for it); `--chipbus` times it as the chip
-bus would (each instruction from chip memory rounded up to 4 cycles: to be fitted to the A500's
-calibration run).
+runs the calibration run in it (the emulator's figures for it).
 `--json FILE` keeps its figures and `--compare FILE` shows the change in each phase, so every
 change to the game can be measured against `bench_baseline.json` (the game as released: the
 original code with the telemetry build's hooks). The
-workflow runs it and shows the report on the run's page. The emulator's times are close to an
-A500's (it does not slow the CPU for the display's memory use) and exact from run to run.
+workflow runs it and shows the report on the run's page. The emulator's timing is fitted to an
+A500's - its calibration run matches the A500's within 1.2% (`measurements/README.md`) - so the
+times are an A500's, and exact from run to run. The released game: 6.65 vertical blanks of work a
+frame, 7.5 frames a second; the enhanced game 2.5% slower until `PlotPixel` and the fill are
+rewritten (the cost of removing their self-modifying code).
 
 **The relocation test** (`tools/reloc_test.py`) assembles the game with 16 bytes put in before its
 code and checks that it plays the benchmark's race exactly as before - that nothing in the source

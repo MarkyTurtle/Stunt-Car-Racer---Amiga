@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--calibration REF.json] [--game BIN] [--helper BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--game BIN] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -12,14 +12,14 @@ Prints tools/telemetry.py's report of the race (--json, --compare, --calibration
 options). --opponent keeps the opponent one piece ahead of the player (its piece set from the player's every
 25 vertical blanks): its car in view all the race - the drawing's worst case so far, about 9%
 more than without. --calibrate presses F7 in the race: the calibration run (src/calibrate.i), whose figures
-are the emulator's to compare with a real Amiga's. --chipbus times the game as the chip bus would
-(scremu's chipbus: each instruction from chip memory rounded up to a multiple of 4 cycles).
+are the emulator's to compare with a real Amiga's. --chipbus rounds each instruction from chip
+memory up to 4 cycles (scremu's chipbus: an older model, which does not fit the A500).
 
-The times are the emulator's: a 68000 at 7.09 MHz running every instruction for its documented
-cycles, with no slowdown for chip memory shared with the display (4 bitplanes in low resolution
-take no cycles the 68000 would use) - close to an A500, not exact. The same build in WinUAE
-(cycle-exact A500) gives the real figures (enhanced/README.md); for comparing two versions of the
-game, the emulator's figures are exact and repeatable.
+The times are the emulator's, fitted to an A500's: a 68000 at 7.09 MHz with the 68000's
+cycles, 6 cycles of each raster line lost to DMA (scremu's cpulost) - the telemetry build's
+calibration run on an A500 is matched within 1.2% (enhanced/measurements/). For comparing two
+versions of the game the emulator's figures are exact and repeatable. --cpulost N changes the
+DMA's share (0: none).
 """
 import os, subprocess, sys, tempfile
 
@@ -34,7 +34,7 @@ import telemetry
 
 
 def script(frames, snap):
-    L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + \
+    L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + (['cpulost ' + arg('--cpulost')] if arg('--cpulost') else []) + \
         ['until 0xE730 100', 'frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']   # the title: fire
     for k in ('37', '20', '13', '27', '44'):                                           # MARK, Return
         L += [f'key {k}', 'frames 10']

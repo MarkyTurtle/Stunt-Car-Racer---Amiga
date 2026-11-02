@@ -28,6 +28,10 @@ HelperCalibrate	equ	$15F			; F7 sets it (helper_c0.s)
 ;-------------------------------------------------------------------------------
 Calibrate:
 	movem.l	d0-d7/a0-a6,-(a7)
+	cmpi.l	#'CALB',(CAL_MAGIC).w		; the first run: the count from 0
+	beq.s	.counted
+	clr.w	(CAL_RUNS).w
+.counted:
 	move.l	#'CALB',(CAL_MAGIC).w
 	move.w	#1,(CAL_VERSION).w
 	move.w	#(CalTestsEnd-CalTests)/4,(CAL_TESTS).w

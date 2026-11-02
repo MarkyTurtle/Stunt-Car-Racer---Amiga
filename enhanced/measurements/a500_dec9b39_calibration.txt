@@ -1,0 +1,91 @@
+289 race frames: 147.2 ms a frame on average, 6.80 frames a second
+the work (all but the wait): 146.6 ms, 7.32 vertical blanks (FrameLimiter allows a frame every 6: 120.2 ms)
+shortest 113.5 ms, longest 316.9 ms
+
+phase           ms  share
+input         4.89   3.3%   the controls, the car's physics, the engine
+cars          2.99   2.0%   the cars placed on the track, the opponent
+geometry     40.77  27.7%   the pieces in view: points rotated and projected, edges stepped
+drawing      75.99  51.6%   sky and ground, mountains, the track's surfaces, the cars
+cockpit      18.60  12.6%   the cockpit's parts drawn over the view
+rest          3.40   2.3%   the drawbridge, the instruments
+wait          0.52   0.4%   FrameLimiter: waiting for the 6th vertical blank
+
+frames by length (vertical blanks): 6: 86, 7: 72, 8: 103, 9: 22, 12: 2, 14: 2, 15+: 2
+
+the calibration run (F7, 43691 run(s); the last): CPU cycles - and against the reference
+  regs         53,654    53,012  x1.012   registers only: 2,000 add, eor, dbra
+  mul          27,600    27,884  x0.990   400 mulu
+  read         36,992    36,816  x1.005   chip memory read: 2,000 words
+  write        45,414    44,928  x1.011   chip memory written: 2,000 longs
+  rmw          45,414    44,928  x1.011   chip memory read and written: 2,000 words
+  cutout       91,950    91,948  x1.000   DrawCutout: the cockpit's widest part, twice
+  plotpixel   100,352   100,374  x1.000   PlotPixel: 500 pixels
+  fill         90,436    90,656  x0.998   ClearWordPlanes/PlotWord: 500 words
+
+the last frames (lines):
+ total    input     cars geometry  drawing  cockpit     rest     wait
+  1935       74       50      473      994      191      151        2
+  1819       75       57      478     1008      194        5        2
+  1824       74       51      488     1009      195        5        2
+  1854       73       56      492     1021      191       11       10
+  2159       73       53      501     1019      191      320        2
+  1818       78       52      474     1016      191        5        2
+  1792       83       50      443     1009      193       12        2
+  1789       74       57      445     1012      193        6        2
+  1906       75       51      435     1007      192      144        2
+  1784       74       51      433     1018      190       16        2
+  1872       73       51      448     1042      191        6       61
+  1874       72       51      468     1062      191        5       25
+  2166       73       51      474     1049      191      326        2
+  1880       76       56      483     1067      191        5        2
+  1926       79       62      495     1089      194        5        2
+  1955       74       51      501     1132      190        5        2
+  2185       74       58      500     1216      184      151        2
+  2166       75       59      511     1320      187       12        2
+  2307       75       51      505     1476      186       12        2
+  2639       80       55      487     1636      193      186        2
+  2660       75       51      489     1704      197      142        2
+  2457       81       54      470     1644      195       11        2
+  2384       76       63      470     1575      193        5        2
+  2317       85       59      486     1488      192        5        2
+  2362       81       59      478     1402      195      145        2
+  2220       78       56      483     1383      213        5        2
+  2288       76       56      497     1431      218        8        2
+  2452       76       61      485     1431      214      183        2
+  2402       75       62      459     1442      216      146        2
+  2292       74       55      488     1454      213        6        2
+  2227       76       61      455     1416      212        5        2
+  2213       75       60      465     1394      211        6        2
+  2216       82       59      462     1256      212      143        2
+  2086       83       60      476     1084      375        6        2
+  1800       76       66      488      980      176       12        2
+  1836       75       61      478      779      175      187       81
+  1874       74       65      473      637      172      153      300
+  1874       73       56      447      810      177       12      299
+  1874       73       57      424      974      175       12      159
+  1874       74       55      446      949      175       12      163
+  1874       73       56      428      898      176      148       95
+  1875       74       55      447      911      175       12      201
+  1874       74       42      539      926      171       12      110
+  1947       73       42      538      931      171      190        2
+  1920       74       42      520      959      172      151        2
+  1773       75       42      512      955      176       11        2
+  1856       74       41      521      934      171       12      103
+  1970       73       47      688      973      175       12        2
+  2354       74       45      883     1026      175      149        2
+  2298       77       42      946     1044      176       11        2
+  2516       75       42      982     1055      171      189        2
+  2404       75       42     1033     1068      172       12        2
+  2669       78       42     1140     1082      173      152        2
+  2545       75       49     1185     1052      171       11        2
+  2513       81       46     1205      996      172       11        2
+  2447       81       45     1207      925      175       12        2
+  2568       75       47     1236      884      175      149        2
+  3603       88       41     1233     2010      190       39        2
+  2928       75       42      630     1804      190      185        2
+  3790       81       50      661     2802      183       11        2
+  4491       85       43      625     3402      188      146        2
+  4655       75       42      632     3705      194        5        2
+  4517       78       42      634     3556      200        5        2
+  4952       75       49      657     3964      200        5        2

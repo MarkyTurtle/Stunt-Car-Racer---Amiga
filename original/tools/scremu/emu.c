@@ -50,9 +50,14 @@
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
  *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
+ *   cpulost N             N CPU cycles of every line lost to DMA (the CPU waits at the line's start):
+ *                         6 by default, which fits an A500 (with Musashi's 68000 timing corrected,
+ *                         build.sh, and each line's overrun carried into the next: the telemetry
+ *                         build's calibration run within 1.2% - enhanced/measurements/); 0: none
  *   pokecopy DST SRC ADD  write byte DST = byte SRC + ADD (to keep a variable tied to another)
- *   chipbus 1 / 0         the chip bus's timing: an instruction run from chip memory takes its cycles
- *                         rounded up to a multiple of 4 (off: each instruction its 68000 cycles)
+ *   chipbus 1 / 0         an instruction run from chip memory takes its cycles rounded up to a multiple
+ *                         of 4 (off by default: it does not fit the A500's calibration run - 4-7%
+ *                         too slow for simple loops - cpulost does)
  *   inject ADDR [D0]      make the game call ADDR now, as from where it is (with D0): the script goes on
  *                         while it runs (to press fire in it, take snapshots)
  *   disk ADDR ADF|none    the game's 4489_byteloader (at ADDR) done at once from the ADF; "none": no disk in
@@ -438,6 +443,7 @@ static void disk_call(void) {
     m68k_set_reg(M68K_REG_PC, m68k_read_memory_32(sp)); m68k_set_reg(M68K_REG_A7, sp + 4);
 }
 static int chipbus; static long cb_last = -1; static unsigned cb_pc = 0xFFFFFFFF;
+static int cpulost = 6, cl_pending, cl_taken;   /* cpulost N: N CPU cycles of each line lost to DMA (taken at its start) */
 /* chipbus: the 68000 on the chip bus can start a memory access only every 4 cycles (2 colour
  * clocks): an instruction run from chip memory takes its cycles rounded up to a multiple of 4 */
 static void chipbus_hook(unsigned pc) {
@@ -450,6 +456,7 @@ static void chipbus_hook(unsigned pc) {
 }
 void instr_hook(unsigned int pc) {
     pc &= 0xFFFFFF;
+    if (cl_pending) { cl_pending = 0; m68k_modify_timeslice(-cpulost); cl_taken = cpulost; }
     if (chipbus) chipbus_hook(pc);
     if (pc == disk_loader) { disk_call(); return; }
     if (crashwatch) {
@@ -502,9 +509,15 @@ static void cia_tick_timers(cia_t *c, int eclocks) {
     }
 }
 static long cyc_now(void) { long c = LINE_CYCLES - m68k_cycles_remaining(); if (c < 0) c = 0; if (c > LINE_CYCLES) c = LINE_CYCLES; return cyc_total + c; }
+static int line_over;              /* the cycles the last line's last instruction ran over its end */
 static void run_line(void) {
     cb_last = -1;                                            /* (chipbus: from the line's start) */
-    m68k_execute(LINE_CYCLES);
+    cl_pending = cpulost > 0;
+    {   /* an instruction that runs over the line's end takes those cycles from the next line */
+        int want = LINE_CYCLES - line_over;
+        if (want < 1) { line_over -= LINE_CYCLES; }
+        else { cl_taken = 0; line_over = m68k_execute(want) + cl_taken - want; }
+    }
     cyc_total += LINE_CYCLES;
     cia_tick_timers(&ciaa, 45); cia_tick_timers(&ciab, 45);
     /* CIA-B TOD counts lines (HSYNC) */
@@ -656,7 +669,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(cmd, "pokecopy")) {                   /* pokecopy DST SRC ADD: byte DST = byte SRC + ADD */
             unsigned d = strtoul(a1, 0, 0), sr = strtoul(a2, 0, 0); long add = strtol(a3, 0, 0);
             if (d < RAM && sr < RAM) ram[d] = (uint8_t)(ram[sr] + add); }
-        else if (!strcmp(cmd, "chipbus")) chipbus = atoi(a1);  /* chipbus 1: the chip bus's 4-cycle grid */
+        else if (!strcmp(cmd, "chipbus")) chipbus = atoi(a1);
+        else if (!strcmp(cmd, "cpulost")) cpulost = atoi(a1);  /* cpulost N: N cycles a line lost to DMA */  /* chipbus 1: the chip bus's 4-cycle grid */
         else if (!strcmp(cmd, "inject")) {                     /* inject ADDR [D0]: the game made to call ADDR now (it returns where it was) */
             unsigned sp = m68k_get_reg(NULL, M68K_REG_A7) - 4; m68k_write_memory_32(sp, m68k_get_reg(NULL, M68K_REG_PC));
             m68k_set_reg(M68K_REG_A7, sp); if (a2[0]) m68k_set_reg(M68K_REG_D0, strtoul(a2, 0, 0));
