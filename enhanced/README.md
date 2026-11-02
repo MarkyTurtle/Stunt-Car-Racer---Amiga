@@ -91,8 +91,9 @@ wreck with no disk in, with another disk in (the game asks for its disk and wait
 disk back. `--png DIR` draws the screens.
 
 `tools/measure_keep.py --check` checks `src/interp_keep.i` - the variables the view's drawing
-keeps from picture to picture, measured in two races in the emulator (without `--check` it writes
-the file anew).
+keeps from picture to picture - against two races measured in the emulator: every byte the
+drawing alone writes is on the list, and none on it is written by the rest of the game (without
+`--check` it merges the measurement into the list).
 
 Both scremu tests (`test_pictures.py`, `reloc_test.py`) fail on any word or long read or written at
 an odd address: a 68000 stops there with an address error (a Guru in WinUAE), while the emulators

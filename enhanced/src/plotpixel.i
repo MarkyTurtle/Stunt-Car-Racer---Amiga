@@ -15,6 +15,7 @@ SetPolygonColour:
 	moveq	#$f,d1
 	and.b	d0,d1
 	lsl.w	#3,d1
+	move.w	d1,(PlotColour8).l		; (DrawEdgeLine: its runs through PlotWord<colour>)
 	lea	(PlotPixelTable).l,a1
 	move.l	(a1,d1.w),(PlotPixelOddRoutine).l
 	move.l	4(a1,d1.w),(PlotPixelEvenRoutine).l
@@ -22,6 +23,8 @@ SetPolygonColour:
 	lsr.b	#4,d0
 	rts
 
+PlotColour8:				; the colour * 8 (SetPolygonColour)
+	dc.w	0
 PlotPixelOddRoutine:			; PlotPixel's routine for a pixel in the word's second byte (SetPolygonColour)
 	dc.l	PlotPixelOdd15
 PlotPixelEvenRoutine:			; ... and in its first byte

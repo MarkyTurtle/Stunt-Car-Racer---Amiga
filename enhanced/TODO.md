@@ -94,8 +94,10 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
 * ~~`ScanEdge`: step a line at a time, not a pixel~~: done (`ScanXMajor`) - the race 4.5% faster,
   the same edges exactly; 2.1% faster than the released game. `ScanEdge` is still 12.5% of the
   frame: about 120 calls a frame at about 400 cycles each before any stepping (the outcodes, the
-  set-up). Next: find edges stepped twice (shared by two rows or pieces) and step them once; a
-  leaner entry (the outcodes from a table, the variables in registers).
+  set-up). Measured since: about 100 calls a frame, 4 of them an edge stepped twice (not worth
+  sharing); 4 in 5 with both points in the view - ~~those skip the outcodes and the clipping~~
+  (done: a test of both points at once). Still to do: a leaner entry and tail for those (the
+  variables `dat_668A2`/`dat_668A6` written and tested for nothing: perhaps 0.5-1% of a frame).
 * ~~The blitter for the cockpit~~: done (`src/blitcutout.i`): `DrawCutout`'s cut-outs blitted
   (cookie-cut, from copies made at start-up in the blitter's form), the cockpit's time 54% less
   (15.6 ms to 7.2 ms a frame), the race's work 8.8% less than the released game's: 6.07 vertical
@@ -112,8 +114,11 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   runs average 11 words), drawing 1.7% less. Still to do: its variables in registers (the line's
   `dat_1BC5A`, `dat_69ACE` and the edge list's bounds are read from memory each line), the
   partial words without the `jsr`/`ColourWordJump` (about 80 cycles of calls for each).
-* `PlotPixel` / `DrawEdgeLine` (9.7%): inline, word masks (and so the cost of removing the
-  self-modifying code won back).
+* ~~`PlotPixel` / `DrawEdgeLine`~~: done - `DrawEdgeLine` notes each screen line's run of pixels
+  (about 5 a line) and writes it a word at a time through `PlotWord<colour>` (`EdgeFlush`), the
+  run's length found at once instead of stepped a pixel at a time: the same pixels (checked: the
+  screens frame for frame, in the benchmark's race and two with random steering), the race's
+  work 3.5% less.
 * The cockpit (11.7%, now 5.7%): ~~F6 turns it off~~ (done); ~~the blitter's cookie-cut for its
   cut-outs~~ (done); the cut-outs split to skip their transparent parts; the
   view's drawing stopped above the engine's solid lines (3,478 pixels of the view are under it).

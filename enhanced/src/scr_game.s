@@ -20027,6 +20027,17 @@ l_668EC:
         exg.l   d6,d4                           ; 6691C
         ori.b   #$40,(a1,d0.w)                  ; 6691E
 l_66924:
+        move.w  d4,d0                           ; (enhanced) both points in the view (4 edges in 5): the
+        or.w    d6,d0                           ; outcodes and the clipping not needed - both x below
+        cmpi.w  #$100,d0                        ; $100 and both y below $80 at once (as unsigned)
+        bcc.s   .clip
+        move.w  d5,d0
+        or.w    d7,d0
+        cmpi.w  #$80,d0
+        bcc.s   .clip
+        moveq   #0,d0                           ; (d0 as the outcodes' way leaves it)
+        bra.w   l_66E36
+.clip:
         move.w  #$0,d0                          ; 66924
         move.w  d0,d3                           ; 66928
         cmpi.w  #$100,d4                        ; 6692A
@@ -23425,10 +23436,34 @@ FarRowsEnd:				; the row table's last row of the far pieces (DrawFarRows stops t
 	dc.b	$00,$00
 
 ;-------------------------------------------------------------------------------
-; DrawEdgeLine - an edge buffer drawn as a line of single pixels (PlotPixel, colour set by
-; SetPolygonColour): the lines along the track (probably)
+; DrawEdgeLine - an edge buffer drawn as a line of single pixels (colour set by
+; SetPolygonColour): the lines along the track (probably).
+;
+; (enhanced) The release plotted each pixel with a call of PlotPixel: 4 bset or bclr, and about
+; 120 cycles of call and dispatch around them. Most of a line's pixels are runs along a screen
+; line (about 5 a line), so here each line's run is noted (EDGEPIX: its lowest and highest x in
+; d1, d7) and written when the line changes or the line ends (EdgeFlush): a word at a time
+; through the fills' PlotWord<colour> (the masked bits set to the colour in each plane). The
+; same pixels as the release's; d1, d3, d7, a1, a4-a6 kept for the callers.
 ;-------------------------------------------------------------------------------
+EDGEPIX	macro					; a pixel at x d4 on the run
+	cmp.w	d1,d4
+	bge.s	.p\@
+	move.w	d4,d1
+.p\@:	cmp.w	d7,d4
+	ble.s	.q\@
+	move.w	d4,d7
+.q\@:
+	endm
+
 DrawEdgeLine:
+        movem.l d1/d3/d7/a1/a4-a6,-(a7)         ; (enhanced) the runs' registers
+        lea.l   (l_66476).l,a5                  ; PlotWord<colour>: 16 bytes each
+        move.w  (PlotColour8).l,d1
+        add.w   d1,d1
+        adda.w  d1,a5
+        move.w  #$7fff,d1                       ; no run yet
+        moveq   #-1,d7
         cmpi.w  #$80,$2(a3)                     ; 6932E
         bcc.w   l_6950A                         ; 69334
         movea.l a3,a2                           ; 69338
@@ -23488,6 +23523,8 @@ l_693A2:
         add.l   d5,d0                           ; 693DC
         asl.l   #$3,d0                          ; 693DE
         adda.l  d0,a0                           ; 693E0
+        movea.l (ScreenDrawTop).l,a6            ; (enhanced) the line's start, for the runs
+        adda.l  d0,a6
         move.b  #$0,d2                          ; 693E2
         move.w  (a3)+,d6                        ; 693E6
         bpl.w   l_69400                         ; 693E8
@@ -23500,7 +23537,7 @@ l_69400:
         bne.w   l_69408                         ; 69400
         move.w  #$ffff,d6                       ; 69404
 l_69408:
-        jsr     (PlotPixel).l                   ; 69408
+        EDGEPIX                                 ; 69408 (enhanced: was jsr PlotPixel)
         cmp.w   d4,d6                           ; 6940E
         bne.w   l_69448                         ; 69410
         move.w  (a3)+,d6                        ; 69414
@@ -23516,21 +23553,25 @@ l_6942E:
 l_69436:
         subq.w  #$1,d5                          ; 69436
         bmi.w   l_6950A                         ; 69438
+        bsr.w   EdgeFlush                       ; (enhanced) the line's run written
+        lea.l   -$28(a6),a6
         suba.l  #$28,a0                         ; 6943C
         cmp.w   d4,d6                           ; 69442
         beq.w   l_69408                         ; 69444
-l_69448:
-        move.w  d4,d0                           ; 69448
-        subq.w  #$1,d4                          ; 6944A
-        andi.w  #$f,d0                          ; 6944C
-        bne.w   l_69460                         ; 69450
-        tst.w   d4                              ; 69454
-        bmi.w   l_6950A                         ; 69456
-        suba.l  #$2,a0                          ; 6945A
-l_69460:
-        bra.w   l_69408                         ; 69460
+l_69448:					; (enhanced) the run left to the edge's x at once - the release
+        subq.w  #1,d4                           ; stepped a pixel at a time: the next pixel (off the view's
+        bmi.w   l_6950A                         ; left: out), then all to the edge's x, or, when that is not
+        EDGEPIX                                 ; to the left (or is off it), to the view's left side and out
+        tst.w   d6
+        bmi.s   .left
+        cmp.w   d4,d6
+        bgt.s   .left
+        move.w  d6,d4
+        bra.w   l_69408
+.left:  clr.w   d1
+        bra.w   l_6950A
 l_69464:
-        rts                                     ; 69464
+        bra.w   EdgeLineDone                    ; 69464 (enhanced: was rts)
 l_69466:
         movea.l (ScreenDrawTop).l,a0            ; 69466
         move.w  d4,d0                           ; 6946C
@@ -23544,6 +23585,8 @@ l_69466:
         add.l   d5,d0                           ; 6947E
         asl.l   #$3,d0                          ; 69480
         adda.l  d0,a0                           ; 69482
+        movea.l (ScreenDrawTop).l,a6            ; (enhanced) the line's start, for the runs
+        adda.l  d0,a6
         move.b  #$0,d2                          ; 69484
         move.w  (a3)+,d6                        ; 69488
         bpl.w   l_694A2                         ; 6948A
@@ -23556,7 +23599,7 @@ l_694A2:
         bne.w   l_694AA                         ; 694A2
         move.w  #$ffff,d6                       ; 694A6
 l_694AA:
-        jsr     (PlotPixel).l                   ; 694AA
+        EDGEPIX                                 ; 694AA (enhanced: was jsr PlotPixel)
         cmp.w   d4,d6                           ; 694B0
         bne.w   l_694EA                         ; 694B2
         move.w  (a3)+,d6                        ; 694B6
@@ -23572,23 +23615,87 @@ l_694D0:
 l_694D8:
         subq.w  #$1,d5                          ; 694D8
         bmi.w   l_6950A                         ; 694DA
+        bsr.w   EdgeFlush                       ; (enhanced) the line's run written
+        lea.l   -$28(a6),a6
         suba.l  #$28,a0                         ; 694DE
         cmp.w   d4,d6                           ; 694E4
         beq.w   l_694AA                         ; 694E6
-l_694EA:
-        addq.w  #$1,d4                          ; 694EA
-        move.w  d4,d0                           ; 694EC
-        andi.w  #$f,d0                          ; 694EE
-        bne.w   l_69504                         ; 694F2
-        cmp.w   #$100,d4                        ; 694F6
-        bge.w   l_6950A                         ; 694FA
-        adda.l  #$2,a0                          ; 694FE
-l_69504:
-        bra.w   l_694AA                         ; 69504
+l_694EA:					; (enhanced) the run right to the edge's x at once: the next pixel
+        addq.w  #1,d4                           ; (off the view's right: out), then all to the edge's x, or
+        cmpi.w  #$100,d4                        ; to the view's right side and out
+        bge.w   l_6950A
+        EDGEPIX
+        cmp.w   d4,d6
+        blt.s   .right
+        cmpi.w  #$100,d6
+        bge.s   .right
+        move.w  d6,d4
+        bra.w   l_694AA
+.right: move.w  #$ff,d7
+        bra.w   l_6950A
 l_69508:
-        rts                                     ; 69508
+        bra.w   EdgeLineDone                    ; 69508 (enhanced: was rts)
 l_6950A:
+EdgeLineDone:					; (enhanced) the last run written
+        bsr.s   EdgeFlush
+        movem.l (a7)+,d1/d3/d7/a1/a4-a6
         rts                                     ; 6950A
+
+;-------------------------------------------------------------------------------
+; EdgeFlush - (enhanced) DrawEdgeLine's run on a line written: x d1 to d7 on the line at a6, in
+; the colour of the PlotWord at a5 (16 bytes a colour from l_66476), a word at a time. The run
+; is emptied. d0, d3, a1, a4 used; the line's registers (d2, d4) kept
+;-------------------------------------------------------------------------------
+EdgeFlush:
+        cmp.w   d1,d7
+        blt.s   .none
+        movea.l d2,a1
+        move.l  d4,d3
+        move.w  d1,d0
+        lsr.w   #4,d0
+        add.w   d0,d0
+        lea.l   (a6,d0.w),a4                    ; the run's first word
+        moveq   #-1,d4
+        move.w  d1,d0
+        andi.w  #$f,d0
+        lsr.w   d0,d4                           ; its mask: from the run's first pixel
+        move.w  d7,d0
+        lsr.w   #4,d0
+        move.w  d1,d2
+        lsr.w   #4,d2
+        sub.w   d2,d0                           ; the words after the first
+        beq.s   .one
+        move.w  d4,d2
+        not.w   d2
+        jsr     (a5)                            ; the first
+        subq.w  #1,d0
+        beq.s   .last
+        moveq   #-1,d4
+        moveq   #0,d2
+.whole: jsr     (a5)                            ; the whole words
+        subq.w  #1,d0
+        bne.s   .whole
+.last:  moveq   #-1,d4
+        bra.s   .end
+.one:   moveq   #-1,d2                          ; one word: both ends masked
+        move.w  d7,d0
+        andi.w  #$f,d0
+        eori.w  #$f,d0
+        lsl.w   d0,d2
+        and.w   d2,d4
+        bra.s   .put
+.end:   move.w  d7,d0                           ; the last: to the run's last pixel
+        andi.w  #$f,d0
+        eori.w  #$f,d0
+        lsl.w   d0,d4
+.put:   move.w  d4,d2
+        not.w   d2
+        jsr     (a5)
+        move.l  d3,d4
+        move.l  a1,d2
+        move.w  #$7fff,d1
+        moveq   #-1,d7
+.none:  rts
 sub_6950C:
         move.w  (a0),d0                         ; 6950C
         cmp.w   (a2),d0                         ; 6950E

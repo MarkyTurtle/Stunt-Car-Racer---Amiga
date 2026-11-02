@@ -273,8 +273,11 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    instead of 54; drawing 1.7% less. Still to do: its variables in registers, the partial words
    without the call through `ColourWordJump`. (Or: the blitter's fill mode, with the edges drawn
    in a buffer by its line mode.)
-5. **`PlotPixel`** - the 365 calls a frame made inline, a word mask instead of 4 `bset`s.
-   Perhaps 30,000.
+5. ~~**`PlotPixel`**~~ - done in the enhanced game, better than planned: `DrawEdgeLine`'s pixels
+   lie in runs along the screen's lines (about 5 a line: 74,000 pixels to 14,000 lines in the
+   benchmark's race), so each line's run is written a word at a time with masks
+   (`EdgeFlush`, through `PlotWord<colour>`), its length found at once - not a `PlotPixel` call
+   (about 180 cycles) for each pixel. The race's work 3.5% less.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.
 7. **Everywhere** - the variables most used in registers or `(d16,An)` from one base register,
    the 6502's leftovers removed.

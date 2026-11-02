@@ -47,6 +47,7 @@
  *   audio FILE            log every write to the audio registers and DMACON: "cycle reg value"
  *   load FILE ADDR        copy a file into memory at ADDR
  *   trace ADDR            log the frame, line and registers each time the PC reaches ADDR
+ *   traceall 1 / 0        trace prints all the registers (on a second line)
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
  *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
@@ -104,7 +105,7 @@ static FILE *logf;
 static unsigned long frame, line_no;
 static unsigned joy;                  /* bits: 1 up 2 down 4 left 8 right 16 fire 32 button 2 */
 static unsigned until_pc = 0xFFFFFFFF; static int until_hit;
-static unsigned trace_pc = 0xFFFFFFFF;
+static unsigned trace_pc = 0xFFFFFFFF; static int trace_all;
 static void snapshot(const char *prefix);
 static void odd_access(unsigned a, const char *what);
 static unsigned rnd(void);
@@ -512,6 +513,10 @@ void instr_hook(unsigned int pc) {
                 frame, line_no, pc, m68k_get_reg(NULL, M68K_REG_SR), m68k_get_reg(NULL, M68K_REG_A7), intreq, m68k_get_reg(NULL, M68K_REG_D0), m68k_get_reg(NULL, M68K_REG_D1),
                 m68k_get_reg(NULL, M68K_REG_D2), m68k_get_reg(NULL, M68K_REG_A0), m68k_get_reg(NULL, M68K_REG_A1),
                 m68k_get_reg(NULL, M68K_REG_A5), m68k_get_reg(NULL, M68K_REG_A6));
+    if (pc == trace_pc && logf && trace_all)               /* (traceall 1: the other registers too) */
+        fprintf(logf, "  d3 $%X d4 $%X d5 $%X d6 $%X d7 $%X a2 $%X a3 $%X a4 $%X\n", m68k_get_reg(NULL, M68K_REG_D3), m68k_get_reg(NULL, M68K_REG_D4),
+                m68k_get_reg(NULL, M68K_REG_D5), m68k_get_reg(NULL, M68K_REG_D6), m68k_get_reg(NULL, M68K_REG_D7), m68k_get_reg(NULL, M68K_REG_A2),
+                m68k_get_reg(NULL, M68K_REG_A3), m68k_get_reg(NULL, M68K_REG_A4));
 }
 
 /* ---- timing: a frame of 313 lines (a PAL long frame, as the Amiga shows without interlace) of
@@ -679,6 +684,7 @@ int main(int argc, char **argv) {
           }
         }
         else if (!strcmp(cmd, "trace")) { trace_pc = strtoul(a1, 0, 0); }
+        else if (!strcmp(cmd, "traceall")) { trace_all = atoi(a1); }   /* traceall 1: trace prints all the registers */
         else if (!strcmp(cmd, "readwatch")) { rwatch_lo = strtoul(a1, 0, 0); rwatch_hi = strtoul(a2, 0, 0); }
         else if (!strcmp(cmd, "dmacheck")) { dma_lo = strtoul(a1, 0, 0); dma_hi = strtoul(a2, 0, 0); }
         else if (!strcmp(cmd, "blittime")) { blit_timed = atoi(a1); }
