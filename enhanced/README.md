@@ -35,9 +35,12 @@ workflow). So far it differs from the original in:
   coarser view;
 * **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels
   written a word at a time, not one `PlotPixel` call a pixel; edges with both ends in the view skip
-  `ScanEdge`'s clipping;
+  `ScanEdge`'s clipping, and step on their own lean path (`ScanEdgeInView`);
 * **the sky and ground are filled by the blitter** (`HorizonFill`), and the view's roll is
   skipped when the car is level (`RollPointXY`: the same points without its 4 multiplications);
+* **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
+  (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain
+  polygons and their 23 edges (most of them clipped at the view's sides) are not drawn;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they

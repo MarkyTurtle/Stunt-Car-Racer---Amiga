@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: c63815beb26c7c557bfa901cd96fa33a7bc8ae1e
+  ADF_SHA1: da91982c806fcfa6d352ff8f36d103168f192121
 
 jobs:
   build:
@@ -81,6 +81,7 @@ jobs:
           { echo; echo '--- with the opponent in view (against enhanced/bench_opponent.json)'; python enhanced/tools/bench.py --opponent --compare enhanced/bench_opponent.json; } | tee -a bench.txt
           { echo; echo '--- the steps to the clock (src/interp.i: --interp; the frames are the steps)'; python enhanced/tools/bench.py --interp | head -3; } | tee -a bench.txt
           { echo; echo '--- the view at half height (src/halfres.i: --half)'; python enhanced/tools/bench.py --half --compare enhanced/bench_baseline.json | tail -4; } | tee -a bench.txt
+          { echo; echo '--- without the mountains (F10: --nomountains)'; python enhanced/tools/bench.py --nomountains --compare enhanced/bench_baseline.json | tail -4; } | tee -a bench.txt
           { echo '### The race benchmarks (scremu)'; echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: The checkout is unchanged
         run: |

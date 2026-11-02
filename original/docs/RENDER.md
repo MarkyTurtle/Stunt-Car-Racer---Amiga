@@ -232,6 +232,10 @@ By what they are part of (the routine and all it calls): `DrawNearRows` 23.0%, `
 10.4%, `ProjectNearPiece` 9.5%, `DrawCutout` 9.3%, `DrawHorizon` 7.9%, `DrawFarRows` 7.6%,
 `EdgesFarPieces` 7.1%, `ProjectFarPieces` 6.7%, `EdgesNextPiece` 4.2%, `CarPhysics` 3.3%.
 
+The mountains are a fixed cost of about a tenth of the frame whatever the track: 6 polygons whose
+23 edges mostly cross the view's sides (so each takes `ScanEdge`'s clipping), filled by
+`FillPolygon`. The enhanced game can leave them out with **F10** (in the race): its work 11% less.
+
 ## A 6502 game, translated
 
 The game was written for 6502 machines first, and the Amiga's code is that program translated to

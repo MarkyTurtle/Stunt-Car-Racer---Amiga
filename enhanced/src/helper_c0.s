@@ -10,10 +10,10 @@
 ;                     game: CockpitOff, which the game tests), F7 a calibration run (the
 ;                     telemetry build: calibrate.i), F8 the race's steps to the clock with the
 ;                     view drawn between them, or the release's timing (interp.i), F9 the view
-;                     at half its height (halfres.i)
+;                     at half its height (halfres.i), F10 the mountains off (DrawMountains)
 ;   $15C the flags (the release's; the enhanced game's at $170, its code having grown): F2's (NTSC
 ;        on), F3's (the turbo on), F6's (the cockpit off: $172), F7's ($173), F8's ($174: the
-;        release's timing), F9's ($175: half height)
+;        release's timing), F9's ($175: half height), F10's ($176: no mountains)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -93,18 +93,18 @@ Helper_Keys:					; $FC
 	move.w	#$4E71,(Helper_Wait+2).w	; a NOP: no wait
 	else
 	not.b	1(a0)				; (Helper_Wait tests it)
-.f6:	cmp.b	#$55,d0				; F6: the cockpit drawn over the view or not (the game's
-	bne.s	.f7				; DrawCockpitPart tests CockpitOff). Caught here, in the
-	not.b	2(a0)				; keyboard interrupt, so that no press is missed
-.f7:	cmp.b	#$56,d0				; F7: the telemetry build's calibration run, asked for
-	bne.s	.f8				; (calibrate.i: run at the end of the race frame)
-	st	3(a0)
-.f8:	cmp.b	#$57,d0				; F8: the race's timing - to the clock, the view drawn
-	bne.s	.f9				; between steps (interp.i), or the release's
-	not.b	4(a0)
-.f9:	cmp.b	#$58,d0				; F9: the race's view at full or half height
-	bne.s	.done				; (halfres.i)
-	not.b	5(a0)
+	bra.s	.done
+.f6:	move.w	d0,-(a7)			; F6-F10: a flag each, toggled (F7: set). Caught here, in
+	subi.b	#$55,d0				; the keyboard interrupt, so that no press is missed:
+	cmpi.b	#$59-$55,d0			; F6 the cockpit drawn over the view or not (the game's
+	bhi.s	.back				; DrawCockpitPart), F7 the telemetry build's calibration
+	ext.w	d0				; run (calibrate.i), F8 the race's timing (interp.i), F9
+	cmpi.b	#$56-$55,d0			; the view at full or half height (halfres.i), F10 the
+	bne.s	.flip				; mountains (DrawMountains). (d0 kept: the game goes on
+	st	3(a0)				; with the key)
+	bra.s	.back
+.flip:	not.b	2(a0,d0.w)
+.back:	move.w	(a7)+,d0
 	endc
 .done:	movea.l	(a7)+,a0
 	rts
@@ -125,4 +125,7 @@ InterpOff:					; $174
 	dc.b	0				; F8: the release's timing
 HalfHeight:					; $175
 	dc.b	0				; F9: the view at half height
+MountainsOff:					; $176
+	dc.b	0				; F10: no mountains
+	dc.b	0
 	endc

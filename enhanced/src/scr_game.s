@@ -20024,8 +20024,6 @@ dat_668A6:
 ;-------------------------------------------------------------------------------
 ScanEdge:
         movea.l #$7b08a,a1                      ; 668A8
-        move.w  #$0,(dat_668A6).l               ; 668AE
-        move.w  #$ffff,(dat_668A2).l            ; 668B6
         move.w  (RowOffset).l,d0                ; 668BE
         movea.l (EdgeBufferNext).l,a0                ; 668C4
         cmpa.l  #$60a8,a0                       ; 668CA
@@ -20067,9 +20065,10 @@ l_66924:
         or.w    d7,d0
         cmpi.w  #$80,d0
         bcc.s   .clip
-        moveq   #0,d0                           ; (d0 as the outcodes' way leaves it)
-        bra.w   l_66E36
+        bra.w   ScanEdgeInView                  ; (enhanced) its own stepping and tail
 .clip:
+        move.w  #$0,(dat_668A6).l               ; 668AE (enhanced: here, not at the start - the
+        move.w  #$ffff,(dat_668A2).l            ; 668B6  edges in the view do not need them)
         move.w  #$0,d0                          ; 66924
         move.w  d0,d3                           ; 66928
         cmpi.w  #$100,d4                        ; 6692A
@@ -20741,6 +20740,93 @@ l_66FA8:
         clr.w   d1                              ; 66FB2
         clr.w   d2                              ; 66FB4
         rts                                     ; 66FB6
+
+;-------------------------------------------------------------------------------
+; ScanEdgeInView - (enhanced) ScanEdge for an edge with both points in the view (4 in 5): the
+; release's four ways of stepping it (x-major or y-major, rightwards or leftwards), without what
+; the clipped edges need - dat_668A6 always 0 here (the header's top and bottom always written),
+; dat_668A2 always $FFFF (no lines to add at the end) - and so without writing and testing them.
+; The same edge buffer, and the registers as the release leaves them (d0 = $0000FFFF).
+;-------------------------------------------------------------------------------
+ScanEdgeInView:
+        move.w  d5,(a2)                         ; the header: top, bottom, x0, x1
+        move.w  d7,$2(a2)
+        move.w  d4,$4(a2)
+        move.w  d6,$6(a2)
+        move.w  d5,d2
+        sub.w   d7,d2
+        move.w  d4,d1
+        sub.w   d6,d1
+        bpl.s   .left
+        neg.w   d1
+        cmp.w   d2,d1
+        blt.s   .rightY
+        move.w  d1,d3                           ; x-major, rightwards (l_66E62)
+        lsr.w   #$1,d3
+        not.w   d3
+        cmpi.w  #SCAN_SHORT,d1
+        bcs.s   .rx
+        bsr.w   ScanXMajor
+        bra.s   .tail
+.rxs:   addq.w  #$1,d4
+        add.w   d2,d3
+        bcc.s   .rx
+        sub.w   d1,d3
+        subq.w  #$1,d5
+        move.w  d4,(a0)+
+.rx:    cmp.w   d6,d4
+        bne.s   .rxs
+        bra.s   .tail
+.rightY: move.w d2,d3                           ; y-major, rightwards (l_66EBC)
+        lsr.w   #$1,d3
+        not.w   d3
+        bra.s   .ry
+.rys:   subq.w  #$1,d5
+        move.w  d4,(a0)+
+        add.w   d1,d3
+        bcc.s   .ry
+        sub.w   d2,d3
+        addq.w  #$1,d4
+.ry:    cmp.w   d7,d5
+        bne.s   .rys
+        bra.s   .tail
+.left:  cmp.w   d2,d1
+        blt.s   .leftY
+        move.w  d1,d3                           ; x-major, leftwards (l_66F1C)
+        lsr.w   #$1,d3
+        not.w   d3
+        cmpi.w  #SCAN_SHORT,d1
+        bcs.s   .lx
+        bsr.w   ScanXMajor
+        bra.s   .tail
+.lxs:   subq.w  #$1,d4
+        add.w   d2,d3
+        bcc.s   .lx
+        sub.w   d1,d3
+        subq.w  #$1,d5
+        move.w  d4,(a0)+
+.lx:    cmp.w   d6,d4
+        bne.s   .lxs
+        bra.s   .tail
+.leftY: move.w  d2,d3                           ; y-major, leftwards (l_66F76)
+        lsr.w   #$1,d3
+        not.w   d3
+        bra.s   .ly
+.lys:   subq.w  #$1,d5
+        move.w  d4,(a0)+
+        add.w   d1,d3
+        bcc.s   .ly
+        sub.w   d2,d3
+        subq.w  #$1,d4
+.ly:    cmp.w   d7,d5
+        bne.s   .lys
+.tail:  move.w  #$8000,(a0)+                    ; the release's tail, with dat_668A2's $FFFF
+        move.l  a0,(EdgeBufferNext).l
+        moveq   #0,d0
+        not.w   d0
+        clr.w   d1
+        clr.w   d2
+        rts
 
 ;-------------------------------------------------------------------------------
 ; ScanXMajor (enhanced) - ScanEdge's x-major edges a line at a time instead of a pixel at a time.
@@ -23727,9 +23813,17 @@ l_69532:
 
 ;-------------------------------------------------------------------------------
 ; DrawMountains - the mountains on the horizon drawn, moved by the car's heading and pitch
-; (probably)
+; (probably). (enhanced) F10 leaves them out: plain sky - about 79,000 cycles a frame (11% of
+; the view; the edges of their 6 or so polygons, many of them clipped at the view's sides, and
+; the polygons' fills)
 ;-------------------------------------------------------------------------------
+HelperMountainsOff	equ	$176		; F10: non-zero - no mountains (helper_c0.s)
+
 DrawMountains:
+	tst.b	(HelperMountainsOff).w
+	beq.s	.on
+	rts
+.on:
         move.w  (dat_1BC42).l,d0                ; 6953E
         asr.w   #$3,d0                          ; 69544
         neg.w   d0                              ; 69546

@@ -96,8 +96,13 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   frame: about 120 calls a frame at about 400 cycles each before any stepping (the outcodes, the
   set-up). Measured since: about 100 calls a frame, 4 of them an edge stepped twice (not worth
   sharing); 4 in 5 with both points in the view - ~~those skip the outcodes and the clipping~~
-  (done: a test of both points at once). Still to do: a leaner entry and tail for those (the
-  variables `dat_668A2`/`dat_668A6` written and tested for nothing: perhaps 0.5-1% of a frame).
+  (done: a test of both points at once); ~~a leaner entry and tail for those~~ (done:
+  `ScanEdgeInView` - the header written at once, no `dat_668A2`/`dat_668A6`: the race's work 1.1%
+  less).
+* ~~**The mountains as an option**~~: done (**F10**, `DrawMountains` returns at once): they cost
+  about 79,000 cycles a frame (11% of the work: 23 `ScanEdge` calls, mostly clipped at the view's
+  sides, at ~1,400 cycles each, and 6 `FillPolygon`s). Still to do, for when they are on: clip
+  them to the view's sides once (they are flat, at the horizon) rather than edge by edge.
 * ~~The blitter for the cockpit~~: done (`src/blitcutout.i`): `DrawCutout`'s cut-outs blitted
   (cookie-cut, from copies made at start-up in the blitter's form), the cockpit's time 54% less
   (15.6 ms to 7.2 ms a frame), the race's work 8.8% less than the released game's: 6.07 vertical
