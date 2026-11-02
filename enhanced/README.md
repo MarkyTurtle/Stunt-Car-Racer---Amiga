@@ -14,6 +14,11 @@ workflow). So far it differs from the original in:
   same x on every line as the release (checked for every edge up to 700 pixels wide, and the edge
   buffers compared in play), the race 4.5% faster than before it - 2.1% faster than the released
   game, the cost of removing the self-modifying code won back;
+* **the cockpit is drawn by the blitter** (`src/blitcutout.i`): its cut-outs copied at start-up
+  into the blitter's form and blitted (cookie-cut) instead of masked word by word by the CPU -
+  the cockpit's time halved;
+* **`FillBetweenEdges` writes two words a plane at once**, from an unrolled sequence: the track's
+  surfaces filled faster;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they
@@ -113,8 +118,9 @@ original code with the telemetry build's hooks). The
 workflow runs it and shows the report on the run's page. The emulator's timing is fitted to an
 A500's - its calibration run matches the A500's within 1.2% (`measurements/README.md`) - so the
 times are an A500's, and exact from run to run. The released game: 6.65 vertical blanks of work a
-frame, 7.5 frames a second; the enhanced game 2.5% slower until `PlotPixel` and the fill are
-rewritten (the cost of removing their self-modifying code).
+frame, 7.5 frames a second; the enhanced game 6.07 and 7.95 (8.8% less work: `ScanEdge`, the
+fill and the blitter's cockpit) - near `FrameLimiter`'s limit of a frame every 6 vertical
+blanks (8.33 a second). The blitter is timed (scremu's `blittime`).
 
 **The relocation test** (`tools/reloc_test.py`) assembles the game with 16 bytes put in before its
 code and checks that it plays the benchmark's race exactly as before - that nothing in the source

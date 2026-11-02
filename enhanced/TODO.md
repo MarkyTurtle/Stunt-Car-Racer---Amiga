@@ -86,7 +86,7 @@ keeping them all in memory.
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
-6.65 vertical blanks on an A500 for the released game (6.51 now, with `ScanEdge` rewritten; the limit is 6), 7.5 frames a second; geometry 32%, drawing 49%,
+6.65 vertical blanks on an A500 for the released game (6.07 now: `ScanEdge`, `FillBetweenEdges` and the blitter's cockpit; the limit is 6), 7.5 frames a second (now 7.95); geometry 32%, drawing 49%,
 cockpit 12%. A word of the view is written 1.87 times a frame (overdraw: moderate - the time goes
 on the work for each line and edge more than on pixels written twice). Measure each change with the benchmark (`tools/bench.py --compare
 bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.
@@ -96,13 +96,26 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   frame: about 120 calls a frame at about 400 cycles each before any stepping (the outcodes, the
   set-up). Next: find edges stepped twice (shared by two rows or pieces) and step them once; a
   leaner entry (the outcodes from a table, the variables in registers).
-* The blitter: the background (`DrawHorizon`, 6.4%) and the cockpit (`DrawCutout`, 9.8%) - in
-  parallel with the CPU.
-* `FillBetweenEdges` (11.1%): its variables in registers, its runs unrolled; or the blitter's fill.
+* ~~The blitter for the cockpit~~: done (`src/blitcutout.i`): `DrawCutout`'s cut-outs blitted
+  (cookie-cut, from copies made at start-up in the blitter's form), the cockpit's time 54% less
+  (15.6 ms to 7.2 ms a frame), the race's work 8.8% less than the released game's: 6.07 vertical
+  blanks, so most frames now meet `FrameLimiter`'s 6. The CPU waits for each blit. To check on an
+  A500: the emulator times the blitter at 2 CPU cycles a memory cycle but not the display's DMA
+  taking some of its slots - the calibration run's `cutout` test (now the blitter, below the
+  display) and a race's telemetry will show the real figure. Next: let the CPU go on while the
+  last blits run (nothing after the cockpit until the instruments).
+* The blitter for the background (`DrawHorizon`, 6.5%): it already writes with `move.l`s; the
+  blitter would win only by running beside the CPU - the horizon worked out before the geometry
+  and the fills started then.
+* ~~`FillBetweenEdges`: its runs unrolled~~: done - the whole words of a run written two at a
+  time (`move.l`) from an unrolled sequence jumped into (54 cycles for 16 pixels before, 30 now;
+  runs average 11 words), drawing 1.7% less. Still to do: its variables in registers (the line's
+  `dat_1BC5A`, `dat_69ACE` and the edge list's bounds are read from memory each line), the
+  partial words without the `jsr`/`ColourWordJump` (about 80 cycles of calls for each).
 * `PlotPixel` / `DrawEdgeLine` (9.7%): inline, word masks (and so the cost of removing the
   self-modifying code won back).
-* The cockpit (11.7%): ~~F6 turns it off~~ (done: a frame then fits in 6 vertical blanks); the
-  blitter's cookie-cut for its cut-outs; the cut-outs split to skip their transparent parts; the
+* The cockpit (11.7%, now 5.7%): ~~F6 turns it off~~ (done); ~~the blitter's cookie-cut for its
+  cut-outs~~ (done); the cut-outs split to skip their transparent parts; the
   view's drawing stopped above the engine's solid lines (3,478 pixels of the view are under it).
 * The ground under the track: `DrawHorizon` fills the whole view and the track's surfaces are
   filled over it - the track's area written twice. Fill the ground only between the track's

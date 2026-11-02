@@ -48,7 +48,7 @@ baseline measured again.)
 ## The pipeline
 
 `RaceView` (called by the race loop once a frame) does it all; the CPU draws every pixel (the
-blitter is not used in the race).
+blitter is not used in the race; the enhanced game blits the cockpit).
 
 1. **The cars.** Each car placed on its piece of track (`PlaceCarOnTrack`, `MoveOpponent`).
 2. **The near pieces.** The piece the car is on and the next two: their points read
@@ -245,13 +245,20 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    row table and the flags in memory) - so the next gain is fewer calls (an edge shared by two
    rows stepped once) or a leaner entry, not faster stepping.
 2. **The blitter for the background** - `DrawHorizon`'s 16K is 2 fills (sky, ground) and the
-   horizon's lines: the blitter fills while the CPU projects the next points. Perhaps 50,000.
-3. **The blitter for the cockpit** - `DrawCutout`'s masked copies are the blitter's cookie-cut
-   (A the mask, B the cut-out, C the screen, D the screen), again in parallel with the CPU.
-   Perhaps 60,000-80,000.
-4. **`FillBetweenEdges`** - its variables in registers, the whole-word run unrolled (4
-   `move.w` a word now, with the loop's `dbra`). Perhaps 30,000-40,000. (Or: the blitter's fill
-   mode, with the edges drawn in a buffer by its line mode.)
+   horizon's lines: the blitter fills while the CPU projects the next points. Perhaps 50,000 -
+   but only by running beside the CPU: `DrawHorizon` already writes with `move.l`s (6 cycles a
+   word; a D-only blit takes about 4), so the horizon must be worked out before the geometry and
+   the fills started then.
+3. ~~**The blitter for the cockpit**~~ - done in the enhanced game (`enhanced/src/blitcutout.i`):
+   cookie-cut (A the mask, B the cut-out, C and D the screen: minterm `$EC`), 4 blits a cut-out,
+   from copies of the cut-outs made in the blitter's form at start-up (`MakeCutout` interleaves
+   the mask and the planes, which the blitter cannot step through). The cockpit went from 15.6
+   ms a frame to 7.2 (in the emulator; the A500's display DMA will slow the blits a little).
+4. **`FillBetweenEdges`** - ~~the whole-word run unrolled~~: done in the enhanced game, two words
+   a plane at once (`move.l`), from an unrolled sequence jumped into - 30 cycles for 16 pixels
+   instead of 54; drawing 1.7% less. Still to do: its variables in registers, the partial words
+   without the call through `ColourWordJump`. (Or: the blitter's fill mode, with the edges drawn
+   in a buffer by its line mode.)
 5. **`PlotPixel`** - the 365 calls a frame made inline, a word mask instead of 4 `bset`s.
    Perhaps 30,000.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.

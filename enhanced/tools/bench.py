@@ -19,7 +19,9 @@ The times are the emulator's, fitted to an A500's: a 68000 at 7.09 MHz with the 
 cycles, 6 cycles of each raster line lost to DMA (scremu's cpulost) - the telemetry build's
 calibration run on an A500 is matched within 1.2% (enhanced/measurements/). For comparing two
 versions of the game the emulator's figures are exact and repeatable. --cpulost N changes the
-DMA's share (0: none).
+DMA's share (0: none). The blitter is timed (scremu's blittime: 2 CPU cycles for each of its
+memory cycles, about one a channel a word): the CPU waiting for a blit waits as long as an A500's
+would (its bus shared with the CPU is not modelled: the enhanced game waits for each of its blits).
 """
 import os, subprocess, sys, tempfile
 
@@ -35,7 +37,8 @@ import telemetry
 
 def script(frames, snap):
     L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + (['cpulost ' + arg('--cpulost')] if arg('--cpulost') else []) + \
-        ['until 0xE730 100', 'frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']   # the title: fire
+        ['blittime 1',                                                                  # the blitter's time: the CPU waits for it
+         'until 0xE730 100', 'frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']   # the title: fire
     for k in ('37', '20', '13', '27', '44'):                                           # MARK, Return
         L += [f'key {k}', 'frames 10']
     L += ['frames 160', 'joy f', 'frames 5', 'joy', 'frames 150',                      # the divisions

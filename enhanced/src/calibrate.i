@@ -128,7 +128,9 @@ CalRMW:						; chip memory read and written: 2,000 words (12 + 10 cycles)
 .l:	and.w	d1,(a0)+
 	dbra	d7,.l
 	rts
-CalCutout:					; the game's DrawCutout: the cockpit's widest part (10), twice
+CalCutout:					; the game's DrawCutout: the cockpit's widest part (10), twice (the
+						; enhanced game: by the blitter - blitcutout.i - its time to the end of
+						; the last blit, below the display: no bitplane DMA in its way)
 	moveq	#10,d0
 	jsr	(DrawCutout).l
 	moveq	#10,d0

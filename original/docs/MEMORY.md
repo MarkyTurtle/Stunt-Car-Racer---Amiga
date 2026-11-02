@@ -59,7 +59,7 @@ cockpit is needed for every race.
 
 ## Not used
 
-* The blitter: the game draws everything with the CPU. Its only blits are the save routine's MFM
+* The blitter: the game draws everything with the CPU (the enhanced game blits the cockpit). Its only blits are the save routine's MFM
   encoding (`BlitMFMEncode`) when a game position is written.
 * `CopylockRoutine` (`$5C984`, 1,318 bytes; the telemetry build's code goes there) and the 6502
   bytes after the tracks (`$1FDC4-$1FE2B`).
@@ -68,13 +68,15 @@ cockpit is needed for every race.
 
 The enhanced game (`enhanced/`) loads the five pictures read only while their own screen is up
 from its disk when they are shown (`enhanced/src/diskload.i`): its load is 123,808 bytes smaller,
-and its screens - which follow the code - start at `$4C25A` instead of `$6A594`.
+and its screens - which follow the code - start at `$4C5AA` instead of `$6A594` (the addresses
+below move as the code grows; these are the enhanced game's of November 2026).
 
 | Address | Bytes | Used for |
 |---|---:|---|
 | `$00400-$032BF` | 11,968 | the byteloader's MFM buffer while a picture is loaded (and, as before, the save routine's) |
-| `$0E700-$4C259` | 252,762 | the game: code, data, the pictures it keeps (cockpit, title, stadium, divisions) |
-| `$4C25A-$5BC59` | 64,000 | the two screens |
-| `$5BC5A-$63A7B` | 32,034 | `DiskPicture`: the picture loaded from the disk |
-| `$63A7C-$77FFF` | 83,332 | **free** |
+| `$0E700-$4C5A9` | 253,610 | the game: code, data, the pictures it keeps (cockpit, title, stadium, divisions) |
+| `$4C5AA-$5BFA9` | 64,000 | the two screens |
+| `$5BFAA-$63CCB` | 32,034 | `DiskPicture`: the picture loaded from the disk |
+| `$63CCC-$6B8B3` | 31,720 | `BlitCutouts`: the 40 cut-outs `DrawCutout` blits, in the blitter's form (made at start-up: `enhanced/src/blitcutout.i`) |
+| `$6B8B4-$77FFF` | 51,020 | **free** |
 | `$78000-$7A019` | 8,218 | free once the loading picture is not needed |

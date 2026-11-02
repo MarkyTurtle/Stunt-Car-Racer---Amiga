@@ -845,6 +845,7 @@ l_1BA5A:
         bmi.w   l_1BA5A                         ; 1BA60
 l_1BA64:
         jsr     (MakeCutouts).l                 ; 1BA64
+        jsr     (MakeBlitCutouts).l             ; (enhanced) their copies for the blitter (blitcutout.i)
         jmp     (l_5C890).l                     ; 1BA6A
 
 ;-------------------------------------------------------------------------------
@@ -22505,26 +22506,30 @@ l_6869C:
         asl.b   #$4,d6                          ; 686A8
         addq.b  #$2,d6                          ; 686AA
         jsr     (SetColourWord).l               ; 686AC  d6 = colour * 16 + 2: ColourWordTarget
-        clr.l   d6                              ; 686B2
+        ; (enhanced) the colour's 4 planes as longs, all ones or all zeros: planes 0 and 1 kept
+        ; in FillPlanes01 (loaded for each run of whole words), 2 and 3 in d6 and d7. The release
+        ; kept them as words: d6 = plane 0 : plane 1, d7 = plane 2 : plane 3
+        clr.l   d2                              ; 686B2
+        clr.l   d3
+        clr.l   d6
         clr.l   d7                              ; 686B4
         lsr.b   #$1,d0                          ; 686B6
         bcc.w   l_686BE                         ; 686B8
-        not.w   d6                              ; 686BC
+        not.l   d2                              ; 686BC: plane 0
 l_686BE:
-        swap    d6                              ; 686BE
         lsr.b   #$1,d0                          ; 686C0
         bcc.w   l_686C8                         ; 686C2
-        not.w   d6                              ; 686C6
+        not.l   d3                              ; 686C6: plane 1
 l_686C8:
         lsr.b   #$1,d0                          ; 686C8
         bcc.w   l_686D0                         ; 686CA
-        not.w   d7                              ; 686CE
+        not.l   d6                              ; 686CE: plane 2
 l_686D0:
-        swap    d7                              ; 686D0
         lsr.b   #$1,d0                          ; 686D2
         bcc.w   l_686DA                         ; 686D4
-        not.w   d7                              ; 686D8
+        not.l   d7                              ; 686D8: plane 3
 l_686DA:
+        movem.l d2-d3,(FillPlanes01).l
         movea.l #dat_667E0,a5                   ; 686DA
         move.w  (a0)+,d1                        ; 686E0
         move.w  (a3)+,d0                        ; 686E2
@@ -22635,16 +22640,36 @@ l_68822:
         subq.w  #$1,d1                          ; 68838
         bmi.w   l_68858                         ; 6883A
 l_6883E:
-        move.l  d6,d2                           ; 6883E
-        move.l  d7,d3                           ; 68840
-        swap    d2                              ; 68842
-        swap    d3                              ; 68844
-l_68846:
-        move.w  d2,(a4)+                        ; 68846
-        move.w  d6,$1f3e(a4)                    ; 68848
-        move.w  d3,$3e7e(a4)                    ; 6884C
-        move.w  d7,$5dbe(a4)                    ; 68850
-        dbra    d1,l_68846                      ; 68854
+        ; (enhanced) the whole words between the partial ones: d1 + 1 of them, at most 16 (the
+        ; view's width). The release wrote a word a plane each time round a dbra loop (54 cycles
+        ; for 16 pixels); here two words a plane at once with move.l, unrolled, jumped into at the
+        ; pair the run needs (60 cycles for 32 pixels)
+        movem.l (FillPlanes01).l,d2-d3          ; planes 0, 1 (d6, d7: 2, 3)
+        addq.w  #1,d1                           ; the words
+        lsr.w   #1,d1                           ; the pairs, an odd word in the carry
+        bcc.s   .pairs
+        move.w  d2,(a4)+                        ; the odd one
+        move.w  d3,$1f3e(a4)
+        move.w  d6,$3e7e(a4)
+        move.w  d7,$5dbe(a4)
+.pairs:	cmpi.w	#8,d1
+        bhi.w   FillPairsLong                   ; (wider than the view: not expected)
+        add.w   d1,d1
+        move.w  d1,d4
+        lsl.w   #3,d4
+        sub.w   d4,d1                           ; -14 bytes a pair
+        jmp     FillPairsEnd(pc,d1.w)
+FillPairs:
+        rept    8
+        move.l  d2,(a4)+
+        move.l  d3,$1f3c(a4)
+        move.l  d6,$3e7c(a4)
+        move.l  d7,$5dbc(a4)
+        endr
+FillPairsEnd:
+        ifne    FillPairsEnd-FillPairs-8*14
+        fail    "FillPairs: 14 bytes a pair expected"
+        endc
 l_68858:
         andi.w  #$f,d5                          ; 68858
         beq.w   l_6886C                         ; 6885C
@@ -22690,6 +22715,16 @@ l_688D2:
         movea.l (a1),a0                         ; 688F0
         adda.l  #$8,a0                          ; 688F2
         bra.w   l_688D2                         ; 688F8
+FillPairsLong:					; (enhanced) FillBetweenEdges: a run of more than 16 words
+        move.l  d2,(a4)+
+        move.l  d3,$1f3c(a4)
+        move.l  d6,$3e7c(a4)
+        move.l  d7,$5dbc(a4)
+        subq.w  #1,d1
+        bne.s   FillPairsLong
+        bra.w   l_68858
+FillPlanes01:					; (enhanced) FillBetweenEdges: the colour's planes 0 and 1
+        dc.l    0,0
 sub_688FC:
         movea.l #$7b08a,a4                      ; 688FC
         move.w  (RowOffset).l,d3                ; 68902
@@ -24102,6 +24137,8 @@ DrawCutout:
         move.w  d1,-(a7)                        ; 69F44
         movem.l a4-a6,-(a7)                     ; 69F46
         andi.w  #$ff,d0                         ; 69F4A
+        bsr.w   DrawCutoutBlit                  ; (enhanced) by the blitter (blitcutout.i)
+        beq.w   l_69FDE
         asl.w   #$2,d0                          ; 69F4E
         movea.l #CutoutPointers,a1              ; 69F50
         movea.l (a1,d0.w),a1                    ; 69F56
@@ -24152,6 +24189,7 @@ l_69FA4:
         lea.l   $3ea8(a2),a5                    ; 69FD2
         lea.l   $5de8(a2),a6                    ; 69FD6
         dbra    d4,l_69FA0                      ; 69FDA
+l_69FDE:
         movem.l (a7)+,a4-a6                     ; 69FDE
         move.w  (a7)+,d1                        ; 69FE2
         move.l  (a7)+,d5                        ; 69FE4
@@ -24374,9 +24412,14 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"calibrate.i"			; (the telemetry build) F7: the calibration run
 	endc
 	include	"diskload.i"			; (the enhanced game) loading from the disk while the game runs
+	include	"blitcutout.i"			; (the enhanced game) the cockpit drawn by the blitter
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)
 	ifgt	DiskPicture+PICTURE_MAX-$7A01A
 	fail	"DiskPicture runs into the work areas at $7A01A"
+	endc
+BlitCutouts	equ	(DiskPicture+PICTURE_MAX+1)&-2	; the cut-outs in the blitter's form (blitcutout.i)
+	ifgt	BlitCutouts+BLIT_CUTOUTS_MAX-$78000
+	fail	"BlitCutouts runs into the loading picture at $78000"
 	endc
