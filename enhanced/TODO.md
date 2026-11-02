@@ -9,7 +9,10 @@ they are shown: about 89K of chip memory is free now.
 
 ## Groundwork
 
-* Try the disk in WinUAE: A500 512K, expanded A500, A1200.
+* ~~Try the disk on an A500 and an A1200~~: done (November 2026, the disk of 6ea8ff7): the game,
+  the pictures loaded from the disk after races and in the Hall of Fame, on both. (The disk before
+  it crashed after a race on a 68000: an address error, fixed - the tests now catch them.) Still
+  to measure: a race on an A500 with the telemetry disk, against the emulator's 6.5 vertical blanks.
 * Annotate the rest of the game's source: 196 routines and most of the race's variables are not
   named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
   track format.
@@ -22,7 +25,7 @@ they are shown: about 89K of chip memory is free now.
 * ~~Remove the self-modifying code~~: done (`original/docs/RENDER.md`): `PlotPixel`'s colours,
   `ColourWordJump`, and the helper block's turbo (now assembled from `src/helper_c0.s`). Checked:
   the enhanced game writes none of its instructions. It costs 2.3% of a frame until `PlotPixel` and
-  the fill are rewritten. Then: try the disk on a 68020/68030 with the caches on (WinUAE A1200).
+  the fill are rewritten. Runs on an A1200.
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
 * ~~Put the 4489_byteloader in the game~~: done (`src/diskload.i`): `DiskRead` reads the boot

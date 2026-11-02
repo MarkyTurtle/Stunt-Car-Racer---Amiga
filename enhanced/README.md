@@ -113,5 +113,5 @@ Publishing a release on GitHub builds the disk from the release's tag (`.github/
 and attaches it as `StuntCarRacer_Enhanced_<tag>.adf`, with the telemetry build as
 `StuntCarRacer_Enhanced_<tag>_telemetry.adf`.
 
-Status: boots to the game's entry in the harness; still to try in WinUAE. What is planned:
+Status: plays on an A500 and an A1200 (the disk of 6ea8ff7, November 2026). What is planned:
 [`TODO.md`](TODO.md).
