@@ -34,8 +34,9 @@ they are shown: about 89K of chip memory is free now.
   from the disk (below), anywhere: the screens move up with the code, into the 89K freed.
 * ~~Remove the self-modifying code~~: done (`original/docs/RENDER.md`): `PlotPixel`'s colours,
   `ColourWordJump`, and the helper block's turbo (now assembled from `src/helper_c0.s`). Checked:
-  the enhanced game writes none of its instructions. It costs 2.5% of a frame until `PlotPixel` and
-  the fill are rewritten. Runs on an A1200.
+  the enhanced game writes none of its instructions. It cost 2.5% of a frame - won back overall
+  by `ScanEdge`'s rewrite, and to be won back in `PlotPixel` and the fill when they are
+  rewritten. Runs on an A1200.
 * ~~Confirm which memory is free~~: done (`original/docs/MEMORY.md`). `$3D80-$E297` is not free:
   the race's work area and the cut-out graphics.
 * ~~Put the 4489_byteloader in the game~~: done (`src/diskload.i`): `DiskRead` reads the boot
@@ -85,12 +86,16 @@ keeping them all in memory.
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
-6.65 vertical blanks on an A500 (the limit is 6), 7.5 frames a second; geometry 32%, drawing 49%,
+6.65 vertical blanks on an A500 for the released game (6.51 now, with `ScanEdge` rewritten; the limit is 6), 7.5 frames a second; geometry 32%, drawing 49%,
 cockpit 12%. A word of the view is written 1.87 times a frame (overdraw: moderate - the time goes
 on the work for each line and edge more than on pixels written twice). Measure each change with the benchmark (`tools/bench.py --compare
 bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.
 
-* `ScanEdge`: step a line at a time, not a pixel (15.6% of the frame).
+* ~~`ScanEdge`: step a line at a time, not a pixel~~: done (`ScanXMajor`) - the race 4.5% faster,
+  the same edges exactly; 2.1% faster than the released game. `ScanEdge` is still 12.5% of the
+  frame: about 120 calls a frame at about 400 cycles each before any stepping (the outcodes, the
+  set-up). Next: find edges stepped twice (shared by two rows or pieces) and step them once; a
+  leaner entry (the outcodes from a table, the variables in registers).
 * The blitter: the background (`DrawHorizon`, 6.4%) and the cockpit (`DrawCutout`, 9.8%) - in
   parallel with the CPU.
 * `FillBetweenEdges` (11.1%): its variables in registers, its runs unrolled; or the blitter's fill.

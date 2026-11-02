@@ -20006,7 +20006,7 @@ ScanEdge:
 l_668EC:
         move.l  a0,(a1,d0.w)                    ; 668EC
         movea.l a0,a2                           ; 668F0
-        adda.l  #$8,a0                          ; 668F2
+        addq.l  #8,a0                           ; 668F2 (enhanced: addq)
         movea.l #PointScreenX,a4                ; 668F8
         movea.l #PointScreenY,a5                ; 668FE
         move.w  (a4,d1.w),d4                    ; 66904
@@ -20555,7 +20555,10 @@ l_66E5A:
         move.w  d1,d3                           ; 66E62
         lsr.w   #$1,d3                          ; 66E64
         not.w   d3                              ; 66E66
-        bra.w   l_66E7A                         ; 66E68
+        cmpi.w  #SCAN_SHORT,d1                  ; (enhanced) a short edge: pixel by pixel as before
+        bcs.w   l_66E7A
+        bsr.w   ScanXMajor                      ; (enhanced) a line at a time
+        bra.w   l_66E80
 l_66E6C:
         addq.w  #$1,d4                          ; 66E6C
         add.w   d2,d3                           ; 66E6E
@@ -20566,10 +20569,12 @@ l_66E6C:
 l_66E7A:
         cmp.w   d6,d4                           ; 66E7A
         bne.w   l_66E6C                         ; 66E7C
+l_66E80:
         move.w  (dat_668A2).l,d0                ; 66E80
         bmi.w   l_66E94                         ; 66E86
+        move.w  (dat_668A4).l,d1                ; (enhanced) read once, not each line
 l_66E8A:
-        move.w  (dat_668A4).l,(a0)+             ; 66E8A
+        move.w  d1,(a0)+                        ; 66E8A
         dbra    d0,l_66E8A                      ; 66E90
 l_66E94:
         move.w  #$8000,(a0)+                    ; 66E94
@@ -20601,8 +20606,9 @@ l_66ED4:
         bne.w   l_66EC6                         ; 66ED6
         move.w  (dat_668A2).l,d0                ; 66EDA
         bmi.w   l_66EEE                         ; 66EE0
+        move.w  (dat_668A4).l,d1                ; (enhanced) read once, not each line
 l_66EE4:
-        move.w  (dat_668A4).l,(a0)+             ; 66EE4
+        move.w  d1,(a0)+                        ; 66EE4
         dbra    d0,l_66EE4                      ; 66EEA
 l_66EEE:
         move.w  #$8000,(a0)+                    ; 66EEE
@@ -20623,7 +20629,10 @@ l_66F14:
         move.w  d1,d3                           ; 66F1C
         lsr.w   #$1,d3                          ; 66F1E
         not.w   d3                              ; 66F20
-        bra.w   l_66F34                         ; 66F22
+        cmpi.w  #SCAN_SHORT,d1                  ; (enhanced) a short edge: pixel by pixel as before
+        bcs.w   l_66F34
+        bsr.w   ScanXMajor                      ; (enhanced) a line at a time
+        bra.w   l_66F3A
 l_66F26:
         subq.w  #$1,d4                          ; 66F26
         add.w   d2,d3                           ; 66F28
@@ -20634,10 +20643,12 @@ l_66F26:
 l_66F34:
         cmp.w   d6,d4                           ; 66F34
         bne.w   l_66F26                         ; 66F36
+l_66F3A:
         move.w  (dat_668A2).l,d0                ; 66F3A
         bmi.w   l_66F4E                         ; 66F40
+        move.w  (dat_668A4).l,d1                ; (enhanced) read once, not each line
 l_66F44:
-        move.w  (dat_668A4).l,(a0)+             ; 66F44
+        move.w  d1,(a0)+                        ; 66F44
         dbra    d0,l_66F44                      ; 66F4A
 l_66F4E:
         move.w  #$8000,(a0)+                    ; 66F4E
@@ -20669,8 +20680,9 @@ l_66F8E:
         bne.w   l_66F80                         ; 66F90
         move.w  (dat_668A2).l,d0                ; 66F94
         bmi.w   l_66FA8                         ; 66F9A
+        move.w  (dat_668A4).l,d1                ; (enhanced) read once, not each line
 l_66F9E:
-        move.w  (dat_668A4).l,(a0)+             ; 66F9E
+        move.w  d1,(a0)+                        ; 66F9E
         dbra    d0,l_66F9E                      ; 66FA4
 l_66FA8:
         move.w  #$8000,(a0)+                    ; 66FA8
@@ -20678,6 +20690,64 @@ l_66FA8:
         clr.w   d1                              ; 66FB2
         clr.w   d2                              ; 66FB4
         rts                                     ; 66FB6
+
+;-------------------------------------------------------------------------------
+; ScanXMajor (enhanced) - ScanEdge's x-major edges a line at a time instead of a pixel at a time.
+;
+; The release steps x a pixel at a time (Bresenham: d3 += dy each pixel, and on its carry d3 -= dx,
+; y down a line and x written), so an edge 200 pixels wide and 10 lines tall takes 200 steps for
+; its 10 words. Line i's x is where the i-th carry falls: x0 + floor(((i-1)*dx + dx/2) / dy) + 1
+; (d3 starts at not(dx/2)). Here that is stepped a line at a time: dx = q*dy + r (one divu), x moves
+; q a line plus 1 when the remainder's sum (from (dx/2) mod dy, worked out from q and r) reaches dy.
+; The same x on every line as the release (checked for every dx < 700, dy <= dx, both ways) and
+; the registers left as its loop leaves them: d4 = x1, d5 = y0 - dy, d3 unchanged (its loop ends
+; where it began).
+;
+; In: d4 = x0, d6 = x1 (x0 <> x1 or dy = 0), d5 = y0, d1 = dx (|x1 - x0|), d2 = dy (0 <= dy <= dx),
+; d3 the release's start, a0 the edge buffer. Out: dy words at (a0)+. d0-d2 used.
+;-------------------------------------------------------------------------------
+SCAN_SHORT	equ	8			; narrower than this: the release's loop is quicker (measured: 8-12 alike)
+
+ScanXMajor:
+	tst.w	d2
+	beq.s	.done				; flat: no line
+	movem.l	d3/d6-d7,-(a7)
+	moveq	#0,d0
+	move.w	d1,d0
+	divu	d2,d0				; q, r in the high word
+	move.w	d0,d1				; q
+	clr.w	d0
+	swap	d0				; r
+	moveq	#0,d3
+	move.w	d1,d7
+	lsr.w	#1,d7				; q / 2 (and q odd in the carry)
+	bcc.s	.even
+	move.w	d2,d3
+.even:	add.w	d0,d3
+	lsr.w	#1,d3				; the remainder's start: (dx / 2) mod dy
+	addq.w	#1,d7				; the first line's x from x0
+	cmp.w	d4,d6
+	bgt.s	.right
+	neg.w	d1				; leftwards
+	neg.w	d7
+	moveq	#-1,d6
+	bra.s	.go
+.right:	moveq	#1,d6
+.go:	add.w	d7,d4				; the first line's x
+	move.w	d2,d7
+	subq.w	#1,d7
+.line:	move.w	d4,(a0)+
+	add.w	d1,d4				; q
+	add.w	d0,d3				; r
+	cmp.w	d2,d3
+	bcs.s	.next
+	sub.w	d2,d3
+	add.w	d6,d4				; and 1
+.next:	dbra	d7,.line
+	movem.l	(a7)+,d3/d6-d7
+	sub.w	d2,d5				; y down dy lines
+.done:	move.w	d6,d4
+	rts
 
 ;-------------------------------------------------------------------------------
 ; ClearPolygonList - the list of the view's polygons ($7B08A) emptied

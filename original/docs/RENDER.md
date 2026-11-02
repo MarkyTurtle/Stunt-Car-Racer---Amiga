@@ -236,9 +236,14 @@ and the 6502's leftovers are everywhere in the code:
 
 Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with the benchmark.
 
-1. **`ScanEdge` stepping a line, not a pixel** - an edge wider than tall needs one x a line; a
-   fixed-point step (x += dx/dy each line, one `divs` per edge) costs about 20 cycles a line
-   instead of about 20 a pixel. Perhaps 80,000-100,000.
+1. ~~**`ScanEdge` stepping a line, not a pixel**~~ - done in the enhanced game (`ScanXMajor`):
+   x moves dx/dy a line (one `divu` an edge, its remainder stepped so that every line's x is the
+   release's exactly). `ScanEdge` went from 16.5% of the frame to 12.5% (its x-major stepping
+   from about 1,280 cycles an edge on average to 935), the race's work 4.5% less. What is left is
+   the cost of each call, not the stepping: about 120 edges a frame, each about 400 cycles of
+   outcodes and set-up before a line is stepped (the projected points read through tables, the
+   row table and the flags in memory) - so the next gain is fewer calls (an edge shared by two
+   rows stepped once) or a leaner entry, not faster stepping.
 2. **The blitter for the background** - `DrawHorizon`'s 16K is 2 fills (sky, ground) and the
    horizon's lines: the blitter fills while the CPU projects the next points. Perhaps 50,000.
 3. **The blitter for the cockpit** - `DrawCutout`'s masked copies are the blitter's cookie-cut

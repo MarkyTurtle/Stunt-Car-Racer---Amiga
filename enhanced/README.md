@@ -10,6 +10,10 @@ workflow). So far it differs from the original in:
   helper block's (the turbo), so that the 68020's and later processors' caches can be left on
   ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)); the helper block is assembled from
   [`src/helper_c0.s`](src/helper_c0.s);
+* **`ScanEdge` steps a wide edge a line at a time** (`ScanXMajor`), not a pixel at a time: the
+  same x on every line as the release (checked for every edge up to 700 pixels wide, and the edge
+  buffers compared in play), the race 4.5% faster than before it - 2.1% faster than the released
+  game, the cost of removing the self-modifying code won back;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they
