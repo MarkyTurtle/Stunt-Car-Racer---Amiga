@@ -188,6 +188,11 @@ Level2Handler:
 ; (VBlankInterrupt)
 ;-------------------------------------------------------------------------------
 Level3Handler:
+        btst    #$6,$dff01f.l                   ; (enhanced) BLIT: the queue's next blit (blitqueue.i) -
+        beq.s   .noblit                         ; first, so that its next end is not cleared below
+        move.w  #$40,(CUSTOM+INTREQ).l
+        jsr     (BlitInterrupt).l
+.noblit:
         btst    #$4,$dff01f.l                   ; 0EF1A
         beq.w   l_0EF34                         ; 0EF22
         jsr     (CopperInterrupt).l             ; 0EF26
@@ -203,8 +208,7 @@ l_0EF34:
         move.w  #$20,(CUSTOM+INTREQ).l          ; 0EF46
         rte                                     ; 0EF4E
 l_0EF50:
-        move.w  #$40,(CUSTOM+INTREQ).l          ; 0EF50
-        rte                                     ; 0EF58
+        rte                                     ; 0EF58 (enhanced: BLIT is handled above, not cleared here)
 
 ;-------------------------------------------------------------------------------
 ; Level4Handler - level 4: the audio channels - channel 0 (the engine): its period; channels
@@ -365,6 +369,7 @@ CopperInterrupt:
         movem.l d0-d7/a0-a6,-(a7)               ; 0F11C
         jsr     (SetCopperPlanes).l             ; 0F120
         clr.b   (FlipPending).l                 ; 0F126
+        jsr     (HorizonFlipped).l              ; (enhanced) the sky and ground's fills, if waiting (blitqueue.i)
         tst.b   (ChainsPending).l               ; 0F12C
         beq.w   l_0F142                         ; 0F132
         jsr     (MoveChains).l                  ; 0F136
@@ -18266,6 +18271,8 @@ l_64F5E:
 l_64F80:
         tst.b   (InterpSkipDraw).l              ; (enhanced) a step to the clock: the cars placed, the drawing left
         bne.w   InterpNoDraw                    ; to the pictures between steps (interp.i)
+        jsr     (HorizonEarly).l                ; (enhanced) the sky and ground filled by the blitter during
+                                                ; the geometry (blitqueue.i)
         move.b  #$80,d0                         ; 64F80
         move.b  d0,(dat_1BC14).l                ; 64F84
         move.b  d0,(dat_1BC16).l                ; 64F8A
@@ -21484,6 +21491,7 @@ l_67886:
 ; DrawHorizon - the sky and the ground split at the horizon, by the car's pitch (probably)
 ;-------------------------------------------------------------------------------
 DrawHorizon:
+        bsr.w   HorizonStart                    ; (enhanced) the fills queued by HorizonEarly done (blitqueue.i)
         move.w  #$500,d0                        ; 67888
         move.w  d0,(dat_1BFB6).l                ; 6788C
         neg.w   d0                              ; 67892
@@ -21541,6 +21549,7 @@ l_67956:
 l_6795C:
         move.w  #$8000,(a4)+                    ; 6795C
         movem.l a0-a2,-(a7)                     ; 67960
+        bsr.w   HorizonEarlyMatch               ; (enhanced) the fills already made by the blitter?
         movea.l (ScreenDrawTop).l,a4            ; 67964
         move.w  (dat_1BC58).l,d0                ; 6796A
         asl.w   #$2,d0                          ; 67970
@@ -21559,7 +21568,7 @@ l_6795C:
         moveq   #127-HALF_TOP,d4
 .full1:
         move.b  #$d,d0                          ; 6798C
-        bsr.w   HorizonFill                     ; (enhanced) by the blitter: the release wrote each line's
+        bsr.w   HorizonFillLate                    ; (enhanced) by the blitter: the release wrote each line's
 						; 128 bytes with 32 move.l (l_6799C)
 l_679F2:
         move.w  (dat_1BC58).l,d4                ; 67A02
@@ -21573,7 +21582,7 @@ l_679F2:
         lea.l   HALF_TOP*40(a4),a4
 .full2:
         move.b  #$7,d0                          ; 679F2
-        bsr.w   HorizonFill                     ; (enhanced) by the blitter (l_67A14)
+        bsr.w   HorizonFillLate                    ; (enhanced) by the blitter (l_67A14)
 l_67A6A:
         move.b  #$0,(dat_668A0).l               ; 67A6A
         movem.l (a7)+,a0-a2                     ; 67A72
@@ -21616,12 +21625,6 @@ HorizonFill:
         dbra    d2,.plane
         rts
 
-HorizonWait:					; (enhanced) HorizonFill's blits done
-        move.l  a5,-(a7)
-        lea.l   (CUSTOM).l,a5
-        bsr.w   BlitWait
-        movea.l (a7)+,a5
-        rts
 sub_67A8C:
         move.l  d6,d0                           ; 67A8C
         move.l  d6,d1                           ; 67A8E
@@ -24630,6 +24633,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"blitcutout.i"			; (the enhanced game) the cockpit drawn by the blitter
 	include	"interp.i"			; (the enhanced game) the physics to the clock, the view between
 	include	"halfres.i"			; (the enhanced game) F9: the view at half its height, doubled
+	include	"blitqueue.i"			; (the enhanced game) the sky and ground filled during the geometry
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

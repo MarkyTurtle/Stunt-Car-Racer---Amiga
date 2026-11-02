@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: da91982c806fcfa6d352ff8f36d103168f192121
+  ADF_SHA1: 7e8fdfdf03bb16c233f8fd7daab7a0094392a61e
 
 jobs:
   build:
@@ -75,6 +75,10 @@ jobs:
         run: python enhanced/tools/test_pictures.py
       - name: The variables the view's drawing keeps (enhanced/tools/measure_keep.py --check)
         run: python enhanced/tools/measure_keep.py --check
+      - name: The blitter beside the CPU in the right order (enhanced/tools/bench.py --blitcheck)
+        run: |
+          python enhanced/tools/bench.py --blitcheck --vblanks 1500 > /dev/null
+          python enhanced/tools/bench.py --blitcheck --vblanks 1500 --interp --half > /dev/null
       - name: The race benchmark (enhanced/tools/bench.py)
         run: |
           python enhanced/tools/bench.py --json bench.json --compare enhanced/bench_baseline.json | tee bench.txt

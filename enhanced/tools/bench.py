@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--cpumult N] [--game BIN] [--helper BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--cpumult N] [--blitcheck] [--game BIN] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -29,7 +29,10 @@ drew (or none, catching up). --half draws the view at half its height, doubled (
 F9); --nomountains leaves the mountains out (F10). --cpumult N runs the CPU N times as fast (an accelerated Amiga:
 scremu's cpumult). The blitter is timed (scremu's blittime: 2 CPU cycles for each of its
 memory cycles, about one a channel a word): the CPU waiting for a blit waits as long as an A500's
-would (its bus shared with the CPU is not modelled: the enhanced game waits for each of its blits).
+would (its bus shared with the CPU is not modelled). --blitcheck also runs scremu's blitcheck: each
+CPU read or write of what a blit still running is to write - the order a real Amiga would get
+wrong, which scremu (its blits done at once) would not show - is reported, and the run fails if
+there is one (the blitter works beside the CPU: src/blitqueue.i).
 """
 import os, subprocess, sys, tempfile
 
@@ -47,6 +50,7 @@ def script(frames, snap):
     L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + (['cpulost ' + arg('--cpulost')] if arg('--cpulost') else []) + \
         (['cpumult ' + arg('--cpumult')] if arg('--cpumult') else []) + \
         ['blittime 1',                                                                  # the blitter's time: the CPU waits for it
+         ] + (['blitcheck 1'] if '--blitcheck' in sys.argv else []) + [
          'until 0xE730 100'] + \
         ([] if '--interp' in sys.argv else ['poke 0x174 1 b']) + \
         (['poke 0x175 1 b'] if '--half' in sys.argv else []) + \
@@ -107,8 +111,13 @@ def main():
     os.makedirs(work, exist_ok=True)
     sc = os.path.join(work, 'bench.txt')
     open(sc, 'w').write(script(frames, os.path.join(work, 'race')))
-    subprocess.run([EMU, game, helper(), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), sc],
-                   check=True, stdout=subprocess.DEVNULL)
+    run = subprocess.run([EMU, game, helper(), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), sc],
+                         check=True, capture_output=True, text=True)
+    if '--blitcheck' in sys.argv:
+        hz = [l for l in run.stdout.splitlines() if 'hazard' in l]
+        print('\n'.join(hz), file=sys.stderr)
+        if hz != ['blit hazards 0']:
+            sys.exit('blit hazards: the CPU at a blit still running')
     sys.argv = (['telemetry.py', os.path.join(work, 'race.mem')] + sum(([o, arg(o)] for o in ('--json', '--compare', '--calibration') if arg(o)), []) +
                 (['--list'] if '--list' in sys.argv else []))
     telemetry.main()

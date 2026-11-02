@@ -36,7 +36,10 @@ workflow). So far it differs from the original in:
 * **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels
   written a word at a time, not one `PlotPixel` call a pixel; edges with both ends in the view skip
   `ScanEdge`'s clipping, and step on their own lean path (`ScanEdgeInView`);
-* **the sky and ground are filled by the blitter** (`HorizonFill`), and the view's roll is
+* **the sky and ground are filled by the blitter while the CPU works out the view**
+  ([`src/blitqueue.i`](src/blitqueue.i)): the horizon's line found before the geometry and the 8
+  fills queued, each started by the blitter's interrupt when the one before is done - 4.6 ms of
+  the blitter's time no longer waited for (the race's work 3.5% less); the view's roll is
   skipped when the car is level (`RollPointXY`: the same points without its 4 multiplications);
 * **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
   (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain

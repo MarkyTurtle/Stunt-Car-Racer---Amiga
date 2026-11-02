@@ -69,7 +69,11 @@
  *   callprof 1 / 0        time the call tree, from now / stop: each jsr/bsr's time, its callees' included
  *   callprofdump FILE     write it: "caller callee calls cycles", one line a caller -> callee (caller 0:
  *                         the top: called by no routine being timed)
- *   blittime 1            the blitter busy (DMACONR bit 14) for 2 CPU cycles a memory cycle
+ *   blittime 1            the blitter busy (DMACONR bit 14) for 2 CPU cycles a memory cycle, and its
+ *                         interrupt (INTREQ bit 6) when it is done (at the end of that line)
+ *   blitcheck 1           report each CPU read or write of what a blit still running writes (its D
+ *                         channel's words: blittime's time) - on a real Amiga the CPU would see or be
+ *                         overwritten by the blit's results out of order ("blit hazard"; the count at the end)
  *   watchpc LO HI         log each instruction's first write to each 256-byte block of LO-HI
  *   watch LO HI           log the first write to each 256-byte block of LO-HI, with the PC
  *   readwatch LO HI       log each instruction's first CPU read of each 256-byte block of LO-HI
@@ -112,6 +116,8 @@ static unsigned rnd(void);
 static int blits, blit_line; static long blit_words, blit_cycles;
 static long cyc_now(void);
 static int blit_timed; static long blit_busy_until;   /* blittime: the blitter busy for its cycles */
+static long blit_irq_at;                                /* blittime: its interrupt due (0: none) */
+static int bh_on; static unsigned bh_lo, bh_hi, bh_row, bh_w; static unsigned long bh_n;   /* blitcheck */
 static FILE *audf;
 static unsigned watch_lo = 1, watch_hi = 0; static uint8_t watched[RAM / 256];
 static int watch_pcs; static unsigned seen_n, seen[8192];   /* watchpc: (block << 20 | pc) seen */
@@ -239,6 +245,11 @@ static void blit(uint16_t size) {
             unsigned n = span[k] > 0x40000 ? 0 : span[k];
             dma_note(nm[k], (con1 & 2) ? at[k] + 2 - n : at[k], n); }
     }
+    if (bh_on && (use & 1)) {                              /* blitcheck: the D channel's words, until it is done */
+        bh_row = 2 * w + md; bh_w = 2 * w;
+        if (desc) { bh_lo = pd + 2 - h * bh_row; bh_row = 0; } else bh_lo = pd;
+        bh_hi = bh_lo + h * (2 * w + md);
+    }
     uint16_t adat = cust[0x74 / 2], bdat = cust[0x72 / 2], cdat = cust[0x70 / 2];
     int step = desc ? -2 : 2;
     int fill = (con1 >> 3) & 3;                     /* IFE / EFE (fill mode) */
@@ -276,7 +287,15 @@ static void blit(uint16_t size) {
     cust[0x50 / 2] = pa >> 16; cust[0x52 / 2] = pa; cust[0x4C / 2] = pb >> 16; cust[0x4E / 2] = pb;
     cust[0x48 / 2] = pc >> 16; cust[0x4A / 2] = pc; cust[0x54 / 2] = pd >> 16; cust[0x56 / 2] = pd;
 done:
+    if (blit_timed && !(con1 & 1)) { blit_irq_at = blit_busy_until; return; }   /* (blittime: when it is done) */
     intreq |= 0x0040; update_irq();
+}
+static long cyc_now(void);
+static void bhaz(unsigned a, const char *what) {             /* blitcheck: the CPU at a running blit's words */
+    if (a < bh_lo || a >= bh_hi || cyc_now() >= blit_busy_until) return;
+    if (bh_row && (a - bh_lo) % bh_row >= bh_w) return;      /* (its modulo's gaps: not written) */
+    if (bh_n++ < 20) fprintf(logf ? logf : stdout, "blit hazard: frame %lu line %lu, a CPU %s of $%X by the instruction at $%X (a blit to $%X-$%X running)\n",
+                             frame, line_no, what, a, m68k_get_reg(NULL, M68K_REG_PPC), bh_lo, bh_hi);
 }
 
 /* ---- memory */
@@ -369,7 +388,7 @@ static void cia_write(cia_t *c, int reg, unsigned v) {
 }
 unsigned int m68k_read_memory_8(unsigned int a) {
     a &= 0xFFFFFF;
-    if (a < RAM) { rwatch(a); pt_read(a); usage[a] |= 1; return ram[a]; }
+    if (a < RAM) { rwatch(a); pt_read(a); usage[a] |= 1; if (bh_on) bhaz(a, "read"); return ram[a]; }
     if (a - SLOW_LO < SLOW_SIZE) return slow[a - SLOW_LO];
     if ((a & 0xFFF000) == 0xBFE000 && (a & 1)) return cia_read(&ciaa, (a >> 8) & 15, 1);
     if ((a & 0xFFF000) == 0xBFD000 && !(a & 1)) return cia_read(&ciab, (a >> 8) & 15, 0);
@@ -379,7 +398,7 @@ unsigned int m68k_read_memory_8(unsigned int a) {
 unsigned int m68k_read_memory_16(unsigned int a) {
     if (a & 1) odd_access(a & 0xFFFFFF, "a word read");
     a &= 0xFFFFFF;
-    if (a < RAM) { rwatch(a); pt_read(a); pt_read(a + 1); usage[a] |= 1; usage[a + 1] |= 1; return ram[a] << 8 | ram[a + 1]; }
+    if (a < RAM) { rwatch(a); pt_read(a); pt_read(a + 1); usage[a] |= 1; usage[a + 1] |= 1; if (bh_on) bhaz(a, "read"); return ram[a] << 8 | ram[a + 1]; }
     if (a - SLOW_LO < SLOW_SIZE) return slow[a - SLOW_LO] << 8 | slow[a - SLOW_LO + 1];
     if ((a & 0xFFF000) == 0xDFF000) return custom_read(a & 0x1FE);
     return m68k_read_memory_8(a) << 8 | m68k_read_memory_8(a + 1);
@@ -405,7 +424,7 @@ static void wlog(unsigned a, unsigned v, int size) {
 }
 void m68k_write_memory_8(unsigned int a, unsigned int v) {
     a &= 0xFFFFFF;
-    if (a < RAM) { wlog(a, v & 0xFF, 1); watch(a); pt_write(a); usage[a] |= 2; ram[a] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFF, 1); watch(a); pt_write(a); usage[a] |= 2; if (bh_on) bhaz(a, "write"); ram[a] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v; return; }
     if ((a & 0xFFF000) == 0xBFE000 && (a & 1)) { cia_write(&ciaa, (a >> 8) & 15, v); return; }
     if ((a & 0xFFF000) == 0xBFD000 && !(a & 1)) { cia_write(&ciab, (a >> 8) & 15, v); return; }
@@ -414,7 +433,7 @@ void m68k_write_memory_8(unsigned int a, unsigned int v) {
 void m68k_write_memory_16(unsigned int a, unsigned int v) {
     if (a & 1) odd_access(a & 0xFFFFFF, "a word write");
     a &= 0xFFFFFF;
-    if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); pt_write(a); pt_write(a + 1); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); pt_write(a); pt_write(a + 1); usage[a] |= 2; usage[a + 1] |= 2; if (bh_on) bhaz(a, "write"); ram[a] = v >> 8; ram[a + 1] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v >> 8; slow[a - SLOW_LO + 1] = v; return; }
     if ((a & 0xFFF000) == 0xDFF000) { custom_write(a & 0x1FE, v); return; }
     m68k_write_memory_8(a, v >> 8); m68k_write_memory_8(a + 1, v);
@@ -548,6 +567,7 @@ static void run_line(void) {
         else { cl_taken = 0; line_over = m68k_execute(want) + cl_taken - want; }
     }
     cyc_total += LINE_CYCLES;
+    if (blit_irq_at && cyc_total >= blit_irq_at) { blit_irq_at = 0; intreq |= 0x0040; update_irq(); }   /* (blittime) */
     cia_tick_timers(&ciaa, 45); cia_tick_timers(&ciab, 45);
     /* CIA-B TOD counts lines (HSYNC) */
     if (!ciab.tod_halt) { ciab.tod = (ciab.tod + 1) & 0xFFFFFF; if (ciab.tod == ciab.alarm) cia_irq(&ciab, 4); }
@@ -688,6 +708,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(cmd, "readwatch")) { rwatch_lo = strtoul(a1, 0, 0); rwatch_hi = strtoul(a2, 0, 0); }
         else if (!strcmp(cmd, "dmacheck")) { dma_lo = strtoul(a1, 0, 0); dma_hi = strtoul(a2, 0, 0); }
         else if (!strcmp(cmd, "blittime")) { blit_timed = atoi(a1); }
+        else if (!strcmp(cmd, "blitcheck")) { bh_on = atoi(a1); }
         else if (!strcmp(cmd, "profile")) {                  /* profile 1: start counting, 0: stop */
             if (atoi(a1)) { if (!prof) prof = calloc(RAM / 2, sizeof *prof); prof_pc = RAM; prof_cyc = cyc_now(); }
             else { free(prof); prof = 0; } }
@@ -748,5 +769,6 @@ int main(int argc, char **argv) {
     unsigned ncov = 0; for (unsigned i = 0; i < sizeof cover; i++) ncov += __builtin_popcount(cover[i]);
     printf("frames %lu, instructions at %u addresses, blits %d (%d line mode, %ld words), pc $%X sr $%04X\n", frame, ncov, blits, blit_line, blit_words,
            m68k_get_reg(NULL, M68K_REG_PC), m68k_get_reg(NULL, M68K_REG_SR));
+    if (bh_on) printf("blit hazards %lu\n", bh_n);
     return 0;
 }

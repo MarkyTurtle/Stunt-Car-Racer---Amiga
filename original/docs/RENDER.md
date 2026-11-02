@@ -286,7 +286,13 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    drawn in 64 lines (`ScanEdge` takes y as 64 + y / 2) and doubled by the blitter before the
    cockpit; the drawing phase 19% less.
 5c. **The background by the blitter** - done in the enhanced game: `DrawHorizon`'s sky and
-   ground filled by D-only blits (`HorizonFill`); drawing 5% less.
+   ground filled by D-only blits (`HorizonFill`); drawing 5% less. And now beside the CPU, as
+   planned in 2 (`enhanced/src/blitqueue.i`): the horizon's top line worked out before the
+   geometry (`HorizonEarly`), the 8 fills queued and run one after another by the blitter's
+   interrupt while the CPU projects the track - started at once, or by the copper's interrupt
+   when it flips the screens, if the screen to draw on was still shown. The race's work 3.5% less
+   (112.6 ms to 108.7 ms a frame). The ground under the track (the overdraw above) costs the CPU
+   nothing now: it is written by the blitter while the CPU is busy elsewhere.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.
 7. **Everywhere** - the variables most used in registers or `(d16,An)` from one base register,
    the 6502's leftovers removed.

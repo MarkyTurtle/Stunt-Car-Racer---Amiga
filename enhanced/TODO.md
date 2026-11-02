@@ -86,7 +86,7 @@ keeping them all in memory.
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
-6.65 vertical blanks on an A500 for the released game (6.07 now: `ScanEdge`, `FillBetweenEdges` and the blitter's cockpit; the limit is 6), 7.5 frames a second (now 7.95); geometry 32%, drawing 49%,
+6.65 vertical blanks on an A500 for the released game (5.43 now - 108.7 ms; the limit is 6), 7.5 frames a second (now 8.0, most frames at the limit); geometry 32%, drawing 49%,
 cockpit 12%. A word of the view is written 1.87 times a frame (overdraw: moderate - the time goes
 on the work for each line and edge more than on pixels written twice). Measure each change with the benchmark (`tools/bench.py --compare
 bench_baseline.json`, also run by the workflow) and, for real figures, the telemetry disk in WinUAE.
@@ -113,8 +113,20 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   last blits run (nothing after the cockpit until the instruments).
 * ~~The blitter for the background (`DrawHorizon`)~~: done - the sky and ground filled by D-only
   blits (`HorizonFill`, the plane's word in A's data register) instead of 32 `move.l` a line; the
-  same bytes; the race's work 2.9% less. Still to do: start the fills earlier (the band's edge
-  buffer is built first), so that the blitter runs beside the CPU.
+  same bytes; the race's work 2.9% less. ~~Start the fills earlier, so that the blitter runs
+  beside the CPU~~: done (`src/blitqueue.i`) - the horizon's top line worked out before the
+  geometry (`HorizonEarly`: DrawHorizon's first part into a buffer of its own, everything it
+  changes put back), the fills queued and chained by the blitter's interrupt (BLIT), started by
+  the copper's interrupt when it flips the screens if the screen was still shown; `DrawHorizon`
+  skips its fills when they were for the same line. The race's work 3.5% less. Checked: every
+  filled word in 8 races (the fill check, a test build), the game's variables unchanged by
+  `HorizonEarly`, the screens frame for frame (aligned runs), and scremu's new `blitcheck` (each
+  CPU access to what a running blit writes: none; in the workflow, `bench.py --blitcheck`).
+  To check on an A500: the blitter's share of the bus while the CPU works (not modelled).
+* The cockpit's blits beside the CPU: looked at, not done - the race loop draws on the screen
+  right after the view (`sub_5E12A`'s text, `sub_5DB34`'s times, cut-outs drawn on both screens)
+  and the blits are per plane (the screen's planes are not interleaved), so a queue would mean an
+  interrupt for each of about 28 blits and waits before each of those writes: about 1% at best.
 * `ArcTan`, `RollPointXY`: ~~the car level (no roll) without `RollPointXY`'s 4 `muls`~~ (done:
   its result worked out from the point, exactly - half its time when the car is level; the
   benchmark's telemetry race happens to be rolled nearly throughout, the normal build's level).
@@ -132,9 +144,10 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
 * The cockpit (11.7%, now 5.7%): ~~F6 turns it off~~ (done); ~~the blitter's cookie-cut for its
   cut-outs~~ (done); the cut-outs split to skip their transparent parts; the
   view's drawing stopped above the engine's solid lines (3,478 pixels of the view are under it).
-* The ground under the track: `DrawHorizon` fills the whole view and the track's surfaces are
-  filled over it - the track's area written twice. Fill the ground only between the track's
-  edges, or draw the track's surfaces first and the ground in the gaps.
+* ~~The ground under the track~~: no longer worth doing - the ground is filled by the blitter
+  while the CPU works out the geometry (`src/blitqueue.i`), so the track's area written twice
+  costs the CPU nothing. Filling less ground would only matter where the geometry takes less
+  than the fills' 4.6 ms (a CPU about 8 times an A500's).
 * ~~**Half the vertical resolution**~~: done (`src/halfres.i`, **F9**) - not with the copper
   (the cockpit's pillars run the whole height of the view, and would be doubled too) but the
   view drawn in its lower 64 lines (`ScanEdge` takes each point's y as 64 + y / 2; the clipping
