@@ -73,6 +73,12 @@
  *   watch LO HI           log the first write to each 256-byte block of LO-HI, with the PC
  *   readwatch LO HI       log each instruction's first CPU read of each 256-byte block of LO-HI
  *   dmacheck LO HI        log each DMA read or write that reaches LO-HI (once per kind and 16 bytes)
+ *   cpumult N             the CPU N times as fast as an A500's (an accelerated Amiga: the CPU only; the
+ *                         beam, the blitter and the rest keep their time)
+ *   phasetrack FLAG LO HI which code's writes to LO-HI other code reads: the phase is 3 in an interrupt,
+ *                         else bits 0-1 of the byte at FLAG (0-2, set by the code under study); a read of
+ *                         a byte last written in another phase is counted
+ *   phasedump FILE        write them: "writer reader addr pc count" (phases 0-3)
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,6 +88,7 @@
 
 #define RAM 0x80000                   /* chip RAM: 512K */
 #define LINE_CYCLES 454               /* a line: 227 colour clocks, 454 CPU cycles */
+static int cpumult = 1;               /* cpumult N: the CPU N times as fast (a faster Amiga), the rest as before */
 #define FRAME_LINES 313               /* a frame: a PAL long frame (no interlace) */
 #define SNAP 0x80000                  /* what a snapshot / the coverage holds: the first 512K */
 #define SLOW_LO 0xC00000              /* slow RAM ("trapdoor"), the CPU's only */
@@ -116,6 +123,22 @@ static void rwatch(unsigned a) {
     for (unsigned i = 0; i < rseen_n; i++) if (rseen[i] == key) return;
     if (rseen_n < 8192) rseen[rseen_n++] = key;
     if (logf) fprintf(logf, "frame %lu: read of $%05X by pc $%X\n", frame, a, pc);
+}
+/* phasetrack: which code's writes other code reads. The phase: 3 in an interrupt (the IPL mask not 0),
+   else bits 0-1 of the byte at pt_flag (the game under study sets it: 0-2). Each byte of LO-HI is marked with
+   the phase that last wrote it; a read of it in another phase is counted (by the phases, the address
+   and the reading instruction) */
+static unsigned pt_flag, pt_lo = 1, pt_hi = 0; static uint8_t *pt_mark;
+static struct { unsigned key, pc, n; } *pt_hits; static unsigned pt_n;
+static int pt_phase(void) { return (m68k_get_reg(NULL, M68K_REG_SR) & 0x0700) ? 3 : (ram[pt_flag] & 3); }
+static void pt_write(unsigned a) { if (a >= pt_lo && a < pt_hi) pt_mark[a - pt_lo] = 4 | pt_phase(); }
+static void pt_read(unsigned a) {
+    if (a < pt_lo || a >= pt_hi) return;
+    uint8_t m = pt_mark[a - pt_lo]; if (!(m & 4)) return;
+    int w = m & 3, r = pt_phase(); if (w == r) return;
+    unsigned pc = m68k_get_reg(NULL, M68K_REG_PPC), key = a << 4 | w << 2 | r;
+    for (unsigned i = 0; i < pt_n; i++) if (pt_hits[i].key == key && pt_hits[i].pc == pc) { pt_hits[i].n++; return; }
+    if (pt_n < 65536) { pt_hits[pt_n].key = key; pt_hits[pt_n].pc = pc; pt_hits[pt_n++].n = 1; }
 }
 static unsigned dma_lo = 1, dma_hi = 0; static unsigned dma_seen_n, dma_seen[4096];
 static uint16_t rw(uint32_t a);
@@ -257,7 +280,7 @@ done:
 
 /* ---- memory */
 static unsigned beam(void) {
-    unsigned cyc = LINE_CYCLES - m68k_cycles_remaining();
+    unsigned cyc = (LINE_CYCLES * cpumult - m68k_cycles_remaining()) / cpumult;
     if ((int)cyc < 0) cyc = 0; if (cyc > LINE_CYCLES - 1) cyc = LINE_CYCLES - 1;
     return (line_no << 8 | (cyc / 2)) & 0xFFFF;
 }
@@ -345,7 +368,7 @@ static void cia_write(cia_t *c, int reg, unsigned v) {
 }
 unsigned int m68k_read_memory_8(unsigned int a) {
     a &= 0xFFFFFF;
-    if (a < RAM) { rwatch(a); usage[a] |= 1; return ram[a]; }
+    if (a < RAM) { rwatch(a); pt_read(a); usage[a] |= 1; return ram[a]; }
     if (a - SLOW_LO < SLOW_SIZE) return slow[a - SLOW_LO];
     if ((a & 0xFFF000) == 0xBFE000 && (a & 1)) return cia_read(&ciaa, (a >> 8) & 15, 1);
     if ((a & 0xFFF000) == 0xBFD000 && !(a & 1)) return cia_read(&ciab, (a >> 8) & 15, 0);
@@ -355,7 +378,7 @@ unsigned int m68k_read_memory_8(unsigned int a) {
 unsigned int m68k_read_memory_16(unsigned int a) {
     if (a & 1) odd_access(a & 0xFFFFFF, "a word read");
     a &= 0xFFFFFF;
-    if (a < RAM) { rwatch(a); usage[a] |= 1; usage[a + 1] |= 1; return ram[a] << 8 | ram[a + 1]; }
+    if (a < RAM) { rwatch(a); pt_read(a); pt_read(a + 1); usage[a] |= 1; usage[a + 1] |= 1; return ram[a] << 8 | ram[a + 1]; }
     if (a - SLOW_LO < SLOW_SIZE) return slow[a - SLOW_LO] << 8 | slow[a - SLOW_LO + 1];
     if ((a & 0xFFF000) == 0xDFF000) return custom_read(a & 0x1FE);
     return m68k_read_memory_8(a) << 8 | m68k_read_memory_8(a + 1);
@@ -376,11 +399,12 @@ static void odd_access(unsigned a, const char *what) {
 static void wlog(unsigned a, unsigned v, int size) {
     wcount(a & ~1u);
     if (a + size > wlog_lo && a < wlog_hi && wlogf)
-        fprintf(wlogf, "%lu %lu %X %X %X/%d\n", frame, line_no, m68k_get_reg(NULL, M68K_REG_PPC), a, v, size);
+        fprintf(wlogf, pt_flag ? "%lu %lu %X %X %X/%d %d\n" : "%lu %lu %X %X %X/%d\n", frame, line_no, m68k_get_reg(NULL, M68K_REG_PPC), a, v, size,
+                pt_flag ? pt_phase() : 0);   /* (with phasetrack on: the phase too) */
 }
 void m68k_write_memory_8(unsigned int a, unsigned int v) {
     a &= 0xFFFFFF;
-    if (a < RAM) { wlog(a, v & 0xFF, 1); watch(a); usage[a] |= 2; ram[a] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFF, 1); watch(a); pt_write(a); usage[a] |= 2; ram[a] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v; return; }
     if ((a & 0xFFF000) == 0xBFE000 && (a & 1)) { cia_write(&ciaa, (a >> 8) & 15, v); return; }
     if ((a & 0xFFF000) == 0xBFD000 && !(a & 1)) { cia_write(&ciab, (a >> 8) & 15, v); return; }
@@ -389,7 +413,7 @@ void m68k_write_memory_8(unsigned int a, unsigned int v) {
 void m68k_write_memory_16(unsigned int a, unsigned int v) {
     if (a & 1) odd_access(a & 0xFFFFFF, "a word write");
     a &= 0xFFFFFF;
-    if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
+    if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); pt_write(a); pt_write(a + 1); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v >> 8; slow[a - SLOW_LO + 1] = v; return; }
     if ((a & 0xFFF000) == 0xDFF000) { custom_write(a & 0x1FE, v); return; }
     m68k_write_memory_8(a, v >> 8); m68k_write_memory_8(a + 1, v);
@@ -508,14 +532,14 @@ static void cia_tick_timers(cia_t *c, int eclocks) {
         }
     }
 }
-static long cyc_now(void) { long c = LINE_CYCLES - m68k_cycles_remaining(); if (c < 0) c = 0; if (c > LINE_CYCLES) c = LINE_CYCLES; return cyc_total + c; }
+static long cyc_now(void) { long c = (LINE_CYCLES * cpumult - m68k_cycles_remaining()) / cpumult; if (c < 0) c = 0; if (c > LINE_CYCLES) c = LINE_CYCLES; return cyc_total + c; }
 static int line_over;              /* the cycles the last line's last instruction ran over its end */
 static void run_line(void) {
     cb_last = -1;                                            /* (chipbus: from the line's start) */
     cl_pending = cpulost > 0;
     {   /* an instruction that runs over the line's end takes those cycles from the next line */
-        int want = LINE_CYCLES - line_over;
-        if (want < 1) { line_over -= LINE_CYCLES; }
+        int want = LINE_CYCLES * cpumult - line_over;
+        if (want < 1) { line_over -= LINE_CYCLES * cpumult; }
         else { cl_taken = 0; line_over = m68k_execute(want) + cl_taken - want; }
     }
     cyc_total += LINE_CYCLES;
@@ -670,6 +694,7 @@ int main(int argc, char **argv) {
             unsigned d = strtoul(a1, 0, 0), sr = strtoul(a2, 0, 0); long add = strtol(a3, 0, 0);
             if (d < RAM && sr < RAM) ram[d] = (uint8_t)(ram[sr] + add); }
         else if (!strcmp(cmd, "chipbus")) chipbus = atoi(a1);
+        else if (!strcmp(cmd, "cpumult")) cpumult = atoi(a1) > 0 ? atoi(a1) : 1;   /* cpumult N: the CPU N times as fast */
         else if (!strcmp(cmd, "cpulost")) cpulost = atoi(a1);  /* cpulost N: N cycles a line lost to DMA */  /* chipbus 1: the chip bus's 4-cycle grid */
         else if (!strcmp(cmd, "inject")) {                     /* inject ADDR [D0]: the game made to call ADDR now (it returns where it was) */
             unsigned sp = m68k_get_reg(NULL, M68K_REG_A7) - 4; m68k_write_memory_32(sp, m68k_get_reg(NULL, M68K_REG_PC));
@@ -684,6 +709,14 @@ int main(int argc, char **argv) {
         else if (!strcmp(cmd, "writecount")) {                /* writecount LO HI: count each CPU write to LO-HI */
             wc_lo = strtoul(a1, 0, 0); wc_hi = strtoul(a2, 0, 0); free(wc_addr); free(wc_pc);
             wc_addr = calloc((wc_hi - wc_lo) / 2 + 1, sizeof *wc_addr); wc_pc = calloc(RAM / 2, sizeof *wc_pc); }
+        else if (!strcmp(cmd, "phasetrack")) {                /* phasetrack FLAG LO HI: (above) */
+            pt_flag = strtoul(a1, 0, 0); pt_lo = strtoul(a2, 0, 0); pt_hi = strtoul(a3, 0, 0);
+            free(pt_mark); pt_mark = calloc(pt_hi - pt_lo + 1, 1); if (!pt_hits) pt_hits = calloc(65536, sizeof *pt_hits); pt_n = 0; }
+        else if (!strcmp(cmd, "phasedump")) {                 /* phasedump FILE: "writer reader addr pc count" */
+            FILE *o = fopen(a1, "w");
+            for (unsigned i = 0; o && i < pt_n; i++)
+                fprintf(o, "%u %u %X %X %u\n", pt_hits[i].key >> 2 & 3, pt_hits[i].key & 3, pt_hits[i].key >> 4, pt_hits[i].pc, pt_hits[i].n);
+            if (o) fclose(o); }
         else if (!strcmp(cmd, "writecountdump")) {            /* writecountdump PREFIX: PREFIX.addr (a u32 a word), PREFIX.pc ("pc count") */
             char fn[500]; snprintf(fn, sizeof fn, "%s.addr", a1); FILE *o = fopen(fn, "wb");
             if (o && wc_addr) { fwrite(wc_addr, sizeof *wc_addr, (wc_hi - wc_lo) / 2, o); fclose(o); }

@@ -9741,6 +9741,7 @@ l_5D3A4:
         bne.w   l_5D402                         ; 5D3F6
         move.b  #$80,(dat_1BBE1).l              ; 5D3FA
 l_5D402:
+        clr.b   (InterpActive).l                ; (enhanced) the start's views drawn as before (interp.i)
         jsr     (PlaceCarOnPiece).l             ; 5D402
         jsr     (sub_5E778).l                   ; 5D408
         jsr     (sub_60CDE).l                   ; 5D40E
@@ -9782,7 +9783,7 @@ l_5D47E:
         jsr     (sub_5DB34).l                   ; 5D4AE
         jsr     (sub_5E12A).l                   ; 5D4B4
         move.b  (dat_1BB6F).l,d0                ; 5D4BA
-        and.b   (dat_1BBC8).l,d0                ; 5D4C0
+        and.b   (StepParity).l,d0               ; 5D4C0  (enhanced) every other step: dat_1BBC8 changes with each picture (interp.i)
         bpl.w   l_5D5A0                         ; 5D4C6
         tst.b   (dat_1BBCC).l                   ; 5D4CA
         bne.w   l_5D5A0                         ; 5D4D0
@@ -9831,7 +9832,7 @@ l_5D5A0:
 	ifd	TELEMETRY
         jsr     (TelFrameEnd).l                 ; 5D5A0  telemetry: TelFrameEnd, then FrameLimiter
 	else
-        jsr     (FrameLimiter).l                ; 5D5A0
+        jsr     (FrameEnd).l                    ; 5D5A0  (enhanced) FrameLimiter, or the steps to the clock (interp.i)
 	endc
 	ifd	TELEMETRY
         jsr     (TelPauseKey).l                 ; 5D5A6  telemetry: TelPauseKey, then CheckPauseKey
@@ -10168,6 +10169,7 @@ FrameLimiter:
         lea.l   Countdown1(pc),a2               ; 5DAC0
         jsr     (Helper_Wait).w                 ; 5DAC4  the release helper block: the wait ($C0; the turbo makes it a NOP)
         nop                                     ; 5DAC8
+FrameFlip:					; (enhanced: interp.i) the screens flipped without the wait
         eori.b  #$1,(dat_5DABE).l               ; 5DACA
         move.b  (dat_5DABE).l,d0                ; 5DAD2
         addi.b  #$5,d0                          ; 5DAD8
@@ -14098,6 +14100,7 @@ Countdown2:				; counted down to 0 by VBlankTick each frame (fades: FadeOutTo se
 ; sound's period from the revs ($493E00 / (revs + $17A)), ...
 ;-------------------------------------------------------------------------------
 VBlankTick:
+        addq.l  #1,(InterpVBlanks).l            ; (enhanced) the clock the race's steps keep to (interp.i)
         clr.w   d1                              ; 616DC
         clr.w   d2                              ; 616DE
         tst.b   (Countdown1).l                  ; 616E0
@@ -18162,7 +18165,7 @@ DrawCockpitPart:
 	jmp	(DrawCutout).l
 .off:	rts
 
-HelperCockpitOff	equ	$15E		; non-zero: the cockpit's parts are not drawn over the view (F6)
+HelperCockpitOff	equ	$172		; (helper_c0.s: its flags) non-zero: the cockpit's parts are not drawn over the view (F6)
 
 ;-------------------------------------------------------------------------------
 ; RaceView - the view each race frame: the cars placed on their pieces (or, off the track, the
@@ -18172,6 +18175,7 @@ HelperCockpitOff	equ	$15E		; non-zero: the cockpit's parts are not drawn over th
 ; DrawNearRows), then the cockpit (DrawCutout) and the chains
 ;-------------------------------------------------------------------------------
 RaceView:
+        jsr     (InterpViewStart).l             ; (enhanced) in a step to the clock: the variables kept, nothing drawn (interp.i)
         jsr     (sub_64E18).l                   ; 64E4C
         move.b  #$0,d0                          ; 64E52
         move.b  d0,(dat_1BBD5).l                ; 64E56
@@ -18193,7 +18197,7 @@ l_64E8E:
 l_64EA6:
         tst.b   (dat_1CA22).l                   ; 64EA6
         bpl.w   l_64EBC                         ; 64EAC
-        jsr     (MoveOpponent).l                ; 64EB0
+        jsr     (InterpMoveOpponent).l          ; 64EB0  (enhanced) MoveOpponent: not in a picture (interp.i)
         jsr     (PlaceCarOnTrack).l             ; 64EB6
 l_64EBC:
         move.b  (dat_1BB9F).l,(dat_1BB0E).l     ; 64EBC
@@ -18231,11 +18235,13 @@ l_64F26:
 l_64F5E:
         tst.b   (dat_1CA22).l                   ; 64F5E
         bpl.w   l_64F80                         ; 64F64
-        jsr     (MoveOpponent).l                ; 64F68
+        jsr     (InterpMoveOpponent).l          ; 64F68  (enhanced) MoveOpponent: not in a picture (interp.i)
         jsr     (sub_6076C).l                   ; 64F6E
         jsr     (sub_636C0).l                   ; 64F74
         jsr     (PlaceCarOnTrack).l             ; 64F7A
 l_64F80:
+        tst.b   (InterpSkipDraw).l              ; (enhanced) a step to the clock: the cars placed, the drawing left
+        bne.w   InterpNoDraw                    ; to the pictures between steps (interp.i)
         move.b  #$80,d0                         ; 64F80
         move.b  d0,(dat_1BC14).l                ; 64F84
         move.b  d0,(dat_1BC16).l                ; 64F8A
@@ -18293,6 +18299,7 @@ l_6509E:
         jsr     (LinkReceiveCarState).l         ; 650A8
 l_650AE:
         move.w  (RowOffset).l,-(a7)             ; 650AE
+        jsr     (InterpWaitFlip).l              ; (enhanced) the last flip done before drawing (interp.i)
 	ifd	TELEMETRY
         jsr     (TelDrawing).l                  ; 650B4  telemetry: TelDrawing, then DrawHorizon
 	else
@@ -24413,6 +24420,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	endc
 	include	"diskload.i"			; (the enhanced game) loading from the disk while the game runs
 	include	"blitcutout.i"			; (the enhanced game) the cockpit drawn by the blitter
+	include	"interp.i"			; (the enhanced game) the physics to the clock, the view between
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

@@ -19,6 +19,16 @@ workflow). So far it differs from the original in:
   the cockpit's time halved;
 * **`FillBetweenEdges` writes two words a plane at once**, from an unrolled sequence: the track's
   surfaces filled faster;
+* **the race keeps to the clock, and faster machines draw more pictures**
+  ([`src/interp.i`](src/interp.i)): the physics steps every 6 vertical blanks, as the game was
+  designed (8.33 a second), whatever the drawing takes - the release slowed the whole game down
+  when a frame took longer (most frames on an A500); a late step is caught up by running the next
+  without drawing it. Between steps, a machine with time to spare draws pictures of the moments in
+  between: the car's place and angles and the opponent's blended between the last two steps. On
+  an A500 each picture is the latest step's, as before (about 8.3 a second); measured in the
+  emulator with a faster CPU, 15 a second at twice the A500's speed, 23 at three times, 30 at four,
+  50 (every frame) at eight. **F8** switches back to the release's timing; a two-player link race
+  always uses it;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they
@@ -79,6 +89,10 @@ own loader (`DiskInit`, `LoadPicture` for each picture file) and compares what i
 ADF: the Hall of Fame and the four pictures shown after races, each loaded and checked; then the
 wreck with no disk in, with another disk in (the game asks for its disk and waits) and with its
 disk back. `--png DIR` draws the screens.
+
+`tools/measure_keep.py --check` checks `src/interp_keep.i` - the variables the view's drawing
+keeps from picture to picture, measured in two races in the emulator (without `--check` it writes
+the file anew).
 
 Both scremu tests (`test_pictures.py`, `reloc_test.py`) fail on any word or long read or written at
 an odd address: a 68000 stops there with an address error (a Guru in WinUAE), while the emulators

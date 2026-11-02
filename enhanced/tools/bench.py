@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--game BIN] [--helper BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--cpumult N] [--game BIN] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -19,7 +19,14 @@ The times are the emulator's, fitted to an A500's: a 68000 at 7.09 MHz with the 
 cycles, 6 cycles of each raster line lost to DMA (scremu's cpulost) - the telemetry build's
 calibration run on an A500 is matched within 1.2% (enhanced/measurements/). For comparing two
 versions of the game the emulator's figures are exact and repeatable. --cpulost N changes the
-DMA's share (0: none). The blitter is timed (scremu's blittime: 2 CPU cycles for each of its
+DMA's share (0: none).
+
+The race is run with the release's timing (a step and a picture each frame, at most every 6
+vertical blanks: F8's flag set at the start), so that the figures measure the drawing as before.
+--interp leaves the enhanced game's own timing on (src/interp.i: the steps to the clock, the
+view drawn between them): the telemetry's frames are then its steps, each with the picture it
+drew (or none, catching up). --cpumult N runs the CPU N times as fast (an accelerated Amiga:
+scremu's cpumult). The blitter is timed (scremu's blittime: 2 CPU cycles for each of its
 memory cycles, about one a channel a word): the CPU waiting for a blit waits as long as an A500's
 would (its bus shared with the CPU is not modelled: the enhanced game waits for each of its blits).
 """
@@ -37,8 +44,11 @@ import telemetry
 
 def script(frames, snap):
     L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + (['cpulost ' + arg('--cpulost')] if arg('--cpulost') else []) + \
+        (['cpumult ' + arg('--cpumult')] if arg('--cpumult') else []) + \
         ['blittime 1',                                                                  # the blitter's time: the CPU waits for it
-         'until 0xE730 100', 'frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']   # the title: fire
+         'until 0xE730 100'] + \
+        ([] if '--interp' in sys.argv else ['poke 0x174 1 b']) + \
+        ['frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']                         # the title: fire
     for k in ('37', '20', '13', '27', '44'):                                           # MARK, Return
         L += [f'key {k}', 'frames 10']
     L += ['frames 160', 'joy f', 'frames 5', 'joy', 'frames 150',                      # the divisions

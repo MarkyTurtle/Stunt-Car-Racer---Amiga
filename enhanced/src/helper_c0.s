@@ -8,8 +8,11 @@
 ;   $FC  Helper_Keys  the keyboard interrupt's hook, d0 the raw key byte: decoded; F1 the audio
 ;                     filter, F2 PAL / NTSC (BEAMCON0), F3 the turbo, F6 the cockpit (the enhanced
 ;                     game: CockpitOff, which the game tests), F7 a calibration run (the
-;                     telemetry build: calibrate.i)
-;   $15C the flags: F2's (NTSC on), F3's (the turbo on), F6's (the cockpit off: $15E), F7's ($15F)
+;                     telemetry build: calibrate.i), F8 the race's steps to the clock with the
+;                     view drawn between them, or the release's timing (interp.i)
+;   $15C the flags (the release's; the enhanced game's at $170, its code having grown): F2's (NTSC
+;        on), F3's (the turbo on), F6's (the cockpit off: $172), F7's ($173), F8's ($174: the
+;        release's timing)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -93,22 +96,28 @@ Helper_Keys:					; $FC
 	bne.s	.f7				; DrawCockpitPart tests CockpitOff). Caught here, in the
 	not.b	2(a0)				; keyboard interrupt, so that no press is missed
 .f7:	cmp.b	#$56,d0				; F7: the telemetry build's calibration run, asked for
-	bne.s	.done				; (calibrate.i: run at the end of the race frame)
+	bne.s	.f8				; (calibrate.i: run at the end of the race frame)
 	st	3(a0)
+.f8:	cmp.b	#$57,d0				; F8: the race's timing - to the clock, the view drawn
+	bne.s	.done				; between steps (interp.i), or the release's
+	not.b	4(a0)
 	endc
 .done:	movea.l	(a7)+,a0
 	rts
 
 	ifnd	ORIGINAL
-	dcb.b	$15C-*,0
+	dcb.b	$170-*,0
 	endc
-HelperFlags:					; $15C
+HelperFlags:					; $15C ($170)
 	dc.b	0				; F2: NTSC
 TurboOn:
 	dc.b	0				; F3: the turbo
 	ifnd	ORIGINAL
-CockpitOff:					; $15E
+CockpitOff:					; $172
 	dc.b	0				; F6: the cockpit off
-CalibrateAsked:					; $15F
+CalibrateAsked:					; $173
 	dc.b	0				; F7: a calibration run asked for (the telemetry build)
+InterpOff:					; $174
+	dc.b	0				; F8: the release's timing
+	dc.b	0
 	endc

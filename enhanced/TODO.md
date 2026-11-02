@@ -138,7 +138,11 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   - a key to switch it (as F6 does the cockpit), to compare in play and measure with the telemetry.
 * `ArcTan`, `RollPointXY` (7.3%): tables.
 * The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
-* Then the frame rate: the game is simulated a step a frame, so a limit under 6 vertical blanks
-  speeds the game up. Keep the physics at a step every 6 vertical blanks and draw more often (the
-  cars' positions interpolated), or shorten the physics' step. The release's turbo (F3) removes the
-  limit: it should become a choice of the limit instead.
+* ~~Then the frame rate~~: done (`src/interp.i`, F8 for the release's timing) - the physics at a
+  step every 6 vertical blanks to the clock (the game's speed constant, late steps caught up), and
+  the view drawn between steps with the cars' places and angles blended: one step's latency,
+  traded for smooth motion, when 2 or more pictures fit in a step; the latest step, as before,
+  when not (the A500). Still to do: try it on an A1200 and an accelerated A500 (the emulator's
+  cpumult is only the CPU); the instruments are still printed once a step; extrapolation instead
+  of the step's latency (riskier: crashes); a shorter step for the physics (the game's tuning
+  assumes 6 vertical blanks).

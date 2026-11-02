@@ -13,7 +13,8 @@
 ;                                                                             (to TelCockpit)
 ;   4 cockpit the cockpit's parts drawn over the view (DrawCutout), the chains (to the view's end)
 ;   5 rest    the drawbridge, the instruments, the lap and time digits        (to TelFrameEnd)
-;   6 wait    FrameLimiter: waiting for the 6th vertical blank, the screens flipped
+;   6 wait    FrameLimiter: waiting for the 6th vertical blank, the screens flipped (with the
+;             steps to the clock, interp.i: the pictures between steps, and the wait for the next)
 ;
 ; The marks are calls that replace calls of the same size in the game (the game's addresses do
 ; not change: this code fills the space of the unused CopylockRoutine). The vertical blank's
@@ -89,6 +90,8 @@ TelNow:
 ; TelMark - d1.w = a phase * 2: the time since the last mark added to that phase. d0, d1, a0 used.
 ;-------------------------------------------------------------------------------
 TelMark:
+	tst.b	InterpRendering			; a picture between steps (interp.i): its time left in the wait
+	bne.s	.rts
 	lea	(TEL_ACC).w,a0
 	adda.w	d1,a0
 	bsr	TelNow
@@ -96,7 +99,7 @@ TelMark:
 	sub.l	(TEL_LAST).w,d1
 	move.l	d0,(TEL_LAST).w
 	add.w	d1,(a0)
-	rts
+.rts:	rts
 
 ;-------------------------------------------------------------------------------
 ; TelRaceStart - in place of the jsr StartEngineSound before the race loop: the results set up
@@ -185,7 +188,7 @@ TelFrameEnd:
 	moveq	#5*2,d1
 	bsr	TelMark
 	movem.l	(a7)+,d0-d1/a0
-	jsr	(FrameLimiter).l
+	jsr	(FrameEnd).l			; (FrameLimiter, or the pictures until the next step: interp.i)
 	movem.l	d0-d3/a0-a2,-(a7)
 	moveq	#6*2,d1
 	bsr	TelMark

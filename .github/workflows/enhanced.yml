@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: 5bea090ce13a2a7927edc0c0bc157f252b7bb43f
+  ADF_SHA1: 4833e0dad360fb7687df5cc859010c8c8128bd44
 
 jobs:
   build:
@@ -73,10 +73,13 @@ jobs:
         run: python enhanced/tools/reloc_test.py
       - name: The pictures loaded from the disk (enhanced/tools/test_pictures.py)
         run: python enhanced/tools/test_pictures.py
+      - name: The variables the view's drawing keeps (enhanced/tools/measure_keep.py --check)
+        run: python enhanced/tools/measure_keep.py --check
       - name: The race benchmark (enhanced/tools/bench.py)
         run: |
           python enhanced/tools/bench.py --json bench.json --compare enhanced/bench_baseline.json | tee bench.txt
           { echo; echo '--- with the opponent in view (against enhanced/bench_opponent.json)'; python enhanced/tools/bench.py --opponent --compare enhanced/bench_opponent.json; } | tee -a bench.txt
+          { echo; echo '--- the steps to the clock (src/interp.i: --interp; the frames are the steps)'; python enhanced/tools/bench.py --interp | head -3; } | tee -a bench.txt
           { echo '### The race benchmarks (scremu)'; echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: The checkout is unchanged
         run: |

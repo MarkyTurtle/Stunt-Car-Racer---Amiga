@@ -15,7 +15,7 @@ is left out.
 |---|---:|---|---|
 | `$00000-$000FF` | 256 | exception vectors; the release's helper block at `$C0` | |
 | `$00100-$0015B` | 92 | | a few bytes read |
-| `$0015C-$03D79` | 15,390 | **free**: nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
+| `$0015C-$03D79` | 15,390 | **free** (the enhanced game's helper block reaches `$175`: its flags at `$170`): nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
 | `$03D80-$0648F` | 10,000 | the race's work area: cleared at the start of each race (`$5D83A`); the 3D view's edge buffers (`$3D80-$60A8`, [RENDER.md](RENDER.md)) | read and written |
 | `$06490-$0E297` | 32,264 | the cut-out graphics: 52 pieces of the pictures (the cockpit's parts, the chains, ...) masked by `MakeCutouts` at start-up; their addresses at `CutoutPointers` | written once, read |
 | `$0E298-$0E729` | 1,170 | free (no use found) | untouched |
@@ -68,15 +68,15 @@ cockpit is needed for every race.
 
 The enhanced game (`enhanced/`) loads the five pictures read only while their own screen is up
 from its disk when they are shown (`enhanced/src/diskload.i`): its load is 123,808 bytes smaller,
-and its screens - which follow the code - start at `$4C5AA` instead of `$6A594` (the addresses
+and its screens - which follow the code - start at `$4E6E4` instead of `$6A594` (the addresses
 below move as the code grows; these are the enhanced game's of November 2026).
 
 | Address | Bytes | Used for |
 |---|---:|---|
 | `$00400-$032BF` | 11,968 | the byteloader's MFM buffer while a picture is loaded (and, as before, the save routine's) |
-| `$0E700-$4C5A9` | 253,610 | the game: code, data, the pictures it keeps (cockpit, title, stadium, divisions) |
-| `$4C5AA-$5BFA9` | 64,000 | the two screens |
-| `$5BFAA-$63CCB` | 32,034 | `DiskPicture`: the picture loaded from the disk |
-| `$63CCC-$6B8B3` | 31,720 | `BlitCutouts`: the 40 cut-outs `DrawCutout` blits, in the blitter's form (made at start-up: `enhanced/src/blitcutout.i`) |
-| `$6B8B4-$77FFF` | 51,020 | **free** |
+| `$0E700-$4E6E3` | 262,116 | the game: code, data, the pictures it keeps (cockpit, title, stadium, divisions) |
+| `$4E6E4-$5E0E3` | 64,000 | the two screens |
+| `$5E0E4-$65E05` | 32,034 | `DiskPicture`: the picture loaded from the disk |
+| `$65E06-$6D9ED` | 31,720 | `BlitCutouts`: the 40 cut-outs `DrawCutout` blits, in the blitter's form (made at start-up: `enhanced/src/blitcutout.i`) |
+| `$6D9EE-$77FFF` | 42,514 | **free** |
 | `$78000-$7A019` | 8,218 | free once the loading picture is not needed |
