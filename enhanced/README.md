@@ -29,6 +29,13 @@ workflow). So far it differs from the original in:
   emulator with a faster CPU, 15 a second at twice the A500's speed, 23 at three times, 30 at four,
   50 (every frame) at eight. **F8** switches back to the release's timing; a two-player link race
   always uses it;
+* **F9 in a race draws the view at half its height**, each line doubled ([`src/halfres.i`](src/halfres.i)):
+  the track, the sky and ground, the mountains and the cars drawn in 64 lines and doubled by the
+  blitter, the cockpit and the sparks over them at full height - the drawing 19% quicker, for a
+  coarser view;
+* **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels
+  written a word at a time, not one `PlotPixel` call a pixel; edges with both ends in the view skip
+  `ScanEdge`'s clipping;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they

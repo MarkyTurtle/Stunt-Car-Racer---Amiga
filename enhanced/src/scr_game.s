@@ -18175,6 +18175,7 @@ HelperCockpitOff	equ	$172		; (helper_c0.s: its flags) non-zero: the cockpit's pa
 ; DrawNearRows), then the cockpit (DrawCutout) and the chains
 ;-------------------------------------------------------------------------------
 RaceView:
+        jsr     (HalfLatch).l                   ; (enhanced) F9: this view at full or half height (halfres.i)
         jsr     (InterpViewStart).l             ; (enhanced) in a step to the clock: the variables kept, nothing drawn (interp.i)
         jsr     (sub_64E18).l                   ; 64E4C
         move.b  #$0,d0                          ; 64E52
@@ -18312,6 +18313,7 @@ l_650AE:
         move.w  (FarRowsEnd).l,(RowOffset).l     ; 650D2
         jsr     (DrawNearRows).l                   ; 650DC
 l_650E2:
+        jsr     (HalfExpand).l                  ; (enhanced) at half height: the lines doubled (halfres.i)
         tst.b   (DropCountdown).l               ; 650E2
         bne.w   l_650FC                         ; 650E8
         tst.b   (dat_1BB9C).l                   ; 650EC
@@ -20021,6 +20023,13 @@ l_668EC:
         move.w  (a4,d2.w),d6                    ; 66908
         move.w  (a5,d1.w),d5                    ; 6690C
         move.w  (a5,d2.w),d7                    ; 66910
+        tst.b   (HalfRes).l                     ; (enhanced) at half height: y as 64 + y / 2 (halfres.i)
+        beq.s   .full
+        asr.w   #1,d5
+        addi.w  #HALF_TOP,d5
+        asr.w   #1,d7
+        addi.w  #HALF_TOP,d7
+.full:
         cmp.w   d7,d5                           ; 66914
         bge.w   l_66924                         ; 66916
         exg.l   d7,d5                           ; 6691A
@@ -21432,6 +21441,14 @@ l_6795C:
         move.w  #$7f,d4                         ; 6797E
         sub.w   (dat_1BC58).l,d4                ; 67982
         bmi.w   l_679F2                         ; 67988
+        tst.b   (HalfRes).l                     ; (enhanced) at half height: from line 64 at the highest
+        beq.s   .full1
+        cmpi.w  #HALF_TOP,(dat_1BC58).l
+        bge.s   .full1
+        movea.l (ScreenDrawTop).l,a4
+        lea.l   HALF_TOP*40(a4),a4
+        moveq   #127-HALF_TOP,d4
+.full1:
         move.b  #$d,d0                          ; 6798C
         jsr     (ColourToMasks).l               ; 67990
         jsr     (sub_67A8C).l                   ; 67996
@@ -21481,6 +21498,12 @@ l_679F2:
         subq.b  #$1,d4                          ; 67A08
         bmi.w   l_67A6A                         ; 67A0A
         movea.l (ScreenDrawTop).l,a4            ; 67A0E
+        tst.b   (HalfRes).l                     ; (enhanced) at half height: lines 64 on only
+        beq.s   .full2
+        subi.w  #HALF_TOP,d4
+        bmi.w   l_67A6A
+        lea.l   HALF_TOP*40(a4),a4
+.full2:
 l_67A14:
         lea.l   $1f40(a4),a0                    ; 67A14
         lea.l   $3e80(a4),a1                    ; 67A18
@@ -24528,6 +24551,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"diskload.i"			; (the enhanced game) loading from the disk while the game runs
 	include	"blitcutout.i"			; (the enhanced game) the cockpit drawn by the blitter
 	include	"interp.i"			; (the enhanced game) the physics to the clock, the view between
+	include	"halfres.i"			; (the enhanced game) F9: the view at half its height, doubled
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

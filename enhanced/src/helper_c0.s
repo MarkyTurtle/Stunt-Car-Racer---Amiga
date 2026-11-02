@@ -9,10 +9,11 @@
 ;                     filter, F2 PAL / NTSC (BEAMCON0), F3 the turbo, F6 the cockpit (the enhanced
 ;                     game: CockpitOff, which the game tests), F7 a calibration run (the
 ;                     telemetry build: calibrate.i), F8 the race's steps to the clock with the
-;                     view drawn between them, or the release's timing (interp.i)
+;                     view drawn between them, or the release's timing (interp.i), F9 the view
+;                     at half its height (halfres.i)
 ;   $15C the flags (the release's; the enhanced game's at $170, its code having grown): F2's (NTSC
 ;        on), F3's (the turbo on), F6's (the cockpit off: $172), F7's ($173), F8's ($174: the
-;        release's timing)
+;        release's timing), F9's ($175: half height)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -99,8 +100,11 @@ Helper_Keys:					; $FC
 	bne.s	.f8				; (calibrate.i: run at the end of the race frame)
 	st	3(a0)
 .f8:	cmp.b	#$57,d0				; F8: the race's timing - to the clock, the view drawn
-	bne.s	.done				; between steps (interp.i), or the release's
+	bne.s	.f9				; between steps (interp.i), or the release's
 	not.b	4(a0)
+.f9:	cmp.b	#$58,d0				; F9: the race's view at full or half height
+	bne.s	.done				; (halfres.i)
+	not.b	5(a0)
 	endc
 .done:	movea.l	(a7)+,a0
 	rts
@@ -119,5 +123,6 @@ CalibrateAsked:					; $173
 	dc.b	0				; F7: a calibration run asked for (the telemetry build)
 InterpOff:					; $174
 	dc.b	0				; F8: the release's timing
-	dc.b	0
+HalfHeight:					; $175
+	dc.b	0				; F9: the view at half height
 	endc

@@ -278,6 +278,9 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    benchmark's race), so each line's run is written a word at a time with masks
    (`EdgeFlush`, through `PlotWord<colour>`), its length found at once - not a `PlotPixel` call
    (about 180 cycles) for each pixel. The race's work 3.5% less.
+5b. **Half the height** - done in the enhanced game (`enhanced/src/halfres.i`, F9): the view
+   drawn in 64 lines (`ScanEdge` takes y as 64 + y / 2) and doubled by the blitter before the
+   cockpit; the drawing phase 19% less.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.
 7. **Everywhere** - the variables most used in registers or `(d16,An)` from one base register,
    the 6502's leftovers removed.

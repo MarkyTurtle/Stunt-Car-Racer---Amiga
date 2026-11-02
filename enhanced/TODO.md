@@ -125,22 +125,14 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
 * The ground under the track: `DrawHorizon` fills the whole view and the track's surfaces are
   filled over it - the track's area written twice. Fill the ground only between the track's
   edges, or draw the track's surfaces first and the ground in the gaps.
-* **Half the vertical resolution, stretched by the copper.** Draw the view in 64 lines instead of
-  128 and show each line twice: the copper list sets the bitplane modulos (BPL1MOD, BPL2MOD) to
-  -40 on the first line of each pair (the same line again) and back to 0 on the second, from the
-  view's first line to its last (a WAIT and 2 MOVEs a line: about 1.5K of copper list). Everything
-  that works a line at a time halves: `DrawHorizon`, `FillBetweenEdges`, the edges' stepping
-  (`ScanEdge`, once it steps a line at a time), `DrawEdgeLine`; the projection stays the same.
-  Measured shares: drawing 49% and much of geometry's 31% - perhaps a quarter to a third of the
-  frame. The thought: the faster the game moves, the less the doubled lines are seen. To work out:
-  - the cockpit overlaps the view's bottom 21 lines and its corners at full resolution: stop the
-    stretch above it (full-resolution lines for the bottom of the view - the track drawn at full
-    resolution there, or the doubled lines continued and the cockpit drawn on them), or draw the
-    cockpit's overlapping parts at half resolution too;
-  - the projection's y scaled by half (`ProjectPointY`), the edge buffers a word a pair of lines,
-    the view's 64 lines packed (40 bytes a line, as now, so that the copper's modulo trick works);
-  - the horizon band, where the far rows stack, gains the most and looks the worst: compare;
-  - a key to switch it (as F6 does the cockpit), to compare in play and measure with the telemetry.
+* ~~**Half the vertical resolution**~~: done (`src/halfres.i`, **F9**) - not with the copper
+  (the cockpit's pillars run the whole height of the view, and would be doubled too) but the
+  view drawn in its lower 64 lines (`ScanEdge` takes each point's y as 64 + y / 2; the clipping
+  unchanged) and doubled by the blitter into the 128 before the sparks and the cockpit are drawn
+  at full height. Drawing 19% less, the race's work 10% less (5.26 vertical blanks a frame against
+  5.85). Still to do: the doubling's 4.6 ms (8 blits; the CPU waits) - overlapped with something,
+  or drawn straight into every other line; at half height the edges' set-up and the projection
+  are most of what is left; compare the look in play (the horizon band, the far rows).
 * `ArcTan`, `RollPointXY` (7.3%): tables.
 * The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
 * ~~Then the frame rate~~: done (`src/interp.i`, F8 for the release's timing) - the physics at a
