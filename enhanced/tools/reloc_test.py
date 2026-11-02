@@ -8,8 +8,8 @@ Assembles src/scr_game.s twice: as it is, and with 16 bytes put in after the ent
 rest - code, data, pictures - is 16 bytes later), then plays the benchmark's race (tools/bench.py:
 the menus, the season's first race, N vertical blanks of it, default 3,000) in scremu with both, and
 compares how often each routine was called. Any difference means something in the game still uses
-an address that did not move with the code. (The game's load ends with its screens and the work
-areas follow soon after: the code can be moved, but it cannot grow much - enhanced/TODO.md.)
+an address that did not move with the code. Fails too on any word or long read or written at an
+odd address (an address error on a 68000; scremu reports them).
 """
 import os, subprocess, sys, tempfile
 
@@ -56,12 +56,16 @@ def main():
     for b in bins:
         sc = os.path.join(work, 'script.txt')
         txt = bench.script(vblanks, os.path.join(work, 'snap')).replace("joy f\nframes", "calls 1\njoy f\nframes", 1)
-        lines = txt.split('\n')
+        lines = [f'log {b}.log'] + txt.split('\n')
         lines.insert(len(lines) - 2, f'callsdump {b}.calls')
         open(sc, 'w').write('\n'.join(lines))
         subprocess.run([bench.EMU, b, bench.helper(),
                         os.path.join(bench.ORIG, 'bin', 'loadpic_78000.bin'), sc], check=True, stdout=subprocess.DEVNULL)
         results.append(b + '.calls')
+    for b in bins:                              # a word or long at an odd address: a 68000 would crash
+        bad = [l for l in open(b + '.log') if l.startswith('address error')] if os.path.exists(b + '.log') else []
+        if bad:
+            sys.exit(f'address errors ({os.path.basename(b)}):\n' + ''.join(bad))
     a, m = calls(results[0]), calls(results[1], entry)
     diff = sorted(x for x in set(a) | set(m) if a.get(x) != m.get(x))
     print(f'{len(a)} routines called; moved {SHIFT} bytes: {len(diff)} differ')

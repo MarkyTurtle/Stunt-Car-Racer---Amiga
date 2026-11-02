@@ -71,6 +71,11 @@ ADF: the Hall of Fame and the four pictures shown after races, each loaded and c
 wreck with no disk in, with another disk in (the game asks for its disk and waits) and with its
 disk back. `--png DIR` draws the screens.
 
+Both scremu tests (`test_pictures.py`, `reloc_test.py`) fail on any word or long read or written at
+an odd address: a 68000 stops there with an address error (a Guru in WinUAE), while the emulators
+here would carry on. (The first disk with the pictures loaded from the disk crashed so after a won
+race: removing the odd-sized pictures had left `PictureTable` on an odd address.)
+
 ## Measuring the speed
 
 **The telemetry build** is the game with each race frame timed: `build_disk.py --telemetry`

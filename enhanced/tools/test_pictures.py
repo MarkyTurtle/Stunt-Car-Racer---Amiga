@@ -65,6 +65,8 @@ def main():
     log = open(w('log.txt')).read()
     if 'crash:' in log:
         sys.exit('the game crashed:\n' + log[log.index('crash:'):][:400])
+    if 'address error:' in log:                 # a word or long at an odd address: a 68000 would crash
+        sys.exit('address errors:\n' + '\n'.join(l for l in log.split('\n') if l.startswith('address error')))
     reads = re.findall(r'disk read \$(\w+)\+\$(\w+) to \$(\w+): (\w+)', log)
     table = adf[0x400:0x490]
     import struct

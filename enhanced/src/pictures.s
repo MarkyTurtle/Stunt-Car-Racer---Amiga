@@ -2,7 +2,10 @@
 ; pictures.s - the enhanced game's pictures: original/gfx/pictures.s without the five shown only
 ; between races and in the Hall of Fame (wreck, season_win, season_crowd, champion, hall_of_fame:
 ; 124,485 bytes), which are files on the disk now (tools/build_disk.py: files 3-7) loaded into
-; PictureBuffer when they are shown (diskload.i). The tables between the pictures are kept.
+; DiskPicture when they are shown (diskload.i). The tables between the pictures are kept; the
+; single $00 bytes after three of them are not: they made up for the odd lengths of wreck,
+; season_win and season_crowd, and without those pictures they would leave everything after on
+; odd addresses (PictureTable's longs: an address error on a 68000).
 ;-----------------------------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------------------------
 ; The pictures: each a record of a flag word (bit 15: packed, ByteRun1 by line and plane,
@@ -53,18 +56,16 @@ dat_35A96	equ	Pic_Divisions+$22
 
 	dc.b	$00,$00,$00,$04,$00,$08,$00,$0C,$00,$03,$00,$07,$00,$0B,$00,$0F
 	dc.b	$00,$01,$00,$01,$00,$01,$00,$01,$00,$80,$00,$54,$00,$2A,$00,$00
-	dc.b	$00
 
 ; Pic_SeasonWin (season_win.bin): not in the game - a file on the disk, loaded when it is shown (diskload.i)
 
 	dc.b	$00,$00,$00,$04,$00,$08,$00,$0C,$00,$03,$00,$07,$00,$0B,$00,$0F
 	dc.b	$00,$01,$00,$01,$00,$01,$00,$01,$00,$80,$00,$54,$00,$2A,$00,$00
-	dc.b	$00
 
 ; Pic_SeasonCrowd (season_crowd.bin): not in the game - a file on the disk, loaded when it is shown (diskload.i)
 
 	dc.b	$00,$00,$00,$04,$00,$08,$00,$0C,$00,$03,$00,$07,$00,$0B,$00,$0F
 	dc.b	$00,$01,$00,$01,$00,$01,$00,$01,$00,$80,$00,$54,$00,$2A,$00,$00
-	dc.b	$00
 
 ; Pic_Champion (champion.bin): not in the game - a file on the disk, loaded when it is shown (diskload.i)
+	even					; (what follows reads words and longs)

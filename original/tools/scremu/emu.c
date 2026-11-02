@@ -14,6 +14,9 @@
  * the loading picture at $78000 (the game's picture table points at it), USP $7FFFC, SSP $3D80,
  * a0 = $E700, d0 = 0, interrupts masked, PC = $E700.
  *
+ * A word or long read or write at an odd address (an address error on a 68000: the game would
+ * crash) is logged ("address error: ..."), the first 20.
+ *
  * Memory use: every byte of the 512K is marked by what touched it - the CPU reading, writing,
  * executing (each instruction's first word), and DMA (the blitter's channels, the bitplanes the
  * copper lists and the CPU point at, for the display window's lines, the copper lists, audio
@@ -88,6 +91,7 @@ static unsigned joy;                  /* bits: 1 up 2 down 4 left 8 right 16 fir
 static unsigned until_pc = 0xFFFFFFFF; static int until_hit;
 static unsigned trace_pc = 0xFFFFFFFF;
 static void snapshot(const char *prefix);
+static void odd_access(unsigned a, const char *what);
 static unsigned rnd(void);
 static int blits, blit_line; static long blit_words, blit_cycles;
 static long cyc_now(void);
@@ -341,17 +345,25 @@ unsigned int m68k_read_memory_8(unsigned int a) {
     return 0;
 }
 unsigned int m68k_read_memory_16(unsigned int a) {
+    if (a & 1) odd_access(a & 0xFFFFFF, "a word read");
     a &= 0xFFFFFF;
     if (a < RAM) { rwatch(a); usage[a] |= 1; usage[a + 1] |= 1; return ram[a] << 8 | ram[a + 1]; }
     if (a - SLOW_LO < SLOW_SIZE) return slow[a - SLOW_LO] << 8 | slow[a - SLOW_LO + 1];
     if ((a & 0xFFF000) == 0xDFF000) return custom_read(a & 0x1FE);
     return m68k_read_memory_8(a) << 8 | m68k_read_memory_8(a + 1);
 }
-unsigned int m68k_read_memory_32(unsigned int a) { return m68k_read_memory_16(a) << 16 | m68k_read_memory_16(a + 2); }
+unsigned int m68k_read_memory_32(unsigned int a) {
+    if (a & 1) odd_access(a & 0xFFFFFF, "a long read"); return m68k_read_memory_16(a) << 16 | m68k_read_memory_16(a + 2); }
 static unsigned wlog_lo = 1, wlog_hi = 0; static FILE *wlogf;   /* writelog: every CPU write to LO-HI */
 static unsigned wc_lo = 1, wc_hi = 0; static unsigned *wc_addr, *wc_pc;   /* writecount: CPU writes to LO-HI */
 static void wcount(unsigned a) {
     if (a >= wc_lo && a < wc_hi) { wc_addr[(a - wc_lo) >> 1]++; unsigned pc = m68k_get_reg(NULL, M68K_REG_PPC); if (pc < RAM) wc_pc[pc >> 1]++; }
+}
+static unsigned long odd_n;                                 /* word/long accesses at odd addresses: the 68000's address error */
+static void odd_access(unsigned a, const char *what) {
+    if (odd_n++ < 20) { FILE *o = logf ? logf : stdout;
+        fprintf(o, "address error: frame %lu line %lu, %s at $%X by the instruction at $%X\n", frame, line_no, what, a,
+                m68k_get_reg(NULL, M68K_REG_PPC)); }
 }
 static void wlog(unsigned a, unsigned v, int size) {
     wcount(a & ~1u);
@@ -367,13 +379,14 @@ void m68k_write_memory_8(unsigned int a, unsigned int v) {
     if ((a & 0xFFF000) == 0xDFF000) { unsigned r = a & 0x1FE; custom_write(r, a & 1 ? (cust[r / 2] & 0xFF00) | (v & 0xFF) : (v & 0xFF) << 8 | (v & 0xFF)); }
 }
 void m68k_write_memory_16(unsigned int a, unsigned int v) {
+    if (a & 1) odd_access(a & 0xFFFFFF, "a word write");
     a &= 0xFFFFFF;
     if (a < RAM) { wlog(a, v & 0xFFFF, 2); watch(a); usage[a] |= 2; usage[a + 1] |= 2; ram[a] = v >> 8; ram[a + 1] = v; return; }
     if (a - SLOW_LO < SLOW_SIZE) { slow[a - SLOW_LO] = v >> 8; slow[a - SLOW_LO + 1] = v; return; }
     if ((a & 0xFFF000) == 0xDFF000) { custom_write(a & 0x1FE, v); return; }
     m68k_write_memory_8(a, v >> 8); m68k_write_memory_8(a + 1, v);
 }
-void m68k_write_memory_32(unsigned int a, unsigned int v) { m68k_write_memory_16(a, v >> 16); m68k_write_memory_16(a + 2, v); }
+void m68k_write_memory_32(unsigned int a, unsigned int v) { if (a & 1) { odd_access(a & 0xFFFFFF, "a long write"); odd_n += 2; } m68k_write_memory_16(a, v >> 16); m68k_write_memory_16(a + 2, v); }
 unsigned int m68k_read_disassembler_8(unsigned int a) { return m68k_read_memory_8(a); }
 unsigned int m68k_read_disassembler_16(unsigned int a) { return m68k_read_memory_16(a); }
 unsigned int m68k_read_disassembler_32(unsigned int a) { return m68k_read_memory_32(a); }
