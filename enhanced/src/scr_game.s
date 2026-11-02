@@ -19255,6 +19255,8 @@ dat_65EC2:
 ; ProjectFarPieces - the pieces seen from the one the car is on (their list: $7AA1A, a pointer
 ; a piece), each one's points projected for the distance (ProjectPointXFar, ProjectPointYFar)
 ;-------------------------------------------------------------------------------
+HelperFarShort  equ     $177                    ; (enhanced) F4's flag (helper_c0.s)
+FAR_SHORT_ROWS  equ     6                       ; (enhanced) F4: the far rows drawn (cross-sections, 2 points each)
 ProjectFarPieces:
         clr.w   d0                              ; 65EC4
         move.b  (PieceIndex).l,d0               ; 65EC6
@@ -19383,6 +19385,11 @@ l_6608C:
         movea.l #dat_65E70,a0                   ; 6609C
         cmp.b   (a0,d2.w),d1                    ; 660A2
         bge.w   l_660F2                         ; 660A6
+        tst.b   (HelperFarShort).w              ; (enhanced) F4: the track drawn less far ahead - at most
+        beq.s   .far                            ; FAR_SHORT_ROWS of the far pieces' cross-sections (12 on
+        cmpi.b  #4+4*FAR_SHORT_ROWS,d1          ; a straight); the opponent's car, beyond them, not drawn
+        bge.w   l_660F2
+.far:
         movea.l #PointScreenX,a4                ; 660AA
         cmpi.w  #$100,-$4(a4,d1.w)              ; 660B0
         bcs.w   l_65EDC                         ; 660B6
@@ -19875,7 +19882,22 @@ l_6664E:
 l_6665E:
         move.b  #$2,(dat_668A0).l               ; 6665E
 l_66666:
-        movea.l #dat_667E0,a5                   ; 66666
+        movea.l (ColourWordTarget).l,a5         ; (enhanced) PlotWord<colour> called at once (jsr (a5)), the edge
+                                                ; masks worked out (the release: a5 = dat_667E0, 66666)
+        move.l  d6,d0                           ; (enhanced) the colour's planes as longs (FillPolyPairs):
+        swap    d0                              ; each plane's word all ones or none, so ext.l repeats it
+        ext.l   d0
+        move.l  d0,(FillPolyPlanes).l
+        move.w  d6,d0
+        ext.l   d0
+        move.l  d0,(FillPolyPlanes+4).l
+        move.l  d7,d0
+        swap    d0
+        ext.l   d0
+        move.l  d0,(FillPolyPlanes+8).l
+        move.w  d7,d0
+        ext.l   d0
+        move.l  d0,(FillPolyPlanes+12).l
         move.w  (a0)+,d1                        ; 6666C
         move.w  (a3)+,d0                        ; 6666E
         cmp.w   d1,d0                           ; 66670
@@ -19954,46 +19976,74 @@ l_66740:
         lsr.w   #$4,d1                          ; 66752
         sub.w   d3,d1                           ; 66754
         bne.w   l_6677A                         ; 66756
-        andi.w  #$f,d4                          ; 6675A
-        asl.w   #$2,d4                          ; 6675E
-        move.w  (a5,d4.w),d4                    ; 66760
-        andi.w  #$f,d5                          ; 66764
-        asl.w   #$2,d5                          ; 66768
-        move.w  $40(a5,d5.w),d5                 ; 6676A
-        and.w   d5,d4                           ; 6676E
-        jsr     (ClearWordPlanes).l             ; 66770
+        andi.w  #$f,d4                          ; 6675A (enhanced) the left edge's mask: $FFFF >> (x & 15)
+        moveq   #-1,d3
+        lsr.w   d4,d3
+        andi.w  #$f,d5                          ; 66764 the right edge's: not ($FFFF >> (x & 15))
+        moveq   #-1,d2
+        lsr.w   d5,d2
+        not.w   d2
+        and.w   d2,d3
+        move.w  d3,d4                           ; the mask
+        move.w  d3,d2
+        not.w   d2                              ; and its inverse (ClearWordPlanes')
+        jsr     (a5)                            ; PlotWord<colour> (66770)
         bra.w   l_667C4                         ; 66776
 l_6677A:
         subq.b  #$1,d1                          ; 6677A
         andi.w  #$f,d4                          ; 6677C
         beq.w   l_66796                         ; 66780
-        asl.w   #$2,d4                          ; 66784
-        move.w  (a5,d4.w),d4                    ; 66786
-        jsr     (ClearWordPlanes).l             ; 6678A
+        move.w  d4,d3                           ; (enhanced) the mask: $FFFF >> (x & 15) (66784)
+        moveq   #-1,d4
+        lsr.w   d3,d4
+        move.w  d4,d2
+        not.w   d2
+        jsr     (a5)                            ; PlotWord<colour> (6678A)
         subq.w  #$1,d1                          ; 66790
         bmi.w   l_667B0                         ; 66792
 l_66796:
-        move.l  d6,d2                           ; 66796
-        move.l  d7,d3                           ; 66798
-        swap    d2                              ; 6679A
-        swap    d3                              ; 6679C
-l_6679E:
-        move.w  d2,(a4)+                        ; 6679E
-        move.w  d6,$1f3e(a4)                    ; 667A0
-        move.w  d3,$3e7e(a4)                    ; 667A4
-        move.w  d7,$5dbe(a4)                    ; 667A8
-        dbra    d1,l_6679E                      ; 667AC
+        ; (enhanced) the whole words: d1 + 1 of them. The release wrote a word a plane each time
+        ; round a dbra loop (l_6679E); here two words a plane at once (move.l), unrolled, jumped
+        ; into at the pair the run needs - as FillBetweenEdges (FillPairs)
+        movem.l (FillPolyPlanes).l,d0/d2-d4     ; planes 0-3
+        addq.w  #1,d1                           ; the words
+        lsr.w   #1,d1                           ; the pairs, an odd word in the carry
+        bcc.s   .pairs
+        move.w  d0,(a4)+                        ; the odd one
+        move.w  d2,$1f3e(a4)
+        move.w  d3,$3e7e(a4)
+        move.w  d4,$5dbe(a4)
+.pairs: cmpi.w  #8,d1
+        bhi.w   FillPolyLong                    ; (wider than the view: not expected)
+        add.w   d1,d1
+        move.w  d1,d5
+        lsl.w   #3,d5
+        sub.w   d5,d1                           ; -14 bytes a pair
+        move.w  -2(a3),d5                       ; (the right edge's x again: d5 was used)
+        jmp     FillPolyPairsEnd(pc,d1.w)
+FillPolyPairs:
+        rept    8
+        move.l  d0,(a4)+
+        move.l  d2,$1f3c(a4)
+        move.l  d3,$3e7c(a4)
+        move.l  d4,$5dbc(a4)
+        endr
+FillPolyPairsEnd:
+        ifne    FillPolyPairsEnd-FillPolyPairs-8*14
+        fail    "FillPolyPairs: 14 bytes a pair expected"
+        endc
 l_667B0:
         andi.w  #$f,d5                          ; 667B0
         beq.w   l_667C4                         ; 667B4
-        asl.w   #$2,d5                          ; 667B8
-        move.w  $40(a5,d5.w),d4                 ; 667BA
-        jsr     (ClearWordPlanes).l             ; 667BE
+        moveq   #-1,d2                          ; (enhanced) the mask: not ($FFFF >> (x & 15)) (667B8)
+        lsr.w   d5,d2
+        move.w  d2,d4
+        not.w   d4
+        jsr     (a5)                            ; PlotWord<colour> (667BE)
 l_667C4:
-        subq.w  #$1,(dat_1BC5A).l               ; 667C4
-        suba.l  #$28,a6                         ; 667CA
-        cmpa.l  (ScreenDrawTop).l,a6            ; 667D0
-        bge.w   l_66698                         ; 667D6
+        lea.l   -$28(a6),a6                     ; 667CA (enhanced: lea, not suba.l #)
+        subq.w  #$1,(dat_1BC5A).l               ; 667C4 (enhanced: the line, a6's line + 1, is above 0 - the
+        bgt.w   l_66698                         ; 667D6  release compared a6 with ScreenDrawTop)
 l_667DA:
         clr.l   d1                              ; 667DA
         clr.l   d2                              ; 667DC
@@ -22644,7 +22694,9 @@ l_686D0:
         not.l   d7                              ; 686D8: plane 3
 l_686DA:
         movem.l d2-d3,(FillPlanes01).l
-        movea.l #dat_667E0,a5                   ; 686DA
+        movea.l (ColourWordTarget).l,a5         ; (enhanced) PlotWord<colour>, called at once (jsr (a5)) - the
+                                                ; release went through ClearWordPlanes and ColourWordJump;
+                                                ; the edge masks worked out, not read from dat_667E0 (686DA)
         move.w  (a0)+,d1                        ; 686E0
         move.w  (a3)+,d0                        ; 686E2
         cmp.w   d1,d0                           ; 686E4
@@ -22735,22 +22787,29 @@ l_687E8:
         lsr.w   #$4,d1                          ; 687FA
         sub.w   d3,d1                           ; 687FC
         bne.w   l_68822                         ; 687FE
-        andi.w  #$f,d4                          ; 68802
-        asl.w   #$2,d4                          ; 68806
-        move.w  (a5,d4.w),d4                    ; 68808
-        andi.w  #$f,d5                          ; 6880C
-        asl.w   #$2,d5                          ; 68810
-        move.w  $40(a5,d5.w),d5                 ; 68812
-        and.w   d5,d4                           ; 68816
-        jsr     (ClearWordPlanes).l             ; 68818
+        andi.w  #$f,d4                          ; 68802 (enhanced) the left edge's mask: $FFFF >> (x & 15)
+        moveq   #-1,d3
+        lsr.w   d4,d3
+        andi.w  #$f,d5                          ; 6880C the right edge's: not ($FFFF >> (x & 15))
+        moveq   #-1,d2
+        lsr.w   d5,d2
+        not.w   d2
+        and.w   d2,d3
+        move.w  d3,d4                           ; the mask
+        move.w  d3,d2
+        not.w   d2                              ; and its inverse (ClearWordPlanes')
+        jsr     (a5)                            ; PlotWord<colour> (68818)
         bra.w   l_6886C                         ; 6881E
 l_68822:
         subq.b  #$1,d1                          ; 68822
         andi.w  #$f,d4                          ; 68824
         beq.w   l_6883E                         ; 68828
-        asl.w   #$2,d4                          ; 6882C
-        move.w  (a5,d4.w),d4                    ; 6882E
-        jsr     (ClearWordPlanes).l             ; 68832
+        move.w  d4,d3                           ; (enhanced) the mask: $FFFF >> (x & 15) (6882C)
+        moveq   #-1,d4
+        lsr.w   d3,d4
+        move.w  d4,d2
+        not.w   d2
+        jsr     (a5)                            ; PlotWord<colour> (68832)
         subq.w  #$1,d1                          ; 68838
         bmi.w   l_68858                         ; 6883A
 l_6883E:
@@ -22787,14 +22846,15 @@ FillPairsEnd:
 l_68858:
         andi.w  #$f,d5                          ; 68858
         beq.w   l_6886C                         ; 6885C
-        asl.w   #$2,d5                          ; 68860
-        move.w  $40(a5,d5.w),d4                 ; 68862
-        jsr     (ClearWordPlanes).l             ; 68866
+        moveq   #-1,d2                          ; (enhanced) the mask: not ($FFFF >> (x & 15)) (68860)
+        lsr.w   d5,d2
+        move.w  d2,d4
+        not.w   d4
+        jsr     (a5)                            ; PlotWord<colour> (68866)
 l_6886C:
-        subq.w  #$1,(dat_1BC5A).l               ; 6886C
         lea.l   -$28(a6),a6                     ; 68872 (enhanced: lea, not suba.l #)
-        cmpa.l  (ScreenDrawTop).l,a6            ; 68878
-        bge.w   l_68710                         ; 6887E
+        subq.w  #$1,(dat_1BC5A).l               ; 6886C (enhanced: the line, a6's line + 1, is above 0 - the
+        bgt.w   l_68710                         ; 6887E  release compared a6 with ScreenDrawTop)
 l_68882:
         tst.b   (dat_69ACA).l                   ; 68882
         beq.w   l_688CC                         ; 68888
@@ -22839,6 +22899,17 @@ FillPairsLong:					; (enhanced) FillBetweenEdges: a run of more than 16 words
         bra.w   l_68858
 FillPlanes01:					; (enhanced) FillBetweenEdges: the colour's planes 0 and 1
         dc.l    0,0
+FillPolyPlanes:					; (enhanced) FillPolygon: the colour's planes 0-3, as longs
+        dc.l    0,0,0,0
+FillPolyLong:					; (enhanced) FillPolygon: a run of more than 16 words
+        move.w  -2(a3),d5                       ; (the right edge's x again)
+.pair:  move.l  d0,(a4)+
+        move.l  d2,$1f3c(a4)
+        move.l  d3,$3e7c(a4)
+        move.l  d4,$5dbc(a4)
+        subq.w  #1,d1
+        bne.s   .pair
+        bra.w   l_667B0
 sub_688FC:
         movea.l #$7b08a,a4                      ; 688FC
         move.w  (RowOffset).l,d3                ; 68902

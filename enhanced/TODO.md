@@ -83,6 +83,31 @@ keeping them all in memory.
 * With more memory, keep the files once loaded (as Ghosts'n Goblins caches its files on 1MB
   machines), so each screen comes from the disk once.
 
+## The view drawn another way (for later)
+
+Options for replacing the race view's renderer, looked at in November 2026 (the time then: about
+36% of the work rasterising - edges 12%, spans 13%, lines 7%, polygons 4% - and 15% projecting).
+None keeps the picture pixel for pixel as the release's except the second.
+
+* **The blitter's polygons** (the demos' filled vectors): each polygon's outline drawn by the
+  blitter's line mode into a buffer, filled by its fill mode, and put on the 4 planes in its
+  colour; the CPU only sets up each edge (about 150-200 cycles, against about 1,000 now with the
+  clipping) and projects the next rows while the blitter fills. The blitter's time about the
+  drawing's now (25-30 ms a frame), but beside the CPU. Costs: the blitter shares the bus on an
+  A500; a polygon costs its bounding box (slanted quads waste a lot); the painter's order keeps
+  the blits in sequence; the fill rules differ from `ScanEdge`'s. Perhaps 15-25%. The biggest
+  change - to try first on the mountains (6 flat polygons a frame) to measure it.
+* **Front to back with a span buffer**: the near rows first, each screen line keeping the spans
+  already covered; further rows fill only the gaps, the sky and ground what is left. No overdraw
+  (a word is written 1.87 times now), and far rows behind a crest skipped. Perhaps 5-10%, most on
+  hills (the worst frames). The CPU's renderer kept; the picture can stay the same. A cheaper
+  form: a "floating horizon" (the highest line drawn so far in each column).
+* **The whole view filled at once by the blitter**: the edges between colours drawn as XOR lines
+  and each plane filled in one pass (about 4.6 ms for the view). Only for polygons that do not
+  overlap: it needs the visible regions first (as the span buffer finds them).
+* **A chunky buffer and chunky-to-planar**: not on a 68000 (the conversion alone about a frame,
+  and flat polygons gain nothing); perhaps on an A1200.
+
 ## Performance
 
 Measured ([`../original/docs/RENDER.md`](../original/docs/RENDER.md)): a race frame's work takes
@@ -133,9 +158,15 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `ArcTan`'s `divu` (half its time) has no exact cheaper form short of a large table.
 * ~~`FillBetweenEdges`: its runs unrolled~~: done - the whole words of a run written two at a
   time (`move.l`) from an unrolled sequence jumped into (54 cycles for 16 pixels before, 30 now;
-  runs average 11 words), drawing 1.7% less. Still to do: its variables in registers (the line's
-  `dat_1BC5A`, `dat_69ACE` and the edge list's bounds are read from memory each line), the
-  partial words without the `jsr`/`ColourWordJump` (about 80 cycles of calls for each).
+  runs average 11 words), drawing 1.7% less. ~~The partial words without the
+  `jsr`/`ColourWordJump`~~: done - `PlotWord<colour>` called at once (`jsr (a5)`, a5 its
+  address), the edge masks worked out (`$FFFF >> (x & 15)`) instead of read through a5 from
+  `dat_667E0`; the line's end tested from the line count (`subq`/`bgt`) instead of comparing a6
+  with `ScreenDrawTop`; the same in `FillPolygon` (the mountains, the cars), whose whole words are
+  now written as `FillBetweenEdges`' (two a plane at once, unrolled). The race's work 1.3% less,
+  the screens the same frame for frame. Still to do: its variables in registers (`dat_1BC5A`,
+  `dat_69ACE` and the edge list's bounds read from memory each line: no register is free in the
+  loop as it is).
 * ~~`PlotPixel` / `DrawEdgeLine`~~: done - `DrawEdgeLine` notes each screen line's run of pixels
   (about 5 a line) and writes it a word at a time through `PlotWord<colour>` (`EdgeFlush`), the
   run's length found at once instead of stepped a pixel at a time: the same pixels (checked: the
@@ -156,7 +187,14 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   5.85). Still to do: the doubling's 4.6 ms (8 blits; the CPU waits) - overlapped with something,
   or drawn straight into every other line; at half height the edges' set-up and the projection
   are most of what is left; compare the look in play (the horizon band, the far rows).
-* `ArcTan`, `RollPointXY` (7.3%): tables.
+* `ArcTan`, `RollPointXY`: tables - looked at: the projection does not divide (the 6502's tables
+  already), so reciprocal tables would save nothing; the only divide that counts is `ArcTan`'s
+  `divu` (about 3% of the work), whose exact result (11 bits of the ratio) has no cheaper form.
+* ~~**A shorter draw distance**~~: done (**F4**: `ProjectFarPieces` stops after `FAR_SHORT_ROWS`
+  (6) of the far pieces' cross-sections, 12 on a straight) - the race's work 15% less (107 ms to
+  91 ms a frame; 76 ms with F9 and F10 too). The cut is near the horizon, a few lines high; the
+  opponent's car beyond it is not drawn. The race itself is unchanged (checked: the same state
+  at the same frame).
 * The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
 * ~~Then the frame rate~~: done (`src/interp.i`, F8 for the release's timing) - the physics at a
   step every 6 vertical blanks to the clock (the game's speed constant, late steps caught up), and

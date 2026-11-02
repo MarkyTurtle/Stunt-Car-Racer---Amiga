@@ -33,6 +33,8 @@ workflow). So far it differs from the original in:
   the track, the sky and ground, the mountains and the cars drawn in 64 lines and doubled by the
   blitter, the cockpit and the sparks over them at full height - the drawing 19% quicker, for a
   coarser view;
+* **the fills' partial words without the calls**: `FillBetweenEdges` and `FillPolygon` call
+  `PlotWord<colour>` at once and work out the edge masks; `FillPolygon`'s whole words unrolled;
 * **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels
   written a word at a time, not one `PlotPixel` call a pixel; edges with both ends in the view skip
   `ScanEdge`'s clipping, and step on their own lean path (`ScanEdgeInView`);
@@ -41,6 +43,9 @@ workflow). So far it differs from the original in:
   fills queued, each started by the blitter's interrupt when the one before is done - 4.6 ms of
   the blitter's time no longer waited for (the race's work 3.5% less); the view's roll is
   skipped when the car is level (`RollPointXY`: the same points without its 4 multiplications);
+* **F4 in a race draws the track less far ahead**: 6 of the far pieces' cross-sections instead of
+  12 (`ProjectFarPieces`) - the race's work 15% less; the cut is near the horizon, and the
+  opponent's car beyond it is not drawn;
 * **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
   (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain
   polygons and their 23 edges (most of them clipped at the view's sides) are not drawn;
@@ -53,8 +58,9 @@ workflow). So far it differs from the original in:
   drive the game was booted from; if the game's disk is not in it (a save disk, no disk), the game
   says "Insert the Stunt Car Racer disc into drive n" and waits for it.
 
-Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F6 the cockpit,
-F7 the calibration run (the telemetry disk), P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
+Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F4 the draw
+distance, F6 the cockpit, F7 the calibration run (the telemetry disk), F8 the release's timing, F9
+half height, F10 the mountains, P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
 original's: the build finds it with `-I original`.
 
 ```

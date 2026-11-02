@@ -274,9 +274,11 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    ms a frame to 7.2 (in the emulator; the A500's display DMA will slow the blits a little).
 4. **`FillBetweenEdges`** - ~~the whole-word run unrolled~~: done in the enhanced game, two words
    a plane at once (`move.l`), from an unrolled sequence jumped into - 30 cycles for 16 pixels
-   instead of 54; drawing 1.7% less. Still to do: its variables in registers, the partial words
-   without the call through `ColourWordJump`. (Or: the blitter's fill mode, with the edges drawn
-   in a buffer by its line mode.)
+   instead of 54; drawing 1.7% less. ~~The partial words without the call through
+   `ColourWordJump`~~: done (`PlotWord<colour>` called at once, the masks worked out; the same in
+   `FillPolygon`, whose whole words are now unrolled too): the race's work 1.3% less. Still to
+   do: its variables in registers. (Or: the blitter's fill mode, with the edges drawn in a buffer
+   by its line mode - `enhanced/TODO.md`, "The view drawn another way".)
 5. ~~**`PlotPixel`**~~ - done in the enhanced game, better than planned: `DrawEdgeLine`'s pixels
    lie in runs along the screen's lines (about 5 a line: 74,000 pixels to 14,000 lines in the
    benchmark's race), so each line's run is written a word at a time with masks
@@ -294,6 +296,9 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
    (112.6 ms to 108.7 ms a frame). The ground under the track (the overdraw above) costs the CPU
    nothing now: it is written by the blitter while the CPU is busy elsewhere.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.
+   Measured since: the projection does not divide (the 6502's tables), and `ArcTan`'s `divu`
+   (about 3% of the work) has no exact cheaper form - little to gain. The enhanced game's F4
+   draws fewer of the far pieces instead: the work 15% less.
 7. **Everywhere** - the variables most used in registers or `(d16,An)` from one base register,
    the 6502's leftovers removed.
 

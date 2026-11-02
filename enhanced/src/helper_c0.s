@@ -10,10 +10,12 @@
 ;                     game: CockpitOff, which the game tests), F7 a calibration run (the
 ;                     telemetry build: calibrate.i), F8 the race's steps to the clock with the
 ;                     view drawn between them, or the release's timing (interp.i), F9 the view
-;                     at half its height (halfres.i), F10 the mountains off (DrawMountains)
+;                     at half its height (halfres.i), F10 the mountains off (DrawMountains),
+;                     F4 the track drawn less far ahead (ProjectFarPieces)
 ;   $15C the flags (the release's; the enhanced game's at $170, its code having grown): F2's (NTSC
 ;        on), F3's (the turbo on), F6's (the cockpit off: $172), F7's ($173), F8's ($174: the
-;        release's timing), F9's ($175: half height), F10's ($176: no mountains)
+;        release's timing), F9's ($175: half height), F10's ($176: no mountains), F4's ($177: the
+;        track drawn less far ahead)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -94,7 +96,10 @@ Helper_Keys:					; $FC
 	else
 	not.b	1(a0)				; (Helper_Wait tests it)
 	bra.s	.done
-.f6:	move.w	d0,-(a7)			; F6-F10: a flag each, toggled (F7: set). Caught here, in
+.f6:	cmp.b	#$53,d0				; F4: the draw distance (ProjectFarPieces)
+	bne.s	.f6b
+	not.b	7(a0)
+.f6b:	move.w	d0,-(a7)			; F6-F10: a flag each, toggled (F7: set). Caught here, in
 	subi.b	#$55,d0				; the keyboard interrupt, so that no press is missed:
 	cmpi.b	#$59-$55,d0			; F6 the cockpit drawn over the view or not (the game's
 	bhi.s	.back				; DrawCockpitPart), F7 the telemetry build's calibration
@@ -127,5 +132,6 @@ HalfHeight:					; $175
 	dc.b	0				; F9: the view at half height
 MountainsOff:					; $176
 	dc.b	0				; F10: no mountains
-	dc.b	0
+FarShort:					; $177
+	dc.b	0				; F4: the track drawn less far ahead
 	endc
