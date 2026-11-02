@@ -32,7 +32,7 @@
 ;   $3814 last mark.l
 ;
 ; tools/telemetry.py reads them: from a scremu snapshot, or from memory saved in WinUAE's debugger
-; ("S telemetry.bin 3800 480").
+; ("S telemetry.bin 3780 500": with the calibration run's results before them, calibrate.i).
 ;-------------------------------------------------------------------------------
 
 TEL		equ	$3800
@@ -236,7 +236,13 @@ TelFrameEnd:
 .hist:	add.w	d1,d1
 	lea	(TEL_HIST).w,a0
 	addq.w	#1,(a0,d1.w)
-	movem.l	(a7)+,d0-d3/a0-a2
+	tst.b	(HelperCalibrate).w		; F7: the calibration run (calibrate.i), its time left out
+	beq.s	.nocal
+	sf	(HelperCalibrate).w
+	jsr	(Calibrate).l
+	bsr	TelNow
+	move.l	d0,(TEL_LAST).w
+.nocal:	movem.l	(a7)+,d0-d3/a0-a2
 	rts
 
 TelemetryCodeEnd:

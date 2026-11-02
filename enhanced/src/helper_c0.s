@@ -7,8 +7,9 @@
 ;   $E8  Helper_AGA2  d0.w = $FFFF, a0 = its low 24 bits
 ;   $FC  Helper_Keys  the keyboard interrupt's hook, d0 the raw key byte: decoded; F1 the audio
 ;                     filter, F2 PAL / NTSC (BEAMCON0), F3 the turbo, F6 the cockpit (the enhanced
-;                     game: CockpitOff, which the game tests)
-;   $15C the flags: F2's (NTSC on), F3's (the turbo on), F6's (the cockpit off: $15E)
+;                     game: CockpitOff, which the game tests), F7 a calibration run (the
+;                     telemetry build: calibrate.i)
+;   $15C the flags: F2's (NTSC on), F3's (the turbo on), F6's (the cockpit off: $15E), F7's ($15F)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -89,8 +90,11 @@ Helper_Keys:					; $FC
 	else
 	not.b	1(a0)				; (Helper_Wait tests it)
 .f6:	cmp.b	#$55,d0				; F6: the cockpit drawn over the view or not (the game's
-	bne.s	.done				; DrawCockpitPart tests CockpitOff). Caught here, in the
+	bne.s	.f7				; DrawCockpitPart tests CockpitOff). Caught here, in the
 	not.b	2(a0)				; keyboard interrupt, so that no press is missed
+.f7:	cmp.b	#$56,d0				; F7: the telemetry build's calibration run, asked for
+	bne.s	.done				; (calibrate.i: run at the end of the race frame)
+	st	3(a0)
 	endc
 .done:	movea.l	(a7)+,a0
 	rts
@@ -105,5 +109,6 @@ TurboOn:
 	ifnd	ORIGINAL
 CockpitOff:					; $15E
 	dc.b	0				; F6: the cockpit off
-	dc.b	0
+CalibrateAsked:					; $15F
+	dc.b	0				; F7: a calibration run asked for (the telemetry build)
 	endc

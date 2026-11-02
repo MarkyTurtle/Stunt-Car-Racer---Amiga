@@ -11,8 +11,16 @@ they are shown: about 89K of chip memory is free now.
 
 * ~~Try the disk on an A500 and an A1200~~: done (November 2026, the disk of 6ea8ff7): the game,
   the pictures loaded from the disk after races and in the Hall of Fame, on both. (The disk before
-  it crashed after a race on a 68000: an address error, fixed - the tests now catch them.) Still
-  to measure: a race on an A500 with the telemetry disk, against the emulator's 6.5 vertical blanks.
+  it crashed after a race on a 68000: an address error, fixed - the tests now catch them.)
+* ~~A race measured on an A500~~ (`measurements/`): 7.55 vertical blanks a frame of work, 6.6
+  frames a second - more than the emulator's 6.5 for its benchmark (another race, so not directly
+  comparable). Next: the calibration run (F7) on the A500, to fit the emulator's timing to it
+  (scremu's `chipbus`, `bench.py --calibrate --calibration`), so that the benchmark's figures are
+  an A500's.
+* Record a race's inputs on a real Amiga (the controls each race frame, the random number's seed at
+  the start: in the free memory under the telemetry) and replay them in the emulator: the same
+  race, frame by frame, on both - the real machine's costs and the emulator's side by side, and
+  the worst moments found in play (frames of 3,500 lines on the A500) made into benchmarks.
 * Annotate the rest of the game's source: 196 routines and most of the race's variables are not
   named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
   track format.

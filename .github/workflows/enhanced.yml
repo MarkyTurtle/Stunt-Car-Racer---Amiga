@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: d44a952c701af789b5588692fd607ac90ca44da5
+  ADF_SHA1: df76680a2e950f3f91d16f5bb0c7c50c29e03a00
 
 jobs:
   build:
@@ -76,7 +76,8 @@ jobs:
       - name: The race benchmark (enhanced/tools/bench.py)
         run: |
           python enhanced/tools/bench.py --json bench.json --compare enhanced/bench_baseline.json | tee bench.txt
-          { echo '### The race benchmark (scremu, against enhanced/bench_baseline.json)'; echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo; echo '--- with the opponent in view (against enhanced/bench_opponent.json)'; python enhanced/tools/bench.py --opponent --compare enhanced/bench_opponent.json; } | tee -a bench.txt
+          { echo '### The race benchmarks (scremu)'; echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: The checkout is unchanged
         run: |
           mkdir -p "$RUNNER_TEMP/out"; mv bench.json bench.txt "$RUNNER_TEMP/out/"

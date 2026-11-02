@@ -24300,6 +24300,9 @@ ScreenDraw:				; the screen the drawing routines draw on: the other one
 	dc.b	$00,$00,$00,$00
 ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	dc.b	$00,$00,$00,$00
+	ifd	TELEMETRY
+	include	"calibrate.i"			; (the telemetry build) F7: the calibration run
+	endc
 	include	"diskload.i"			; (the enhanced game) loading from the disk while the game runs
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the

@@ -1,0 +1,704 @@
+{
+ "frames": 530,
+ "phase_lines": {
+  "input": 39901,
+  "cars": 25852,
+  "geometry": 354258,
+  "drawing": 571783,
+  "cockpit": 133596,
+  "rest": 21091,
+  "wait": 1044
+ },
+ "total_lines": 1147525,
+ "histogram_vblanks": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  210,
+  202,
+  97,
+  21,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "shortest_lines": 1955,
+ "longest_lines": 2884,
+ "last_frames": [
+  {
+   "lines": 1975,
+   "input": 72,
+   "cars": 56,
+   "geometry": 654,
+   "drawing": 997,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1979,
+   "input": 83,
+   "cars": 50,
+   "geometry": 654,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 72,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2115,
+   "input": 73,
+   "cars": 56,
+   "geometry": 657,
+   "drawing": 994,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 50,
+   "geometry": 662,
+   "drawing": 989,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 72,
+   "cars": 56,
+   "geometry": 660,
+   "drawing": 990,
+   "cockpit": 189,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1984,
+   "input": 76,
+   "cars": 55,
+   "geometry": 663,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2123,
+   "input": 74,
+   "cars": 61,
+   "geometry": 660,
+   "drawing": 990,
+   "cockpit": 195,
+   "rest": 141,
+   "wait": 2
+  },
+  {
+   "lines": 1979,
+   "input": 77,
+   "cars": 50,
+   "geometry": 659,
+   "drawing": 993,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1975,
+   "input": 73,
+   "cars": 50,
+   "geometry": 659,
+   "drawing": 993,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 79,
+   "cars": 55,
+   "geometry": 654,
+   "drawing": 993,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2114,
+   "input": 77,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 192,
+   "rest": 141,
+   "wait": 2
+  },
+  {
+   "lines": 1981,
+   "input": 79,
+   "cars": 55,
+   "geometry": 654,
+   "drawing": 993,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1975,
+   "input": 72,
+   "cars": 50,
+   "geometry": 662,
+   "drawing": 991,
+   "cockpit": 192,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1975,
+   "input": 73,
+   "cars": 50,
+   "geometry": 663,
+   "drawing": 993,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2121,
+   "input": 79,
+   "cars": 60,
+   "geometry": 657,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 140,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 72,
+   "cars": 58,
+   "geometry": 661,
+   "drawing": 990,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1980,
+   "input": 79,
+   "cars": 48,
+   "geometry": 661,
+   "drawing": 990,
+   "cockpit": 195,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 49,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 192,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 73,
+   "cars": 54,
+   "geometry": 654,
+   "drawing": 997,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1972,
+   "input": 72,
+   "cars": 48,
+   "geometry": 660,
+   "drawing": 993,
+   "cockpit": 192,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 55,
+   "geometry": 658,
+   "drawing": 992,
+   "cockpit": 189,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 76,
+   "cars": 49,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 192,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2109,
+   "input": 73,
+   "cars": 49,
+   "geometry": 659,
+   "drawing": 992,
+   "cockpit": 192,
+   "rest": 142,
+   "wait": 2
+  },
+  {
+   "lines": 1983,
+   "input": 77,
+   "cars": 54,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1976,
+   "input": 73,
+   "cars": 51,
+   "geometry": 662,
+   "drawing": 991,
+   "cockpit": 192,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 78,
+   "cars": 53,
+   "geometry": 656,
+   "drawing": 991,
+   "cockpit": 189,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 77,
+   "cars": 49,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 140,
+   "wait": 2
+  },
+  {
+   "lines": 1979,
+   "input": 81,
+   "cars": 52,
+   "geometry": 655,
+   "drawing": 989,
+   "cockpit": 191,
+   "rest": 9,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 73,
+   "cars": 49,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1971,
+   "input": 72,
+   "cars": 49,
+   "geometry": 659,
+   "drawing": 996,
+   "cockpit": 188,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 78,
+   "cars": 54,
+   "geometry": 653,
+   "drawing": 993,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 72,
+   "cars": 55,
+   "geometry": 654,
+   "drawing": 997,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1984,
+   "input": 79,
+   "cars": 58,
+   "geometry": 655,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 73,
+   "cars": 51,
+   "geometry": 661,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2114,
+   "input": 73,
+   "cars": 55,
+   "geometry": 657,
+   "drawing": 994,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1972,
+   "input": 72,
+   "cars": 49,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 192,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 55,
+   "geometry": 660,
+   "drawing": 990,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1978,
+   "input": 76,
+   "cars": 49,
+   "geometry": 663,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2111,
+   "input": 76,
+   "cars": 48,
+   "geometry": 660,
+   "drawing": 989,
+   "cockpit": 195,
+   "rest": 141,
+   "wait": 2
+  },
+  {
+   "lines": 1979,
+   "input": 77,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 192,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1976,
+   "input": 72,
+   "cars": 56,
+   "geometry": 659,
+   "drawing": 993,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2119,
+   "input": 77,
+   "cars": 55,
+   "geometry": 660,
+   "drawing": 992,
+   "cockpit": 193,
+   "rest": 140,
+   "wait": 2
+  },
+  {
+   "lines": 1978,
+   "input": 78,
+   "cars": 57,
+   "geometry": 654,
+   "drawing": 993,
+   "cockpit": 189,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 77,
+   "cars": 48,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 72,
+   "cars": 49,
+   "geometry": 663,
+   "drawing": 990,
+   "cockpit": 192,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 79,
+   "cars": 53,
+   "geometry": 656,
+   "drawing": 990,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 72,
+   "cars": 50,
+   "geometry": 662,
+   "drawing": 994,
+   "cockpit": 188,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 1981,
+   "input": 82,
+   "cars": 54,
+   "geometry": 653,
+   "drawing": 990,
+   "cockpit": 195,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1973,
+   "input": 72,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 989,
+   "cockpit": 195,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 72,
+   "cars": 50,
+   "geometry": 660,
+   "drawing": 996,
+   "cockpit": 188,
+   "rest": 145,
+   "wait": 2
+  },
+  {
+   "lines": 1979,
+   "input": 72,
+   "cars": 56,
+   "geometry": 660,
+   "drawing": 991,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1977,
+   "input": 73,
+   "cars": 58,
+   "geometry": 654,
+   "drawing": 997,
+   "cockpit": 188,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1978,
+   "input": 83,
+   "cars": 48,
+   "geometry": 654,
+   "drawing": 993,
+   "cockpit": 192,
+   "rest": 6,
+   "wait": 2
+  },
+  {
+   "lines": 2109,
+   "input": 73,
+   "cars": 49,
+   "geometry": 660,
+   "drawing": 991,
+   "cockpit": 193,
+   "rest": 141,
+   "wait": 2
+  },
+  {
+   "lines": 1978,
+   "input": 77,
+   "cars": 49,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1974,
+   "input": 73,
+   "cars": 50,
+   "geometry": 662,
+   "drawing": 990,
+   "cockpit": 192,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1976,
+   "input": 73,
+   "cars": 56,
+   "geometry": 662,
+   "drawing": 989,
+   "cockpit": 189,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2113,
+   "input": 76,
+   "cars": 50,
+   "geometry": 663,
+   "drawing": 989,
+   "cockpit": 193,
+   "rest": 140,
+   "wait": 2
+  },
+  {
+   "lines": 1964,
+   "input": 81,
+   "cars": 59,
+   "geometry": 640,
+   "drawing": 986,
+   "cockpit": 191,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1963,
+   "input": 76,
+   "cars": 53,
+   "geometry": 646,
+   "drawing": 986,
+   "cockpit": 195,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 1955,
+   "input": 73,
+   "cars": 50,
+   "geometry": 644,
+   "drawing": 988,
+   "cockpit": 193,
+   "rest": 5,
+   "wait": 2
+  },
+  {
+   "lines": 2097,
+   "input": 73,
+   "cars": 56,
+   "geometry": 640,
+   "drawing": 994,
+   "cockpit": 188,
+   "rest": 144,
+   "wait": 2
+  }
+ ],
+ "calibration": {
+  "runs": 1,
+  "cycles": {
+   "regs": 55902,
+   "mul": 26288,
+   "read": 39812,
+   "write": 48124,
+   "rmw": 48124,
+   "cutout": 91046,
+   "plotpixel": 99696,
+   "fill": 88750
+  }
+ },
+ "summary": {
+  "frames": 530,
+  "frame_ms": 138.56941134146663,
+  "fps": 7.216599899784318,
+  "work_ms": 138.4433430942036,
+  "work_vblanks": 6.911091687262644,
+  "phases_ms": {
+   "input": 4.818246296974671,
+   "cars": 3.1217589350991,
+   "geometry": 42.77843404109303,
+   "drawing": 69.04567109654066,
+   "cockpit": 16.1323884687258,
+   "rest": 2.5468442557703517,
+   "wait": 0.12606824726301488
+  }
+ }
+}

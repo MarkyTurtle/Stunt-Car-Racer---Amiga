@@ -20,7 +20,7 @@ workflow). So far it differs from the original in:
   says "Insert the Stunt Car Racer disc into drive n" and waits for it.
 
 Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F6 the cockpit,
-P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
+F7 the calibration run (the telemetry disk), P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
 original's: the build finds it with `-I original`.
 
 ```
@@ -88,15 +88,23 @@ The results stay in memory at `$3800-$3C7F` from race to race: the totals of eac
 shortest and longest frame, the frames by length in vertical blanks, and the last 64 frames. The
 timing costs about 3,700 cycles a frame (0.4%; measured in the emulator).
 
-On a real Amiga or in WinUAE (cycle-exact, A500): play a race with the telemetry disk, then in
-WinUAE's debugger (Shift+F12) save the results with `S telemetry.bin 3800 480` and read them:
+On a real Amiga or in WinUAE (cycle-exact, A500): play a race with the telemetry disk - and press
+**F7** once in it: the calibration run, a second of fixed tests timed to the colour clock
+([`src/calibrate.i`](src/calibrate.i)) - then in WinUAE's debugger (Shift+F12) save the results
+with `S telemetry.bin 3780 500` and read them:
 
 ```
-python3 enhanced/tools/telemetry.py telemetry.bin [--list]
+python3 enhanced/tools/telemetry.py telemetry.bin [--list] [--calibration EMULATOR.json]
 ```
+
+Measurements made so far are in [`measurements/`](measurements).
 
 **The benchmark** (`tools/bench.py`) plays the same race the same way every time in the study
 emulator (`original/tools/scremu`): Division 4's first race, a minute of it with the throttle held.
+`--opponent` keeps the opponent's car in view all the race (`bench_opponent.json`); `--calibrate`
+runs the calibration run in it (the emulator's figures for it); `--chipbus` times it as the chip
+bus would (each instruction from chip memory rounded up to 4 cycles: to be fitted to the A500's
+calibration run).
 `--json FILE` keeps its figures and `--compare FILE` shows the change in each phase, so every
 change to the game can be measured against `bench_baseline.json` (the game as released: the
 original code with the telemetry build's hooks). The

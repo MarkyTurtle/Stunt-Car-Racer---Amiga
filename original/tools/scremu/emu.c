@@ -50,6 +50,9 @@
  *   profile 1 / 0         count the CPU cycles spent at each instruction, from now / stop
  *   profdump FILE         write them: "pc cycles", one line an instruction
  *   writelog LO HI        log every CPU write to LO-HI (to the log, else stdout): "frame line pc addr value/size"
+ *   pokecopy DST SRC ADD  write byte DST = byte SRC + ADD (to keep a variable tied to another)
+ *   chipbus 1 / 0         the chip bus's timing: an instruction run from chip memory takes its cycles
+ *                         rounded up to a multiple of 4 (off: each instruction its 68000 cycles)
  *   inject ADDR [D0]      make the game call ADDR now, as from where it is (with D0): the script goes on
  *                         while it runs (to press fire in it, take snapshots)
  *   disk ADDR ADF|none    the game's 4489_byteloader (at ADDR) done at once from the ADF; "none": no disk in
@@ -434,8 +437,20 @@ static void disk_call(void) {
     unsigned sp = m68k_get_reg(NULL, M68K_REG_A7);
     m68k_set_reg(M68K_REG_PC, m68k_read_memory_32(sp)); m68k_set_reg(M68K_REG_A7, sp + 4);
 }
+static int chipbus; static long cb_last = -1; static unsigned cb_pc = 0xFFFFFFFF;
+/* chipbus: the 68000 on the chip bus can start a memory access only every 4 cycles (2 colour
+ * clocks): an instruction run from chip memory takes its cycles rounded up to a multiple of 4 */
+static void chipbus_hook(unsigned pc) {
+    long c = cyc_now();
+    if (cb_last >= 0 && cb_pc < RAM && c > cb_last) {
+        long pad = (4 - (c - cb_last) % 4) % 4;
+        if (pad) { m68k_modify_timeslice(-(int)pad); c += pad; }
+    }
+    cb_last = c; cb_pc = pc;
+}
 void instr_hook(unsigned int pc) {
     pc &= 0xFFFFFF;
+    if (chipbus) chipbus_hook(pc);
     if (pc == disk_loader) { disk_call(); return; }
     if (crashwatch) {
         if (pc < 0xC0 || pc >= RAM) {
@@ -488,6 +503,7 @@ static void cia_tick_timers(cia_t *c, int eclocks) {
 }
 static long cyc_now(void) { long c = LINE_CYCLES - m68k_cycles_remaining(); if (c < 0) c = 0; if (c > LINE_CYCLES) c = LINE_CYCLES; return cyc_total + c; }
 static void run_line(void) {
+    cb_last = -1;                                            /* (chipbus: from the line's start) */
     m68k_execute(LINE_CYCLES);
     cyc_total += LINE_CYCLES;
     cia_tick_timers(&ciaa, 45); cia_tick_timers(&ciab, 45);
@@ -571,8 +587,8 @@ int main(int argc, char **argv) {
     FILE *sc = fopen(argv[4], "r"); if (!sc) { perror(argv[4]); return 1; }
     char ln[512];
     while (fgets(ln, sizeof ln, sc)) {
-        char cmd[32] = "", a1[256] = "", a2[64] = "", a3[16] = "";
-        if (sscanf(ln, "%31s %255s %63s %15s", cmd, a1, a2, a3) < 1 || cmd[0] == '#') continue;
+        char cmd[32] = "", a1[256] = "", a2[256] = "", a3[16] = "";
+        if (sscanf(ln, "%31s %255s %255s %15s", cmd, a1, a2, a3) < 1 || cmd[0] == '#') continue;
         if (!strcmp(cmd, "frames")) { long n = strtol(a1, 0, 0); for (long i = 0; i < n; i++) run_frame(); }
         else if (!strcmp(cmd, "joy")) { joy = 0; for (char *p = a1; *p; p++) joy |= *p == 'u' ? 1 : *p == 'd' ? 2 : *p == 'l' ? 4 : *p == 'r' ? 8 : *p == 'f' ? 16 : *p == '2' ? 32 : 0; }
         else if (!strcmp(cmd, "random")) {
@@ -637,6 +653,10 @@ int main(int argc, char **argv) {
             if (o && prof) for (unsigned i = 0; i < RAM / 2; i++) if (prof[i]) fprintf(o, "%X %u\n", i * 2, prof[i]);
             if (o) fclose(o); }
         else if (!strcmp(cmd, "writelog")) { wlog_lo = strtoul(a1, 0, 0); wlog_hi = strtoul(a2, 0, 0); if (!wlogf) wlogf = logf ? logf : stdout; }
+        else if (!strcmp(cmd, "pokecopy")) {                   /* pokecopy DST SRC ADD: byte DST = byte SRC + ADD */
+            unsigned d = strtoul(a1, 0, 0), sr = strtoul(a2, 0, 0); long add = strtol(a3, 0, 0);
+            if (d < RAM && sr < RAM) ram[d] = (uint8_t)(ram[sr] + add); }
+        else if (!strcmp(cmd, "chipbus")) chipbus = atoi(a1);  /* chipbus 1: the chip bus's 4-cycle grid */
         else if (!strcmp(cmd, "inject")) {                     /* inject ADDR [D0]: the game made to call ADDR now (it returns where it was) */
             unsigned sp = m68k_get_reg(NULL, M68K_REG_A7) - 4; m68k_write_memory_32(sp, m68k_get_reg(NULL, M68K_REG_PC));
             m68k_set_reg(M68K_REG_A7, sp); if (a2[0]) m68k_set_reg(M68K_REG_D0, strtoul(a2, 0, 0));

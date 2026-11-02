@@ -1,14 +1,53 @@
 """Read the telemetry build's results (src/telemetry.i) and report them.
 
-  python3 enhanced/tools/telemetry.py FILE [--json OUT] [--compare BASE.json] [--list]
+  python3 enhanced/tools/telemetry.py FILE [--json OUT] [--compare BASE.json] [--calibration REF.json] [--list]
 
-FILE is either a whole 512K memory image (a scremu snapshot's .mem) or the telemetry block saved
-on its own from $3800 (in WinUAE's debugger: "S telemetry.bin 3800 480"). --frames lists the last
-64 frames. --json writes the figures for --compare (a later run against it: the change in each).
+FILE is either a whole 512K memory image (a scremu snapshot's .mem) or the telemetry saved on its
+own (in WinUAE's debugger, Shift+F12): "S telemetry.bin 3780 500" - the calibration run's results
+($3780, F7 in a race: src/calibrate.i) and the race's ($3800) - or, older, "S telemetry.bin 3800
+480" (the race's only). --list lists the last 64 frames. --json writes the figures for --compare
+(a later run against it: the change in each). --calibration REF.json compares the calibration
+run with another's (a real Amiga's against the emulator's, say).
 """
 import json, struct, sys
 
 BASE, SIZE = 0x3800, 0x480
+CAL_BASE, CAL_SIZE = 0x3780, 0x80
+CAL_TESTS = [('regs', 'registers only: 2,000 add, eor, dbra'), ('mul', '400 mulu'),
+             ('read', 'chip memory read: 2,000 words'), ('write', 'chip memory written: 2,000 longs'),
+             ('rmw', 'chip memory read and written: 2,000 words'), ('cutout', 'DrawCutout: the cockpit\'s widest part, twice'),
+             ('plotpixel', 'PlotPixel: 500 pixels'), ('fill', 'ClearWordPlanes/PlotWord: 500 words')]
+
+
+def split(data):
+    """the calibration block (or None) and the telemetry block, from what was saved"""
+    if len(data) >= 0x80000:
+        return data[CAL_BASE:CAL_BASE + CAL_SIZE], data[BASE:BASE + SIZE]
+    if data[:4] == b'CALB' or len(data) >= CAL_SIZE + SIZE:
+        return data[:CAL_SIZE], data[CAL_SIZE:CAL_SIZE + SIZE]
+    return None, data
+
+
+def calibration(cal):
+    if not cal or cal[:4] != b'CALB':
+        return None
+    version, tests, runs = struct.unpack_from('>HHH', cal, 4)
+    cycles = struct.unpack_from(f'>{tests}L', cal, 0x10)
+    return {'runs': runs, 'cycles': {name: c for (name, _), c in zip(CAL_TESTS, cycles)}}
+
+
+def calibration_report(c, ref=None):
+    out = [f'the calibration run (F7, {c["runs"]} run(s); the last): CPU cycles' + (' - and against the reference' if ref else '')]
+    for name, what in CAL_TESTS:
+        v = c['cycles'].get(name)
+        if v is None:
+            continue
+        line = f'  {name:10s} {v:8,d}'
+        if ref and ref['cycles'].get(name):
+            r = ref['cycles'][name]
+            line += f'  {r:8,d}  x{v / r:.3f}'
+        out.append(line + f'   {what}')
+    return '\n'.join(out)
 PHASES = ['input', 'cars', 'geometry', 'drawing', 'cockpit', 'rest', 'wait']
 LINE_US = 1e6 / (313 * 49.92)          # a raster line: 64 us
 FRAME_LINES = 313
@@ -22,8 +61,7 @@ NOTES = {'input': 'the controls, the car\'s physics, the engine',
 
 
 def parse(data):
-    if len(data) >= 0x80000:
-        data = data[BASE:BASE + SIZE]
+    cal, data = split(data)
     if data[:4] != b'TELM':
         sys.exit('no telemetry there (no "TELM" at $3800): the telemetry build, after at least one race?')
     version, recsize, frames, index, ringlen = struct.unpack_from('>HHLHH', data, 4)
@@ -36,7 +74,8 @@ def parse(data):
     recs = [struct.unpack_from('>8H', data, 0x80 + 16 * ((index - n + i) % ringlen)) for i in range(n)]
     return {'frames': frames, 'phase_lines': dict(zip(PHASES, sums[:7])), 'total_lines': sums[7],
             'histogram_vblanks': list(hist), 'shortest_lines': shortest, 'longest_lines': longest,
-            'last_frames': [{'lines': r[0], **dict(zip(PHASES, r[1:]))} for r in recs]}
+            'last_frames': [{'lines': r[0], **dict(zip(PHASES, r[1:]))} for r in recs],
+            'calibration': calibration(cal)}
 
 
 def summary(t):
@@ -82,6 +121,9 @@ def main():
     t = parse(open(a[0], 'rb').read())
     base = json.load(open(a[a.index('--compare') + 1])) if '--compare' in a else None
     print(report(t, base))
+    if t['calibration']:
+        ref = json.load(open(a[a.index('--calibration') + 1]))['calibration'] if '--calibration' in a else None
+        print('\n' + calibration_report(t['calibration'], ref))
     if '--list' in a:
         print('\nthe last frames (lines):\n' + f"{'total':>6s} " + ' '.join(f'{p:>8s}' for p in PHASES))
         for r in t['last_frames']:
