@@ -196,6 +196,33 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   opponent's car beyond it is not drawn. The race itself is unchanged (checked: the same state
   at the same frame).
 * The 6502's leftovers: byte variables at absolute addresses, instructions that do nothing.
+* **The physics and the race loop** (measured November 2026, a call profile of the benchmark's
+  race; the work then 107 ms a frame, about 760,000 cycles). The physics is about 6% of it:
+  `CarPhysics` 29,900 cycles a step (`BuildViewMatrix` 5,800, the track under the wheels
+  `sub_5C1D0` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
+  `PlaceCarOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
+  it is not simulated). Each step the car is a rigid body on four wheels: its matrix from its
+  angles (`Sin`/`Cos`: a 512-entry table, interpolated), the track's height under each wheel from
+  its piece's points, the wheels on, above or below the track, the forces turned between the
+  car's frame and the world's, then an Euler step (velocity x 238/256 added to the place, the
+  turn rates to the angles). All exact, so the cars drive as before:
+  * the pieces' loads cached: `LoadPiece` 3-4 times a step (about 930 cycles each),
+    `ReadPiecePoints` 8 times in `PlaceCarOnTrack` - mostly the piece of the step before: ~0.5%;
+  * the physics' variables from a base register (`d16(An)`) instead of absolute longs (4 cycles
+    an access, hundreds of accesses a step): ~0.7%;
+  * `Sin`/`Cos` tighter (about 270 cycles a call, ~10 a step; an exact full table would take
+    32K): ~0.2%;
+  * `MatrixTimes` inlined (20 calls a step): ~0.2%.
+  Together about 1.5%. A cheaper integrator or fewer samples of the track would change the
+  handling: not recommended.
+* **The opponent's distance on the instruments** (`sub_5E12A`): printed every 4th step with the
+  proportional font a row of pixels at a time - about 11,000 cycles a character, about 60,000
+  (8.5 ms) on those steps: 2% of the work on average, and a regular hitch (more visible with the
+  pictures between steps). Print only when the number changes, or copy ready-drawn digits: most
+  of the 2%, and the hitch gone. The first to do of these.
+* **The vertical blank's work** (`VBlankTick`): about 10,700 cycles a frame (1.4%), much of it the
+  wheels' sprites rebuilt (`SpriteFromCutout`, 12 a frame): rebuild them only when the wheels'
+  animation frame changes.
 * ~~Then the frame rate~~: done (`src/interp.i`, F8 for the release's timing) - the physics at a
   step every 6 vertical blanks to the clock (the game's speed constant, late steps caught up), and
   the view drawn between steps with the cars' places and angles blended: one step's latency,
