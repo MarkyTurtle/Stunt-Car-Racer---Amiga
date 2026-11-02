@@ -1,5 +1,7 @@
 # The 3D view and the drawing
 
+(A step-by-step explainer of the rasteriser itself is in [RASTERISER.md](RASTERISER.md).)
+
 How the game draws the race, what each part costs, and where the time could be won. Everything
 here was measured with the telemetry build and the study emulator: the race benchmark
 (`enhanced/tools/bench.py`: Division 4's first race, Little Ramp, against Jumpin' Jack, a minute
