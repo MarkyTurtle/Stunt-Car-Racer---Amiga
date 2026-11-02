@@ -106,9 +106,14 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   taking some of its slots - the calibration run's `cutout` test (now the blitter, below the
   display) and a race's telemetry will show the real figure. Next: let the CPU go on while the
   last blits run (nothing after the cockpit until the instruments).
-* The blitter for the background (`DrawHorizon`, 6.5%): it already writes with `move.l`s; the
-  blitter would win only by running beside the CPU - the horizon worked out before the geometry
-  and the fills started then.
+* ~~The blitter for the background (`DrawHorizon`)~~: done - the sky and ground filled by D-only
+  blits (`HorizonFill`, the plane's word in A's data register) instead of 32 `move.l` a line; the
+  same bytes; the race's work 2.9% less. Still to do: start the fills earlier (the band's edge
+  buffer is built first), so that the blitter runs beside the CPU.
+* `ArcTan`, `RollPointXY`: ~~the car level (no roll) without `RollPointXY`'s 4 `muls`~~ (done:
+  its result worked out from the point, exactly - half its time when the car is level; the
+  benchmark's telemetry race happens to be rolled nearly throughout, the normal build's level).
+  `ArcTan`'s `divu` (half its time) has no exact cheaper form short of a large table.
 * ~~`FillBetweenEdges`: its runs unrolled~~: done - the whole words of a run written two at a
   time (`move.l`) from an unrolled sequence jumped into (54 cycles for 16 pixels before, 30 now;
   runs average 11 words), drawing 1.7% less. Still to do: its variables in registers (the line's

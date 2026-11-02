@@ -281,6 +281,8 @@ Rough estimates, in cycles a frame (of about 880,000); each to be confirmed with
 5b. **Half the height** - done in the enhanced game (`enhanced/src/halfres.i`, F9): the view
    drawn in 64 lines (`ScanEdge` takes y as 64 + y / 2) and doubled by the blitter before the
    cockpit; the drawing phase 19% less.
+5c. **The background by the blitter** - done in the enhanced game: `DrawHorizon`'s sky and
+   ground filled by D-only blits (`HorizonFill`); drawing 5% less.
 6. **The maths** - `ArcTan` and `RollPointXY` from tables, in words. Perhaps 20,000-30,000.
 7. **Everywhere** - the variables most used in registers or `(d16,An)` from one base register,
    the 6502's leftovers removed.

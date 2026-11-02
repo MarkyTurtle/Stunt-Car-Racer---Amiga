@@ -15084,6 +15084,29 @@ RollPointNow:
 RollPointXY:
         move.w  (a5,d1.w),d5                    ; 6252A
         move.w  (a4,d1.w),d4                    ; 6252E
+        tst.w   $20(a3)                         ; (enhanced) the car level (no roll: $20 = 0, $22 = $7FFF -
+        bne.s   .roll                           ; most frames on a flat track): the 4 muls' result without
+        cmpi.w  #$7fff,$22(a3)                  ; them. (x * $7FFF * 2) >> 16 is x - 1 for x > 0, else x;
+        bne.s   .roll                           ; the registers as the release leaves them (d0's high word
+        moveq   #0,d3                           ; the low word of y * $7FFF * 2: -2y; d3 0)
+        move.w  d5,d0
+        ble.s   .x
+        subq.w  #1,d0
+.x:     asr.w   #2,d0
+        addi.w  #$80,d0
+        move.w  d0,(a5,d1.w)
+        move.w  d4,d0
+        neg.w   d0
+        add.w   d0,d0
+        swap    d0
+        move.w  d4,d0
+        ble.s   .y
+        subq.w  #1,d0
+.y:     asr.w   #2,d0
+        addi.w  #$40,d0
+        move.w  d0,(a4,d1.w)
+        rts
+.roll:
         move.w  $22(a3),d0                      ; 62532
         muls.w  d5,d0                           ; 62536
         asl.l   #$1,d0                          ; 62538
@@ -21450,50 +21473,9 @@ l_6795C:
         moveq   #127-HALF_TOP,d4
 .full1:
         move.b  #$d,d0                          ; 6798C
-        jsr     (ColourToMasks).l               ; 67990
-        jsr     (sub_67A8C).l                   ; 67996
-l_6799C:
-        lea.l   $1f40(a4),a0                    ; 6799C
-        lea.l   $3e80(a4),a1                    ; 679A0
-        lea.l   $5dc0(a4),a2                    ; 679A4
-        move.l  d6,(a4)+                        ; 679A8
-        move.l  d1,(a0)+                        ; 679AA
-        move.l  d7,(a1)+                        ; 679AC
-        move.l  d2,(a2)+                        ; 679AE
-        move.l  d6,(a4)+                        ; 679B0
-        move.l  d1,(a0)+                        ; 679B2
-        move.l  d7,(a1)+                        ; 679B4
-        move.l  d2,(a2)+                        ; 679B6
-        move.l  d6,(a4)+                        ; 679B8
-        move.l  d1,(a0)+                        ; 679BA
-        move.l  d7,(a1)+                        ; 679BC
-        move.l  d2,(a2)+                        ; 679BE
-        move.l  d6,(a4)+                        ; 679C0
-        move.l  d1,(a0)+                        ; 679C2
-        move.l  d7,(a1)+                        ; 679C4
-        move.l  d2,(a2)+                        ; 679C6
-        move.l  d6,(a4)+                        ; 679C8
-        move.l  d1,(a0)+                        ; 679CA
-        move.l  d7,(a1)+                        ; 679CC
-        move.l  d2,(a2)+                        ; 679CE
-        move.l  d6,(a4)+                        ; 679D0
-        move.l  d1,(a0)+                        ; 679D2
-        move.l  d7,(a1)+                        ; 679D4
-        move.l  d2,(a2)+                        ; 679D6
-        move.l  d6,(a4)+                        ; 679D8
-        move.l  d1,(a0)+                        ; 679DA
-        move.l  d7,(a1)+                        ; 679DC
-        move.l  d2,(a2)+                        ; 679DE
-        move.l  d6,(a4)+                        ; 679E0
-        move.l  d1,(a0)+                        ; 679E2
-        move.l  d7,(a1)+                        ; 679E4
-        move.l  d2,(a2)+                        ; 679E6
-        adda.l  #$8,a4                          ; 679E8
-        dbra    d4,l_6799C                      ; 679EE
+        bsr.w   HorizonFill                     ; (enhanced) by the blitter: the release wrote each line's
+						; 128 bytes with 32 move.l (l_6799C)
 l_679F2:
-        move.b  #$7,d0                          ; 679F2
-        jsr     (ColourToMasks).l               ; 679F6
-        jsr     (sub_67A8C).l                   ; 679FC
         move.w  (dat_1BC58).l,d4                ; 67A02
         subq.b  #$1,d4                          ; 67A08
         bmi.w   l_67A6A                         ; 67A0A
@@ -21504,44 +21486,8 @@ l_679F2:
         bmi.w   l_67A6A
         lea.l   HALF_TOP*40(a4),a4
 .full2:
-l_67A14:
-        lea.l   $1f40(a4),a0                    ; 67A14
-        lea.l   $3e80(a4),a1                    ; 67A18
-        lea.l   $5dc0(a4),a2                    ; 67A1C
-        move.l  d6,(a4)+                        ; 67A20
-        move.l  d1,(a0)+                        ; 67A22
-        move.l  d7,(a1)+                        ; 67A24
-        move.l  d2,(a2)+                        ; 67A26
-        move.l  d6,(a4)+                        ; 67A28
-        move.l  d1,(a0)+                        ; 67A2A
-        move.l  d7,(a1)+                        ; 67A2C
-        move.l  d2,(a2)+                        ; 67A2E
-        move.l  d6,(a4)+                        ; 67A30
-        move.l  d1,(a0)+                        ; 67A32
-        move.l  d7,(a1)+                        ; 67A34
-        move.l  d2,(a2)+                        ; 67A36
-        move.l  d6,(a4)+                        ; 67A38
-        move.l  d1,(a0)+                        ; 67A3A
-        move.l  d7,(a1)+                        ; 67A3C
-        move.l  d2,(a2)+                        ; 67A3E
-        move.l  d6,(a4)+                        ; 67A40
-        move.l  d1,(a0)+                        ; 67A42
-        move.l  d7,(a1)+                        ; 67A44
-        move.l  d2,(a2)+                        ; 67A46
-        move.l  d6,(a4)+                        ; 67A48
-        move.l  d1,(a0)+                        ; 67A4A
-        move.l  d7,(a1)+                        ; 67A4C
-        move.l  d2,(a2)+                        ; 67A4E
-        move.l  d6,(a4)+                        ; 67A50
-        move.l  d1,(a0)+                        ; 67A52
-        move.l  d7,(a1)+                        ; 67A54
-        move.l  d2,(a2)+                        ; 67A56
-        move.l  d6,(a4)+                        ; 67A58
-        move.l  d1,(a0)+                        ; 67A5A
-        move.l  d7,(a1)+                        ; 67A5C
-        move.l  d2,(a2)+                        ; 67A5E
-        adda.l  #$8,a4                          ; 67A60
-        dbra    d4,l_67A14                      ; 67A66
+        move.b  #$7,d0                          ; 679F2
+        bsr.w   HorizonFill                     ; (enhanced) by the blitter (l_67A14)
 l_67A6A:
         move.b  #$0,(dat_668A0).l               ; 67A6A
         movem.l (a7)+,a0-a2                     ; 67A72
@@ -21549,9 +21495,47 @@ l_67A6A:
         clr.w   d2                              ; 67A78
         move.b  #$7,d0                          ; 67A7A
         jsr     (ColourToMasks).l               ; 67A7E
+        bsr.w   HorizonWait                     ; (enhanced) the fills done before the band is drawn
         jmp     (l_66666).l                     ; 67A84
 l_67A8A:
         rts                                     ; 67A8A
+
+;-------------------------------------------------------------------------------
+; HorizonFill - (enhanced) DrawHorizon's fills by the blitter: d0.b a colour, a4 the first line
+; (plane 0), d4.w the lines - 1: those lines of the view (its 256 pixels) set to the colour, a blit
+; a plane (D only: D = A, A's data register the plane's word, all ones or none). The CPU goes on;
+; HorizonWait waits for the last. d0-d2, a4-a5 used. The release wrote them with the CPU, 32
+; move.l a line (about 50,000 cycles a frame); the blitter takes 2 memory cycles a word.
+;-------------------------------------------------------------------------------
+HorizonFill:
+        lea.l   (CUSTOM).l,a5
+        addq.w  #1,d4
+        lsl.w   #6,d4
+        ori.w   #16,d4                          ; BLTSIZE: the lines, 16 words
+        moveq   #3,d2
+        bsr.w   BlitWait
+        move.w  #$8240,DMACON(a5)               ; the blitter's DMA on
+        move.l  #$01F00000,BLTCON0(a5)          ; D only: D = A (its data register)
+        move.l  #-1,BLTAFWM(a5)
+        move.w  #40-32,BLTDMOD(a5)
+.plane: bsr.w   BlitWait
+        moveq   #0,d1
+        lsr.b   #1,d0                           ; the colour's bit for this plane
+        bcc.s   .set
+        moveq   #-1,d1
+.set:   move.w  d1,BLTADAT(a5)
+        move.l  a4,BLTDPTH(a5)
+        move.w  d4,BLTSIZE(a5)
+        lea.l   $1f40(a4),a4
+        dbra    d2,.plane
+        rts
+
+HorizonWait:					; (enhanced) HorizonFill's blits done
+        move.l  a5,-(a7)
+        lea.l   (CUSTOM).l,a5
+        bsr.w   BlitWait
+        movea.l (a7)+,a5
+        rts
 sub_67A8C:
         move.l  d6,d0                           ; 67A8C
         move.l  d6,d1                           ; 67A8E
@@ -22719,7 +22703,7 @@ l_68858:
         jsr     (ClearWordPlanes).l             ; 68866
 l_6886C:
         subq.w  #$1,(dat_1BC5A).l               ; 6886C
-        suba.l  #$28,a6                         ; 68872
+        lea.l   -$28(a6),a6                     ; 68872 (enhanced: lea, not suba.l #)
         cmpa.l  (ScreenDrawTop).l,a6            ; 68878
         bge.w   l_68710                         ; 6887E
 l_68882:
