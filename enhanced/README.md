@@ -151,17 +151,20 @@ Measurements made so far are in [`measurements/`](measurements).
 
 **The benchmark** (`tools/bench.py`) plays the same race the same way every time in the study
 emulator (`original/tools/scremu`): Division 4's first race, a minute of it with the throttle held.
+The race is started the same way however long the menus took: the script waits for the race's
+start (`Race`, in the game's listing), sets Random's state for the race there and presses the
+track's keys a set time after it.
 `--opponent` keeps the opponent's car in view all the race (`bench_opponent.json`); `--calibrate`
 runs the calibration run in it (the emulator's figures for it).
 `--json FILE` keeps its figures and `--compare FILE` shows the change in each phase, so every
 change to the game can be measured against `bench_baseline.json` (the game as released: the
-original code with the telemetry build's hooks). The
+original code with the telemetry build's hooks: the telemetry build of commit 21b21ba, run with
+`--game` and `--helper original/bin/lowmem_c0.bin`). The
 workflow runs it and shows the report on the run's page. The emulator's timing is fitted to an
 A500's - its calibration run matches the A500's within 1.2% (`measurements/README.md`) - so the
-times are an A500's, and exact from run to run. The released game: 6.65 vertical blanks of work a
-frame, 7.5 frames a second; the enhanced game 6.07 and 7.95 (8.8% less work: `ScanEdge`, the
-fill and the blitter's cockpit) - near `FrameLimiter`'s limit of a frame every 6 vertical
-blanks (8.33 a second). The blitter is timed (scremu's `blittime`).
+times are an A500's, and exact from run to run. The released game: 6.61 vertical blanks of work a
+frame, 7.55 frames a second; the enhanced game 5.05 and 8.17 (23.5% less work) - below
+`FrameLimiter`'s limit of a frame every 6 vertical blanks (8.33 a second) on most frames. The blitter is timed (scremu's `blittime`).
 
 **The relocation test** (`tools/reloc_test.py`) assembles the game with 16 bytes put in before its
 code and checks that it plays the benchmark's race exactly as before - that nothing in the source

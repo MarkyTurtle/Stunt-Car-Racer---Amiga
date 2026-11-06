@@ -59,7 +59,7 @@ def main():
     sy = syms(os.path.join(work, 'g.lst'))
     lo, hi = sy['dat_1BAF8'], sy['dat_1C280']
     sys.argv = ['bench.py']                         # (bench's script: the release's timing)
-    base = bench.script(10, os.path.join(work, 'x')).split('joy f\nframes 10')[0]
+    base = bench.script(10, os.path.join(work, 'x'), lst=os.path.join(work, 'g.lst')).split('joy f\nframes 10')[0]
     if not os.path.exists(bench.EMU):
         subprocess.run(['sh', os.path.join(bench.EMU_DIR, 'build.sh')], check=True)
     helper = bench.helper()

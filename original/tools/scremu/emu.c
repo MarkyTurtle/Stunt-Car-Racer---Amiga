@@ -42,6 +42,9 @@
  *   callsdump FILE        write them: "addr count", one line a routine
  *   log FILE              append events to FILE
  *   until ADDR [N]        run until the PC reaches ADDR (at most N frames)
+ *   hits ADDR N [M]       run whole frames until the PC has reached ADDR N times from now (at most M
+ *                         frames): the frame it is reached in run to its end, so the timing is as
+ *                         with frames (a loop's Nth pass waited for whatever it took to get there)
  *   call ADDR [D0]        call a routine (interrupts masked, time going on) until it returns
  *   calli ADDR [D0]       the same with the interrupts on (frames going on as usual)
  *   audio FILE            log every write to the audio registers and DMACON: "cycle reg value"
@@ -109,6 +112,7 @@ static FILE *logf;
 static unsigned long frame, line_no;
 static unsigned joy;                  /* bits: 1 up 2 down 4 left 8 right 16 fire 32 button 2 */
 static unsigned until_pc = 0xFFFFFFFF; static int until_hit;
+static unsigned hits_pc = 0xFFFFFFFF; static long hits_left;   /* hits: the passes still to come */
 static unsigned trace_pc = 0xFFFFFFFF; static int trace_all;
 static void snapshot(const char *prefix);
 static void odd_access(unsigned a, const char *what);
@@ -521,6 +525,7 @@ void instr_hook(unsigned int pc) {
     }
     if (pc < SNAP) cover[pc >> 3] |= 1 << (pc & 7);
     if (pc == until_pc) { until_hit = 1; m68k_end_timeslice(); }
+    if (pc == hits_pc && hits_left > 0) hits_left--;
     if (pc < SNAP) usage[pc] |= 4;
     if (calls) {                                             /* a jsr/bsr's target: the instruction after it */
         if (call_from) { calls[pc >> 1]++; call_from = 0; }
@@ -758,10 +763,18 @@ int main(int argc, char **argv) {
         else if (!strcmp(cmd, "watchpc")) { watch_pcs = 1; watch_lo = strtoul(a1, 0, 0); watch_hi = strtoul(a2, 0, 0); seen_n = 0; }
         else if (!strcmp(cmd, "watch")) { watch_pcs = 0; watch_lo = strtoul(a1, 0, 0); watch_hi = strtoul(a2, 0, 0); memset(watched, 0, sizeof watched); }
         else if (!strcmp(cmd, "log")) { logf = fopen(a1, "a"); setvbuf(logf, 0, _IOLBF, 0); }
+        else if (!strcmp(cmd, "hits")) {
+            hits_pc = strtoul(a1, 0, 0); long want = strtol(a2, 0, 0), n = a3[0] ? strtol(a3, 0, 0) : 100000, i;
+            hits_left = want;
+            for (i = 0; i < n && hits_left > 0; i++) run_frame();
+            printf("hits $%X: %s at frame %lu (%ld passes)\n", hits_pc, hits_left ? "NOT reached" : "reached", frame, want - hits_left);
+            hits_pc = 0xFFFFFFFF; hits_left = 0;
+        }
         else if (!strcmp(cmd, "until")) {
             until_pc = strtoul(a1, 0, 0); until_hit = 0; long n = a2[0] ? strtol(a2, 0, 0) : 100000;
             for (long i = 0; i < n && !until_hit; i++) run_frame();
             printf("until $%X: %s at frame %lu\n", until_pc, until_hit ? "reached" : "NOT reached", frame);
+            if (until_hit) line_over = 0;                      /* (its frame cut short there: the next from its start) */
             until_pc = 0xFFFFFFFF; until_hit = 0;
         }
         else fprintf(stderr, "unknown command: %s\n", cmd);

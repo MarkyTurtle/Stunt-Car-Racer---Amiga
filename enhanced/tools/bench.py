@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--farshort] [--cpumult N] [--blitcheck] [--game BIN] [--helper BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--farshort] [--cpumult N] [--blitcheck] [--game BIN [--lst LST]] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -46,7 +46,18 @@ sys.path.insert(0, HERE)
 import telemetry
 
 
-def script(frames, snap):
+RACE_WAIT = 224                     # vblanks from the race's start to the 4th press (as before)
+RACE_SEED = 0x12345678              # Random's state for the race (the copy RestoreRandomSeed puts back)
+
+
+def script(frames, snap, lst=None):
+    """the benchmark's scremu script, for the game whose listing is lst (by default the telemetry
+    build's). The race is started the same way whatever the menus took before it: the race's start
+    (Race) waited for - from the start of a frame then - and Random's state for the race set there
+    (dat_636B8: SaveRandomSeed keeps it after the title, RestoreRandomSeed puts it back as the race
+    is set up; the menus call Random as they wait, so it would otherwise depend on how long they
+    took - the opponent's place)"""
+    sym = symbols(lst)
     L = (['chipbus 1'] if '--chipbus' in sys.argv else []) + (['cpulost ' + arg('--cpulost')] if arg('--cpulost') else []) + \
         (['cpumult ' + arg('--cpumult')] if arg('--cpumult') else []) + \
         ['blittime 1',                                                                  # the blitter's time: the CPU waits for it
@@ -61,12 +72,14 @@ def script(frames, snap):
         L += [f'key {k}', 'frames 10']
     L += ['frames 160', 'joy f', 'frames 5', 'joy', 'frames 150',                      # the divisions
           'joy d', 'frames 8', 'joy', 'frames 30']                                      # 3. the season
-    for _ in range(5):                                                                 # the race screen,
-        L += ['joy f', 'frames 5', 'joy', 'frames 250']                                # the track, the drop
+    for i in range(5):                                                                 # the race screen,
+        L += ['joy f', 'frames 5', 'joy']                                              # the track, the drop:
+        L += ([f'until {sym["Race"]:#x} 1000', f'poke {sym["dat_636B8"]:#x} {RACE_SEED:#x} l',   # the race's
+               f'frames {RACE_WAIT}'] if i == 2 else ['frames 250'])                          # start
     if '--calibrate' in sys.argv:                                                     # F7 in the race: the
         L += ['joy f', 'frames 600', 'key 56', 'frames 120', 'joy f', f'frames {max(0, frames - 720)}']   # calibration run
     elif '--opponent' in sys.argv:                                                    # the opponent kept a
-        sym = symbols()                                                               # piece ahead: in view
+                                                                                      # piece ahead: in view
         L += ['joy f']
         for _ in range(0, frames, 25):
             L += [f'pokecopy {sym["OpponentPiece"]:#x} {sym["PlayerPiece"]:#x} 1', 'frames 25']
@@ -76,10 +89,10 @@ def script(frames, snap):
     return '\n'.join(L) + '\n'
 
 
-def symbols():
-    """the telemetry game's symbols (its listing, tools/build_disk.py --telemetry)"""
+def symbols(lst=None):
+    """a game's symbols, from its listing: by default the telemetry build's (tools/build_disk.py --telemetry)"""
     out = {}
-    for line in open(os.path.join(ENH, 'build', 'game_telemetry.lst'), errors='replace'):
+    for line in open(lst or os.path.join(ENH, 'build', 'game_telemetry.lst'), errors='replace'):
         p = line.split()
         if len(p) == 2 and p[1][:2] in ('A:', 'E:') and len(p[1]) == 10:
             out[p[0]] = int(p[1][2:], 16)
@@ -102,7 +115,9 @@ def main():
     if '-h' in sys.argv or '--help' in sys.argv:
         sys.exit(__doc__)
     frames = int(arg('--vblanks', 3000))
-    game = arg('--game')
+    game, lst = arg('--game'), arg('--lst')
+    if game and not lst:
+        lst = os.path.splitext(game)[0] + '.lst'                    # (its listing: the race's start)
     if not game:
         subprocess.run([sys.executable, os.path.join(HERE, 'build_disk.py'), '--telemetry'], check=True, stdout=subprocess.DEVNULL)
         game = os.path.join(ENH, 'build', 'game_telemetry.bin')
@@ -111,7 +126,7 @@ def main():
     work = arg('--keep') or tempfile.mkdtemp()                       # (the game built: its symbols for --opponent)
     os.makedirs(work, exist_ok=True)
     sc = os.path.join(work, 'bench.txt')
-    open(sc, 'w').write(script(frames, os.path.join(work, 'race')))
+    open(sc, 'w').write(script(frames, os.path.join(work, 'race'), lst=lst))
     run = subprocess.run([EMU, game, helper(), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), sc],
                          check=True, capture_output=True, text=True)
     if '--blitcheck' in sys.argv:

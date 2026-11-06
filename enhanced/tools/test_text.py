@@ -23,7 +23,7 @@ def main():
     game = os.path.join(work, 'game.bin')
     vasm = os.environ.get('VASM', 'vasmm68k_mot')
     subprocess.run([vasm, '-Fbin', '-m68000', '-no-opt', '-quiet', '-DTEXT_CHECK=1', '-I', os.path.join(ENH, 'src'),
-                    '-I', os.path.join(ROOT, 'original'), '-o', game, os.path.join(ENH, 'src', 'scr_game.s')], check=True)
+                    '-I', os.path.join(ROOT, 'original'), '-L', game[:-4] + '.lst', '-o', game, os.path.join(ENH, 'src', 'scr_game.s')], check=True)
     if not os.path.exists(bench.EMU):
         subprocess.run(['sh', os.path.join(bench.EMU_DIR, 'build.sh')], check=True)
     failed = False
@@ -32,7 +32,7 @@ def main():
                               ('pictures between steps', ['--interp'], 'frames 300\nrandom 3000 5\n')):
         sys.argv = ['bench.py'] + flags
         snap = os.path.join(work, 'end')
-        sc = bench.script(10, snap).split('joy f\nframes 10')[0] + 'joy f\n' + tail + f'snap {snap}\n'
+        sc = bench.script(10, snap, lst=game[:-4] + '.lst').split('joy f\nframes 10')[0] + 'joy f\n' + tail + f'snap {snap}\n'
         txt = os.path.join(work, 's.txt')
         open(txt, 'w').write(sc)
         subprocess.run([bench.EMU, game, bench.helper(), os.path.join(ROOT, 'original', 'bin', 'loadpic_78000.bin'), txt],

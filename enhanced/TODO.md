@@ -239,11 +239,19 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   (the readout 5,200 cycles a frame, its steps about 20,000). The same bytes and the same
   registers left as the release's loop, checked character by character by
   `tools/test_text.py` (in the workflow: the menus and races, every way of drawing text).
-* The benchmark's race now moves with the menus' speed: the benchmark reaches the race by keys
-  pressed at set times, so faster text in the menus starts the race at another moment and a
-  different race follows (the work 101.9 and 103.5 ms for the same race code). Start the
-  benchmark's inputs from the race's start instead (an `until` on it) so that menus' changes do
-  not move it; until then compare changes to text or menus by profile (`callprof`).
+* ~~The benchmark's race moved with the menus' speed~~: done (`tools/bench.py`) - the keys were
+  pressed at set times, and Random's state for the race (`SaveRandomSeed` keeps it after the title,
+  `RestoreRandomSeed` puts it back as the race is set up) depends on how long the menus took: the
+  menus call `Random` as they wait (`ReadControls`). So faster text started another race (the
+  opponent placed elsewhere). Now the script waits for the race's start (`Race`, scremu's `until`,
+  the next frame from its start: the line's overrun cleared), sets that saved state to a fixed value
+  (`RACE_SEED`) and presses the track's keys a set time after it; the slow-text and fast-text builds
+  then run the same race (the geometry within 0.01 ms; the cockpit 0.53 ms and the instruments 0.33 ms
+  less: the text). Left as it is: the race still depends on the race's own speed - the engine's revs
+  (`dat_1BC34`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
+  them, so a frame taking 7 vertical blanks instead of 6 moves the opponent a little (the game's own
+  behaviour). The baselines regenerated: the released game (the telemetry build of 21b21ba with the
+  release's helper, `original/bin/lowmem_c0.bin`) 6.61 vertical blanks of work, 7.55 frames a second.
 * ~~**The vertical blank's work**~~ (`VBlankTick`): looked at, little to win - about 1,800 cycles
   a vertical blank (10,700 a frame): saving and restoring all the registers, the engine sound's
   period (a `divu`), the timers. The wheels' sprites are not rebuilt there, only pointed at their
