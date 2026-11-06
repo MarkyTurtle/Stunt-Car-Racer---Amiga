@@ -90,8 +90,10 @@ emulator for each track): each ends where the next begins.
 | `high_jump.bin` | `$1FC76` | 142 |
 | `roller_coaster.bin` | `$1FD04` | 192 |
 
-Their format (the pieces, their heights and the tables the builder uses: `$1C4C0`, `$1C524`,
-`$1C588`, `$1C5EC`, `$1F0C2`, ...) is still to be worked out. After the last track, up to `$1FE2C`,
+Their format - the header, the pieces (shape, direction, grid square, two height profiles), the
+settings and the opponent's speeds after them, the shapes' geometry and the draw bridge - is in
+[TRACKS.md](TRACKS.md), read by
+[`tools/tracks.py`](../tools/tracks.py) the way `BuildTrack` reads it. After the last track, up to `$1FE2C`,
 are bytes left from another version of the game (6502 code).
 
 ## Still in the source

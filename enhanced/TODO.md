@@ -32,8 +32,8 @@ they are shown: about 89K of chip memory is free now.
   where a value is used only as data.
 * ~~Annotate the rest of the game's source~~: the routines done (November 2026: all named, with
   headers, many "probably"), and 163 of the race's variables. Still to do: the rest of the race's
-  variables (about 330 labels, mostly table parts and one-routine variables), the track format
-  (`docs/DATA.md`), and the "probably"s worked through - the physics and the opponent first.
+  variables (about 330 labels, mostly table parts and one-routine variables), the shapes'
+  geometry in the 6502 data (the track format itself is done: `original/docs/TRACKS.md`), and the "probably"s worked through - the physics and the opponent first.
 * ~~Make the source safe to change~~: done - every address in it is a label, checked by
   `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
   code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
@@ -60,8 +60,11 @@ Load what a race needs when it is set up instead of keeping everything in memory
   memory together.
 * Hook: the race set-up at `$5D2C8` calls the track builder (`$5AE46`) with the track number
   (`dat_1CA33`): load the track's file (or file set) just before it.
-* First work out the track format (`docs/DATA.md`: the builder's tables `$1C4C0`, `$1C524`,
-  `$1C588`, `$1C5EC`, `$1F0C2`) and which tables are per track.
+* ~~First work out the track format~~: done (`original/docs/TRACKS.md`, `original/tools/tracks.py`,
+  checked against the game by `tools/test_tracks.py`). Per track: the track's bytes only - the
+  shapes' geometry and the height profiles are shared by all 8 (`Data6502`, `HeightProfiles`); the
+  draw bridge's moving part (`UpdateDrawBridge`) and the opponent's limits (`OpponentSpeedLimits`) are kept
+  per track in the game's tables.
 * One file per track in the file table; on machines with more memory, keep loaded tracks in a cache
   so the next race on the same track does not touch the disk.
 
