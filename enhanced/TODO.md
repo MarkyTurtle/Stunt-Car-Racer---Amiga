@@ -213,7 +213,9 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   its piece's points, the wheels on, above or below the track, the forces turned between the
   car's frame and the world's, then an Euler step (velocity x 238/256 added to the place, the
   turn rates to the angles). All exact, so the cars drive as before:
-  * the pieces' loads cached: `LoadPiece` 3-4 times a step (about 930 cycles each),
+  * the pieces' loads cached: `LoadPiece` about 7 times a step (about 930 cycles each; it copies
+    some 20 values of the piece into variables that other code changes between the calls, so an
+    exact cache must check them all - perhaps 0.4%),
     `ReadPiecePoints` 8 times in `PlaceCarOnTrack` - mostly the piece of the step before: ~0.5%;
   * the physics' variables from a base register (`d16(An)`) instead of absolute longs (4 cycles
     an access, hundreds of accesses a step): ~0.7%;
@@ -242,9 +244,10 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   different race follows (the work 101.9 and 103.5 ms for the same race code). Start the
   benchmark's inputs from the race's start instead (an `until` on it) so that menus' changes do
   not move it; until then compare changes to text or menus by profile (`callprof`).
-* **The vertical blank's work** (`VBlankTick`): about 10,700 cycles a frame (1.4%), much of it the
-  wheels' sprites rebuilt (`SpriteFromCutout`, 12 a frame): rebuild them only when the wheels'
-  animation frame changes.
+* ~~**The vertical blank's work**~~ (`VBlankTick`): looked at, little to win - about 1,800 cycles
+  a vertical blank (10,700 a frame): saving and restoring all the registers, the engine sound's
+  period (a `divu`), the timers. The wheels' sprites are not rebuilt there, only pointed at their
+  cut-outs (`SpriteFromCutout`: about 120 cycles each, 2 a blank).
 * ~~Then the frame rate~~: done (`src/interp.i`, F8 for the release's timing) - the physics at a
   step every 6 vertical blanks to the clock (the game's speed constant, late steps caught up), and
   the view drawn between steps with the cars' places and angles blended: one step's latency,
