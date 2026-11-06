@@ -145,7 +145,7 @@ TelView:
 
 ;-------------------------------------------------------------------------------
 ; TelGeometry, TelDrawing, TelCockpit - in the view (RaceView), in place of its jsr ProjectNearPiece
-; (the first track piece), jsr DrawHorizon and jsr StartKnockSparks: marks 1, 2 and 3
+; (the first track piece), jsr DrawHorizon and jsr StartWheelDust: marks 1, 2 and 3
 ;-------------------------------------------------------------------------------
 TelGeometry:
 	movem.l	d0-d1/a0,-(a7)
@@ -166,7 +166,7 @@ TelCockpit:
 	moveq	#3*2,d1
 	bsr	TelMark
 	movem.l	(a7)+,d0-d1/a0
-	jmp	(StartKnockSparks).l
+	jmp	(StartWheelDust).l
 
 ;-------------------------------------------------------------------------------
 ; TelPauseKey - in place of the race loop's jsr CheckPauseKey: the time it took (a pause) left out

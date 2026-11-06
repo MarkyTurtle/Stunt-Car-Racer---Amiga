@@ -66,7 +66,7 @@ baseline measured again.)
 `RaceView` (called by the race loop once a frame) does it all; the CPU draws every pixel (the
 blitter is not used in the race; the enhanced game blits the cockpit).
 
-1. **The cars.** Each car placed on its piece of track (`PlaceCarOnTrack`, `MoveOpponent`).
+1. **The cars.** Each car placed on its piece of track (`PlaceOpponentOnTrack`, `MoveOpponent`).
 2. **The near pieces.** The piece the car is on and the next two: their points read
    (`ReadPiecePoints`: heights from the piece's shape, `PiecePointHeight`, `InterpolatePiece`),
    turned by the view's matrix (`RollPoint`, `RollPointXY`) and projected (`ProjectPointX`: an

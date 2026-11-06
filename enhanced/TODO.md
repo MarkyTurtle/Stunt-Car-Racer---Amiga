@@ -30,10 +30,15 @@ they are shown: about 89K of chip memory is free now.
   any text). Both sources now have the numbers; `tools/reloc_test.py` now compares the screens
   too (it caught this one: 60 bytes), not only the routines' calls. Others like it may remain
   where a value is used only as data.
-* ~~Annotate the rest of the game's source~~: the routines done (November 2026: all named, with
-  headers, many "probably"), and 163 of the race's variables. Still to do: the rest of the race's
-  variables (about 330 labels, mostly table parts and one-routine variables), the shapes'
-  geometry in the 6502 data (the track format itself is done: `original/docs/TRACKS.md`), and the "probably"s worked through - the physics and the opponent first.
+* ~~Annotate the rest of the game's source~~: done (November 2026) - every routine and every race
+  variable named and described, none of it a guess ("probably"); checked against the code,
+  recordings and knock-outs (`original/docs/CODE.md`). Left: `CarPhysicsPieces` (not studied: it
+  holds the integrity check) and the shapes' geometry in the 6502 data beyond what
+  `original/docs/TRACKS.md` reads.
+* **The benchmark's car does not drive**: its race holds fire only, and fire is the boost - up is
+  the accelerator (`RaceInput`) - so the player's car stays on the start (the opponent drives, the
+  view and the drawing are what is measured). A race with up held (and some steering) would
+  measure the physics and the track ahead as in play; its figures would need a new baseline.
 * ~~Make the source safe to change~~: done - every address in it is a label, checked by
   `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
   code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
@@ -227,7 +232,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   race; the work then 107 ms a frame, about 760,000 cycles). The physics is about 6% of it:
   `CarPhysics` 29,900 cycles a step (`BuildViewMatrix` 5,800, the track under the wheels
   `TrackUnderWheels` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
-  `PlaceCarOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
+  `PlaceOpponentOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
   it is not simulated). Each step the car is a rigid body on four wheels: its matrix from its
   angles (`Sin`/`Cos`: a 512-entry table, interpolated), the track's height under each wheel from
   its piece's points, the wheels on, above or below the track, the forces turned between the
@@ -236,7 +241,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   * the pieces' loads cached: `LoadPiece` about 7 times a step (about 930 cycles each; it copies
     some 20 values of the piece into variables that other code changes between the calls, so an
     exact cache must check them all - perhaps 0.4%),
-    `ReadPiecePoints` 8 times in `PlaceCarOnTrack` - mostly the piece of the step before: ~0.5%;
+    `ReadPiecePoints` 8 times in `PlaceOpponentOnTrack` - mostly the piece of the step before: ~0.5%;
   * the physics' variables from a base register (`d16(An)`) instead of absolute longs (4 cycles
     an access, hundreds of accesses a step): ~0.7%;
   * `Sin`/`Cos` tighter (about 270 cycles a call, ~10 a step; an exact full table would take
