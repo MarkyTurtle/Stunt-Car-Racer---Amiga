@@ -17,6 +17,7 @@ Galahad), disassembled: sources that reassemble byte-identical, and the disk reb
 | [`docs/BOOT.md`](docs/BOOT.md) | the boot chain step by step, the helper block at `$C0`, the game's own disk access |
 | [`docs/MEMORY.md`](docs/MEMORY.md) | how the game uses the 512K: measured in the emulator |
 | [`docs/CODE.md`](docs/CODE.md) | how the game's code is put together, how the names were found, what is still to name |
+| [`docs/TRACKS.md`](docs/TRACKS.md) | the tracks' format: the pieces on the 16 x 16 grid, their shapes and height profiles, the settings after them; [`tools/tracks.py`](tools/tracks.py) prints and draws the 8 tracks |
 | [`docs/RASTERISER.md`](docs/RASTERISER.md) | how the 3D rasteriser works, step by step: the screen, projection by angle, edge buffers and the row table, filling, the background and cockpit, and what the enhanced game changed |
 | [`docs/RENDER.md`](docs/RENDER.md) | the 3D view and the drawing: the pipeline, what each part costs (measured), where the time could be won |
 | [`tools/scremu/`](tools/scremu) | the study emulator (Musashi, adapted from The New Zealand Story's): runs the game, records memory use, calls, variables, where the time goes (`profile`, `callprof`), writes (`writelog`, `writecount`), crashes (`crashwatch`); `run_usage.py` makes the measurements in MEMORY.md, `overdraw.py` those of the overdraw in RENDER.md; `tools/screen.py` draws its snapshots |

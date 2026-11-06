@@ -2195,15 +2195,15 @@ SparkPlaces:				; the 32 sparks' places ($D4: out of the view; ClearSparks)
 	dcb.b	64,$00
 SparkPaths:				; the sparks' paths (SparksAndSound) (probably)
 	dcb.b	192,$00
-TrackPieceKinds:				; each piece's kind (BuildTrack)
+TrackPieceProfileA:				; each piece's height profile for side A (its even points): HeightProfiles' index; bit 7 two bytes an entry (BuildTrack, docs/TRACKS.md)
 	dcb.b	100,$00
-TrackPieceHeights:				; each piece's height (BuildTrack)
+TrackPieceProfileB:				; each piece's height profile for side B (its odd points); bit 7 the stripes' parity (BuildTrack, docs/TRACKS.md)
 	dcb.b	100,$00
-TrackPieceGrid:				; each piece's place on the grid: x and y nibbles (BuildTrack)
+TrackPieceGrid:				; each piece's grid square: y x 16 + x (BuildTrack, docs/TRACKS.md)
 	dcb.b	100,$00
-TrackPieceFlags:				; each piece's flags and its kind (BuildTrack)
+TrackPieceFlags:				; each piece's flags: bits 0-3 its shape, 4 reversed, 5 one profile byte, 6-7 its direction (BuildTrack, docs/TRACKS.md)
 	dcb.b	100,$00
-dat_1C650:
+PieceHeightBaseA:				; each piece's base height for its side A (its even points): the height so far less its profile's first entry (BuildTrack; LoadPiece into dat_1BC0E)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2239,15 +2239,15 @@ dat_1C6B6:
 	dc.b	$00
 dat_1C6B8:
 	dcb.b	96,$00
-dat_1C718:
+PieceHeightBaseB:				; each piece's base height for its side B (its odd points) (BuildTrack; LoadPiece into dat_1BC10)
 	dcb.b	200,$00
 PieceDistances:				; each piece's distance from the start (BuildTrack, UpdateOpponentDistance) (probably)
 	dcb.b	200,$00
-dat_1C8A8:
+OpponentLinePieces:				; the pieces whose line for the opponent the track sets (BuildTrack)
 	dcb.b	32,$00
-dat_1C8C8:
+OpponentLineValues:				; those lines (bit 7: the 3 pieces before it marked too) (BuildTrack)
 	dcb.b	32,$00
-dat_1C8E8:
+NoRestartPieces:				; the pieces the car is not put back on after leaving the track (PlaceCarOnPiece) (probably)
 	dcb.b	32,$00
 TimeHundredths:				; the times (lap and race, of each driver): BCD hundredths, seconds (TimeSeconds), minutes (TimeMinutes), a byte each
 	dc.b	$00
@@ -2459,13 +2459,13 @@ dat_1CA19:
 	dc.b	$00
 TrackPieceCount:				; how many pieces the track has
 	dc.b	$00
-dat_1CA1B:
+StartingPiece:				; the piece the cars start on (Race: the opponent placed there)
 	dc.b	$00
-dat_1CA1C:
+LapCountPiece:				; the piece before the one the laps count from (LapStartPiece = it + 1)
 	dc.b	$00
 StartPiece:				; the start and finish piece (CheckLapPiece)
 	dc.b	$00
-dat_1CA1E:
+TrackLength:				; the track's length: its sections x 32 (BuildTrack)
 	dc.b	$00
 	dc.b	$00
 BoostLeft:				; the boost left (BCD: UseBoost, PrintBoost)
@@ -2488,17 +2488,17 @@ dat_1CA28:
 	dc.b	$00
 OpponentSkill:				; the opponent's driver, for its skill (OpponentDrive: dat_1ED8A) (probably)
 	dc.b	$00
-dat_1CA2A:
+OpponentSetting:				; the track's setting for the opponent in the leagues (SetOpponentSkill: into dat_63CE2)
 	dc.b	$00
-dat_1CA2B:
+OpponentSettingSuper:				; the same in the super league
 	dc.b	$00
-dat_1CA2C:
+BoostAtStart:				; the boost at the race's start in the leagues (a count, made decimal: Race)
 	dc.b	$00
-dat_1CA2D:
+BoostAtStartSuper:				; the same in the super league
 	dc.b	$00
-dat_1CA2E:
+OpponentLineCount:				; how many lines for the opponent the track sets (OpponentLinePieces)
 	dc.b	$00
-dat_1CA2F:
+NoRestartCount:				; how many pieces are in NoRestartPieces
 	dc.b	$00,$00
 dat_1CA31:
 	dc.b	$00
@@ -3184,7 +3184,7 @@ dat_1EF4A:
 Data6502:				; the 6502 data as the C64/Atari version had it: 6502 address $B100 is here (the tracks' pointers are 6502 addresses: byte-swapped, - $B100, + Data6502)
 	dc.b	$50,$B2,$A3,$B2,$A9,$FF,$FE,$B2,$59,$B3,$20,$DA,$D8,$B3,$3B,$B4
 	dc.b	$0A,$46,$2E,$20,$9E,$B4,$A9,$80,$85,$2E,$60,$A5,$30,$C9,$81,$90
-PieceShapes:				; the pieces' shapes: a word for each kind
+HeightProfiles:				; the height profiles: a 6502 pointer each, to a height for each section's end (TrackPieceProfileA, TrackPieceProfileB; docs/TRACKS.md)
 	dc.b	$0D,$B5,$1B,$B5,$24,$B5,$36,$B5,$44,$B5,$52,$B5,$5C,$B5,$66,$B5
 	dc.b	$6F,$B5,$78,$B5,$86,$B5,$94,$B5,$9D,$B5,$A6,$B5,$B2,$B5,$CA,$B5
 	dc.b	$D3,$B5,$EB,$B5,$F7,$B5,$01,$B6,$0A,$B6,$14,$B6,$1D,$B6,$27,$B6
@@ -3205,7 +3205,7 @@ TrackOffsets:				; the 8 tracks' data: a word each, byte-swapped, minus $B100, p
 	dc.b	$62,$BA,$DE,$BA,$6F,$BB,$00,$BC,$8E,$BC,$1F,$BD,$F4,$BD,$82,$BE
 	dc.b	$F5,$A7,$4C,$00,$A5,$4C,$B2,$A3,$00,$17
 	dc.b	'Accura'
-dat_1F0C2:
+ShapeTurns:				; each shape's turn ($80, $C0: the bends' two ways; 0, $40 none): bit 7 a bend for the opponent's line (BuildTrack)
 	dc.b	$00,$80,$20,$C0,$00,$73,$80,$C0,$A9,$59,$00,$02,$A9,$5E,$85,$4B
 	dc.b	$04,$00,$40,$03,$12,$00,$AB,$80,$80,$01,$20,$40,$03,$00,$00,$C0
 	dc.b	$04,$00,$00,$40,$03,$00,$01,$C0,$04,$00,$01,$40,$03,$00,$02,$C0
@@ -7290,7 +7290,7 @@ l_5A832:
         move.w  d0,(dat_1BBF6).l                ; 5A84E
         move.b  #$2,d2                          ; 5A854
         move.b  #$be,d1                         ; 5A858
-        movea.l #PieceShapes,a1                 ; 5A85C
+        movea.l #HeightProfiles,a1                 ; 5A85C
         move.w  (a1,d1.w),(LeagueBlockPointer).l         ; 5A862
         move.w  (LeagueBlockPointer).l,d0                ; 5A86A
         rol.w   #$8,d0                          ; 5A870
@@ -7700,8 +7700,10 @@ l_5AE40:
         rts                                     ; 5AE44
 
 ;-------------------------------------------------------------------------------
-; BuildTrack - d1: a track - its data (TrackOffsets) read into the track's tables (the pieces,
-; their heights and kinds: $1C4C0, $1C524, $1C588, $1C5EC, ...)
+; BuildTrack - d1: a track - its data (TrackOffsets) read into the track's tables: the pieces'
+; flags, squares and height profiles (TrackPieceFlags, TrackPieceGrid, TrackPieceProfileA and B),
+; their distances and base heights, the header and the settings after the pieces, the opponent's
+; lines (docs/TRACKS.md; original/tools/tracks.py reads the tracks the same way)
 ;-------------------------------------------------------------------------------
 BuildTrack:
         move.b  d1,d0                           ; 5AE46
@@ -7787,19 +7789,19 @@ l_5AF6C:
         move.b  d0,(a1,d1.w)                    ; 5AFB4
         movea.l #l_5B2B8,a2                     ; 5AFB8
         move.b  (a2,d2.w),d0                    ; 5AFBE
-        movea.l #TrackPieceKinds,a1             ; 5AFC2
+        movea.l #TrackPieceProfileA,a1             ; 5AFC2
         move.b  d0,(a1,d1.w)                    ; 5AFC8
         movea.l #l_5B2B8+2,a2                   ; 5AFCC
         move.b  (a2,d2.w),d0                    ; 5AFD2
         jmp     (l_5B010).l                     ; 5AFD6
 l_5AFDC:
         jsr     (TrackReadByte).l               ; 5AFDC
-        movea.l #TrackPieceKinds,a1             ; 5AFE2
+        movea.l #TrackPieceProfileA,a1             ; 5AFE2
         move.b  d0,(a1,d1.w)                    ; 5AFE8
         move.b  (WorkByte5).l,d0                ; 5AFEC
         andi.b  #$20,d0                         ; 5AFF2
         beq.w   l_5B00A                         ; 5AFF6
-        movea.l #TrackPieceKinds,a1             ; 5AFFA
+        movea.l #TrackPieceProfileA,a1             ; 5AFFA
         move.b  (a1,d1.w),d0                    ; 5B000
         jmp     (l_5B010).l                     ; 5B004
 l_5B00A:
@@ -7807,7 +7809,7 @@ l_5B00A:
 l_5B010:
         andi.b  #$7f,d0                         ; 5B010
         or.b    (WorkByte6).l,d0                ; 5B014
-        movea.l #TrackPieceHeights,a1           ; 5B01A
+        movea.l #TrackPieceProfileB,a1           ; 5B01A
         move.b  d0,(a1,d1.w)                    ; 5B020
         move.b  d2,d0                           ; 5B024
         move.b  d0,-(a7)                        ; 5B026
@@ -7829,8 +7831,8 @@ l_5B010:
         move.b  #$0,d2                          ; 5B06C
         jsr     (TrackDataEntry).l                   ; 5B070
         move.b  d0,(WorkByte5).l                ; 5B076
-        movea.l #dat_1C650,a3                   ; 5B07C
-        movea.l #dat_1C718,a4                   ; 5B082
+        movea.l #PieceHeightBaseA,a3                   ; 5B07C
+        movea.l #PieceHeightBaseB,a4                   ; 5B082
         move.w  (dat_1BBF6).l,d4                ; 5B088
         sub.w   (WorkByte5).l,d4                ; 5B08E
         move.w  d4,(a3,d1.w)                    ; 5B094
@@ -7858,7 +7860,7 @@ l_5B010:
         beq.w   l_5B10C                         ; 5B102
         jmp     (l_5AED0).l                     ; 5B106
 l_5B10C:
-        move.b  (dat_1CA1C).l,d1                ; 5B10C
+        move.b  (LapCountPiece).l,d1                ; 5B10C
         addq.b  #$1,d1                          ; 5B112
         cmp.b   (TrackPieceCount).l,d1          ; 5B114
         blt.w   l_5B122                         ; 5B11A
@@ -7867,38 +7869,38 @@ l_5B122:
         move.b  d1,(LapStartPiece).l                ; 5B122
         move.w  (dat_1BC2A).l,d0                ; 5B128
         asl.w   #$5,d0                          ; 5B12E
-        move.w  d0,(dat_1CA1E).l                ; 5B130
+        move.w  d0,(TrackLength).l                ; 5B130
         move.b  #$0,d1                          ; 5B136
 l_5B13A:
         jsr     (TrackReadByte).l               ; 5B13A
-        movea.l #dat_1CA2A,a1                   ; 5B140
+        movea.l #OpponentSetting,a1                   ; 5B140
         move.b  d0,(a1,d1.w)                    ; 5B146
         addq.b  #$1,d1                          ; 5B14A
         cmpi.b  #$6,d1                          ; 5B14C
         bne.w   l_5B13A                         ; 5B150
-        move.b  (dat_1CA2E).l,d0                ; 5B154
+        move.b  (OpponentLineCount).l,d0                ; 5B154
         beq.w   l_5B18E                         ; 5B15A
         move.b  #$0,d1                          ; 5B15E
 l_5B162:
         jsr     (TrackReadByte).l               ; 5B162
-        movea.l #dat_1C8A8,a1                   ; 5B168
+        movea.l #OpponentLinePieces,a1                   ; 5B168
         move.b  d0,(a1,d1.w)                    ; 5B16E
         jsr     (TrackReadByte).l               ; 5B172
-        movea.l #dat_1C8C8,a1                   ; 5B178
+        movea.l #OpponentLineValues,a1                   ; 5B178
         move.b  d0,(a1,d1.w)                    ; 5B17E
         addq.b  #$1,d1                          ; 5B182
-        cmp.b   (dat_1CA2E).l,d1                ; 5B184
+        cmp.b   (OpponentLineCount).l,d1                ; 5B184
         bne.w   l_5B162                         ; 5B18A
 l_5B18E:
-        move.b  (dat_1CA2F).l,d0                ; 5B18E
+        move.b  (NoRestartCount).l,d0                ; 5B18E
         beq.w   l_5B1B8                         ; 5B194
         move.b  #$0,d1                          ; 5B198
 l_5B19C:
         jsr     (TrackReadByte).l               ; 5B19C
-        movea.l #dat_1C8E8,a1                   ; 5B1A2
+        movea.l #NoRestartPieces,a1                   ; 5B1A2
         move.b  d0,(a1,d1.w)                    ; 5B1A8
         addq.b  #$1,d1                          ; 5B1AC
-        cmp.b   (dat_1CA2F).l,d1                ; 5B1AE
+        cmp.b   (NoRestartCount).l,d1                ; 5B1AE
         bne.w   l_5B19C                         ; 5B1B4
 l_5B1B8:
         jsr     (SetOpponentSkill).l                   ; 5B1B8
@@ -7910,11 +7912,11 @@ l_5B1B8:
         move.b  d0,(dat_1BB90).l                ; 5B1D6
         bne.w   l_5B2B0                         ; 5B1DC
 l_5B1E0:
-        move.b  (dat_1CA2E).l,d2                ; 5B1E0
+        move.b  (OpponentLineCount).l,d2                ; 5B1E0
         jmp     (l_5B1FC).l                     ; 5B1E6
 l_5B1EC:
         move.b  d1,d0                           ; 5B1EC
-        movea.l #dat_1C8A8,a2                   ; 5B1EE
+        movea.l #OpponentLinePieces,a2                   ; 5B1EE
         cmp.b   (a2,d2.w),d0                    ; 5B1F4
         beq.w   l_5B208                         ; 5B1F8
 l_5B1FC:
@@ -7922,7 +7924,7 @@ l_5B1FC:
         bpl.w   l_5B1EC                         ; 5B1FE
         jmp     (l_5B238).l                     ; 5B202
 l_5B208:
-        movea.l #dat_1C8C8,a2                   ; 5B208
+        movea.l #OpponentLineValues,a2                   ; 5B208
         move.b  (a2,d2.w),d0                    ; 5B20E
         movea.l #PieceOpponentLines,a1                   ; 5B212
         move.b  d0,(a1,d1.w)                    ; 5B218
@@ -7938,7 +7940,7 @@ l_5B238:
         move.b  (a1,d1.w),d0                    ; 5B23E
         andi.b  #$f,d0                          ; 5B242
         move.b  d0,d2                           ; 5B246
-        movea.l #dat_1F0C2,a2                   ; 5B248
+        movea.l #ShapeTurns,a2                   ; 5B248
         move.b  (a2,d2.w),d0                    ; 5B24E
         bpl.w   l_5B272                         ; 5B252
         move.b  (dat_63CE1).l,d0                ; 5B256
@@ -9929,12 +9931,12 @@ l_5D3A4:
         move.b  #$b,d2                          ; 5D3B6
         jsr     (DrawLeadLamp).l                   ; 5D3BA
         jsr     (DrawBestLapLamp).l                   ; 5D3C0
-        move.b  (dat_1CA1B).l,d1                ; 5D3C6
+        move.b  (StartingPiece).l,d1                ; 5D3C6
         move.b  d1,(OpponentPiece).l            ; 5D3CC
         move.b  #$4,(OpponentPiecePos).l        ; 5D3D2
         move.b  #$4c,(dat_1BBED).l              ; 5D3DA
         jsr     (PlaceOpponentStart).l                   ; 5D3E2
-        move.b  (dat_1CA1B).l,d1                ; 5D3E8
+        move.b  (StartingPiece).l,d1                ; 5D3E8
         cmpi.b  #$40,(LinkMode).l               ; 5D3EE
         bne.w   l_5D402                         ; 5D3F6
         move.b  #$80,(DrivingBackwards).l              ; 5D3FA
@@ -10146,10 +10148,10 @@ l_5D7B4:
         move.b  #$4,(RaceLaps).l               ; 5D7D0
         jsr     (RestoreRandomSeed).l           ; 5D7D8
         move.b  #$3b,(dat_625A5).l              ; 5D7DE
-        move.b  (dat_1CA2C).l,d1                ; 5D7E6
+        move.b  (BoostAtStart).l,d1                ; 5D7E6
         tst.b   (SuperLeague).l                   ; 5D7EC
         beq.w   l_5D7FC                         ; 5D7F2
-        move.b  (dat_1CA2D).l,d1                ; 5D7F6
+        move.b  (BoostAtStartSuper).l,d1                ; 5D7F6
 l_5D7FC:
         move.b  #$0,d0                          ; 5D7FC
         move.b  #$1,d3                          ; 5D800
@@ -12821,30 +12823,31 @@ l_5FE50:
         rts                                     ; 5FE54
 
 ;-------------------------------------------------------------------------------
-; LoadPiece - d1: a piece - its kind (TrackPieceKinds) and its parameters (PieceShapes) made
-; current
+; LoadPiece - d1: a piece made current: its height profiles (HeightProfiles by TrackPieceProfileA
+; and B) and their base heights, its flags (PieceDirection, PieceReversed, PieceCurve: its shape) and
+; its shape's numbers from the 6502 data (Data6502 by the shape: the points, the sections)
 ;-------------------------------------------------------------------------------
 LoadPiece:
-        movea.l #TrackPieceKinds,a1             ; 5FE56
+        movea.l #TrackPieceProfileA,a1             ; 5FE56
         move.b  (a1,d1.w),d2                    ; 5FE5C
         move.b  d2,(dat_1BB79).l                ; 5FE60
         asl.b   #$1,d2                          ; 5FE66
-        movea.l #PieceShapes,a2                 ; 5FE68
+        movea.l #HeightProfiles,a2                 ; 5FE68
         move.w  (a2,d2.w),(TrackDataPointer).l         ; 5FE6E
-        movea.l #TrackPieceHeights,a1           ; 5FE76
+        movea.l #TrackPieceProfileB,a1           ; 5FE76
         move.b  (a1,d1.w),d2                    ; 5FE7C
         asl.b   #$1,d2                          ; 5FE80
         move.b  #$0,d0                          ; 5FE82
         roxl.b  #$1,d0                          ; 5FE86
         asl.b   #$1,d0                          ; 5FE88
         move.b  d0,(dat_1BBDC).l                ; 5FE8A
-        movea.l #PieceShapes,a2                 ; 5FE90
+        movea.l #HeightProfiles,a2                 ; 5FE90
         move.w  (a2,d2.w),d0                    ; 5FE96
         move.w  d0,(TrackDataStart).l                ; 5FE9A
         asl.b   #$1,d1                          ; 5FEA0
-        movea.l #dat_1C650,a1                   ; 5FEA2
+        movea.l #PieceHeightBaseA,a1                   ; 5FEA2
         move.w  (a1,d1.w),(dat_1BC0E).l         ; 5FEA8
-        movea.l #dat_1C718,a1                   ; 5FEB0
+        movea.l #PieceHeightBaseB,a1                   ; 5FEB0
         move.w  (a1,d1.w),(dat_1BC10).l         ; 5FEB6
         lsr.b   #$1,d1                          ; 5FEBE
         movea.l #TrackPieceFlags,a1             ; 5FEC0
@@ -13323,15 +13326,15 @@ PlaceCarOnPiece:
         move.b  (a1,d1.w),d0                    ; 605C8
         andi.b  #$f,d0                          ; 605CC
         move.b  d0,d2                           ; 605D0
-        movea.l #dat_1F0C2,a2                   ; 605D2
+        movea.l #ShapeTurns,a2                   ; 605D2
         move.b  (a2,d2.w),d0                    ; 605D8
         bmi.w   l_605B0                         ; 605DC
-        move.b  (dat_1CA2F).l,d2                ; 605E0
+        move.b  (NoRestartCount).l,d2                ; 605E0
         beq.w   l_60602                         ; 605E6
         subq.b  #$1,d2                          ; 605EA
 l_605EC:
         move.b  d1,d0                           ; 605EC
-        movea.l #dat_1C8E8,a2                   ; 605EE
+        movea.l #NoRestartPieces,a2                   ; 605EE
         cmp.b   (a2,d2.w),d0                    ; 605F4
         beq.w   l_605B0                         ; 605F8
         subq.b  #$1,d2                          ; 605FC
@@ -13435,7 +13438,7 @@ UpdateOpponentDistance:
         bpl.w   l_607A8                         ; 607A2
         neg.w   d0                              ; 607A6
 l_607A8:
-        move.w  (dat_1CA1E).l,d4                ; 607A8
+        move.w  (TrackLength).l,d4                ; 607A8
         sub.w   d0,d4                           ; 607AE
         cmp.w   d0,d4                           ; 607B0
         bcs.w   l_607BC                         ; 607B2
@@ -17304,7 +17307,7 @@ l_63880:
         move.b  (a1,d1.w),d0                    ; 63886
         andi.b  #$f,d0                          ; 6388A
         move.b  d0,d2                           ; 6388E
-        movea.l #dat_1F0C2,a2                   ; 63890
+        movea.l #ShapeTurns,a2                   ; 63890
         move.b  (a2,d2.w),d0                    ; 63896
         bpl.w   l_638A6                         ; 6389A
         move.b  #$80,(OpponentPace).l              ; 6389E
@@ -17465,7 +17468,7 @@ l_63A7C:
 
 ;-------------------------------------------------------------------------------
 ; SetOpponentSkill - BuildTrack: Random run 256 times, then the opponent's settings for the track
-; (dat_63CE0-dat_63CE2, from dat_1FE2C by CurrentTrack and dat_1CA2A; the super league: SuperLeague)
+; (dat_63CE0-dat_63CE2, from dat_1FE2C by CurrentTrack and OpponentSetting; the super league: SuperLeague)
 ; (probably)
 ;-------------------------------------------------------------------------------
 SetOpponentSkill:
@@ -17480,11 +17483,11 @@ l_63AA6:
         dbra    d4,l_63AA6                      ; 63AAC
         clr.w   d1                              ; 63AB0
         move.b  (CurrentTrack).l,d1             ; 63AB2
-        move.b  (dat_1CA2A).l,d2                ; 63AB8
+        move.b  (OpponentSetting).l,d2                ; 63AB8
         tst.b   (SuperLeague).l                   ; 63ABE
         beq.w   l_63AD2                         ; 63AC4
         addi.b  #$20,d1                         ; 63AC8
-        move.b  (dat_1CA2B).l,d2                ; 63ACC
+        move.b  (OpponentSettingSuper).l,d2                ; 63ACC
 l_63AD2:
         move.b  d2,(dat_63CE2).l                ; 63AD2
         jsr     (Random).l                      ; 63AD8
@@ -19562,7 +19565,7 @@ l_657A2:
         move.b  (dat_1BB98).l,d1                ; 657B4
         asl.w   #$1,d1                          ; 657BA
         move.b  (PieceIndex).l,d2               ; 657BC
-        cmp.b   (dat_1CA1C).l,d2                ; 657C2
+        cmp.b   (LapCountPiece).l,d2                ; 657C2
         bne.w   l_657D0                         ; 657C8
         move.b  #$1,d0                          ; 657CC
 l_657D0:
@@ -19944,7 +19947,7 @@ l_65D14:
         tst.b   (PieceDirection).l                   ; 65D14
         bmi.w   l_65D5E                         ; 65D1A
         move.b  (PieceIndex).l,d3               ; 65D1E
-        movea.l #TrackPieceKinds,a2             ; 65D24
+        movea.l #TrackPieceProfileA,a2             ; 65D24
         cmpi.b  #$25,(a2,d3.w)                  ; 65D2A
         bne.w   l_65D3C                         ; 65D30
         cmpi.b  #$18,d1                         ; 65D34
