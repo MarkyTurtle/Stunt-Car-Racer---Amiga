@@ -6075,147 +6075,11 @@ l_59612:
         bne.w   l_59640                         ; 59636
         adda.l  #$fffffec0,a1                   ; 5963A
 l_59640:
-        move.b  #$8,d2                          ; 59640
-l_59644:
-        tst.b   (dat_5924A).l                   ; 59644
-        beq.w   l_5965E                         ; 5964A
-        jsr     (GlyphRow).l                    ; 5964E
-        move.l  #$1F800,d5                      ; 59654 the glyph's mask (a number, not dat_1F800)
-        bra.w   l_5966C                         ; 5965A
-l_5965E:
-        move.b  (a0)+,d7                        ; 5965E
-        andi.l  #$ff,d7                         ; 59660
-        move.l  #$1FC00,d5                      ; 59666 the glyph's mask: 7 columns (a number)
-l_5966C:
-        asl.l   #$8,d7                          ; 5966C
-        asl.l   #$1,d7                          ; 5966E
-        move.b  (dat_59841).l,d3                ; 59670
-        eori.b  #$f,d3                          ; 59676
-        andi.l  #$f,d3                          ; 5967A
-        asl.l   d3,d7                           ; 59680
-        asl.l   d3,d5                           ; 59682
-        move.l  d7,d6                           ; 59684
-        swap    d7                              ; 59686
-        move.w  d7,d6                           ; 59688
-        move.l  d5,d4                           ; 5968A
-        swap    d5                              ; 5968C
-        move.w  d5,d4                           ; 5968E
-        move.l  (TextBackgroundMasks).l,d3      ; 59690
-        and.l   d4,d3                           ; 59696
-        not.l   d4                              ; 59698
-        move.w  (a1),d0                         ; 5969A
-        swap    d0                              ; 5969C
-        move.w  $1f40(a1),d0                    ; 5969E
-        tst.b   (dat_1BBD3).l                   ; 596A2
-        bmi.w   l_596B0                         ; 596A8
-        and.l   d4,d0                           ; 596AC
-        or.l    d3,d0                           ; 596AE
-l_596B0:
-        move.l  (TextColourMasks).l,d3          ; 596B0
-        and.l   d6,d3                           ; 596B6
-        not.l   d6                              ; 596B8
-        and.l   d6,d0                           ; 596BA
-        or.l    d3,d0                           ; 596BC
-        move.w  d0,$1f40(a1)                    ; 596BE
-        swap    d0                              ; 596C2
-        move.w  d0,(a1)                         ; 596C4
-        tst.b   (dat_1BBBC).l                   ; 596C6
-        bmi.w   l_596DA                         ; 596CC
-        move.w  d0,-$7d00(a1)                   ; 596D0
-        swap    d0                              ; 596D4
-        move.w  d0,-$5dc0(a1)                   ; 596D6
-l_596DA:
-        adda.l  #$3e80,a1                       ; 596DA
-        not.l   d4                              ; 596E0
-        not.l   d6                              ; 596E2
-        move.l  (dat_59832).l,d3                ; 596E4
-        and.l   d4,d3                           ; 596EA
-        not.l   d4                              ; 596EC
-        move.w  (a1),d0                         ; 596EE
-        swap    d0                              ; 596F0
-        move.w  $1f40(a1),d0                    ; 596F2
-        tst.b   (dat_1BBD3).l                   ; 596F6
-        bmi.w   l_59704                         ; 596FC
-        and.l   d4,d0                           ; 59700
-        or.l    d3,d0                           ; 59702
-l_59704:
-        move.l  (dat_5983A).l,d3                ; 59704
-        and.l   d6,d3                           ; 5970A
-        not.l   d6                              ; 5970C
-        and.l   d6,d0                           ; 5970E
-        or.l    d3,d0                           ; 59710
-        move.w  d0,$1f40(a1)                    ; 59712
-        swap    d0                              ; 59716
-        move.w  d0,(a1)                         ; 59718
-        tst.b   (dat_1BBBC).l                   ; 5971A
-        bmi.w   l_5972E                         ; 59720
-        move.w  d0,-$7d00(a1)                   ; 59724
-        swap    d0                              ; 59728
-        move.w  d0,-$5dc0(a1)                   ; 5972A
-l_5972E:
-        adda.l  #$ffffc182,a1                   ; 5972E
-        move.l  d7,d6                           ; 59734
-        swap    d7                              ; 59736
-        move.w  d7,d6                           ; 59738
-        move.l  d5,d4                           ; 5973A
-        swap    d5                              ; 5973C
-        move.w  d5,d4                           ; 5973E
-        move.l  (TextBackgroundMasks).l,d3      ; 59740
-        and.l   d4,d3                           ; 59746
-        not.l   d4                              ; 59748
-        move.w  (a1),d0                         ; 5974A
-        swap    d0                              ; 5974C
-        move.w  $1f40(a1),d0                    ; 5974E
-        tst.b   (dat_1BBD3).l                   ; 59752
-        bmi.w   l_59760                         ; 59758
-        and.l   d4,d0                           ; 5975C
-        or.l    d3,d0                           ; 5975E
-l_59760:
-        move.l  (TextColourMasks).l,d3          ; 59760
-        and.l   d6,d3                           ; 59766
-        not.l   d6                              ; 59768
-        and.l   d6,d0                           ; 5976A
-        or.l    d3,d0                           ; 5976C
-        move.w  d0,$1f40(a1)                    ; 5976E
-        swap    d0                              ; 59772
-        move.w  d0,(a1)                         ; 59774
-        tst.b   (dat_1BBBC).l                   ; 59776
-        bmi.w   l_5978A                         ; 5977C
-        move.w  d0,-$7d00(a1)                   ; 59780
-        swap    d0                              ; 59784
-        move.w  d0,-$5dc0(a1)                   ; 59786
-l_5978A:
-        adda.l  #$3e80,a1                       ; 5978A
-        not.l   d4                              ; 59790
-        not.l   d6                              ; 59792
-        move.l  (dat_59832).l,d3                ; 59794
-        and.l   d4,d3                           ; 5979A
-        not.l   d4                              ; 5979C
-        move.w  (a1),d0                         ; 5979E
-        swap    d0                              ; 597A0
-        move.w  $1f40(a1),d0                    ; 597A2
-        tst.b   (dat_1BBD3).l                   ; 597A6
-        bmi.w   l_597B4                         ; 597AC
-        and.l   d4,d0                           ; 597B0
-        or.l    d3,d0                           ; 597B2
-l_597B4:
-        move.l  (dat_5983A).l,d3                ; 597B4
-        and.l   d6,d3                           ; 597BA
-        not.l   d6                              ; 597BC
-        and.l   d6,d0                           ; 597BE
-        or.l    d3,d0                           ; 597C0
-        move.w  d0,$1f40(a1)                    ; 597C2
-        swap    d0                              ; 597C6
-        move.w  d0,(a1)                         ; 597C8
-        tst.b   (dat_1BBBC).l                   ; 597CA
-        bmi.w   l_597DE                         ; 597D0
-        move.w  d0,-$7d00(a1)                   ; 597D4
-        swap    d0                              ; 597D8
-        move.w  d0,-$5dc0(a1)                   ; 597DA
-l_597DE:
-        adda.l  #$ffffc1a6,a1                   ; 597DE
-        subq.b  #$1,d2                          ; 597E4
-        bne.w   l_59644                         ; 597E6
+        ifd     TEXT_CHECK
+        jsr     (TextCheckRows).l               ; (tools/test_text.py: both loops, compared)
+        else
+        jsr     (TextRows).l                    ; 59640-597E6 (enhanced) the 8 rows, faster (textfast.i)
+        endc
         move.b  (TextCursorX).l,d0              ; 597EA
         addq.b  #$1,d0                          ; 597F0
         cmpi.b  #$2d,d0                         ; 597F2
@@ -24710,6 +24574,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"halfres.i"			; (the enhanced game) F9: the view at half its height, doubled
 	include	"blitqueue.i"			; (the enhanced game) the sky and ground filled during the geometry
 	include	"readout.i"			; (the enhanced game) the opponent's distance: only what changed printed
+	include	"textfast.i"			; (the enhanced game) PrintCharNow's rows drawn faster
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

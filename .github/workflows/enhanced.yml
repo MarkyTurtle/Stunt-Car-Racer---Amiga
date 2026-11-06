@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: 8cbd386bdb867e3e7fcce6b079942667e1fcdd4c
+  ADF_SHA1: dec333b2c71f64dc4ba2c5cd019b85b22f7888c0
 
 jobs:
   build:
@@ -73,6 +73,8 @@ jobs:
         run: python enhanced/tools/reloc_test.py
       - name: The pictures loaded from the disk (enhanced/tools/test_pictures.py)
         run: python enhanced/tools/test_pictures.py
+      - name: The text's faster rows draw what the release's did (enhanced/tools/test_text.py)
+        run: python enhanced/tools/test_text.py
       - name: The readout leaves a character only when the screen shows it (enhanced/tools/test_readout.py)
         run: python enhanced/tools/test_readout.py
       - name: The variables the view's drawing keeps (enhanced/tools/measure_keep.py --check)
