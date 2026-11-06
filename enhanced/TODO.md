@@ -132,9 +132,22 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `ScanEdgeInView` - the header written at once, no `dat_668A2`/`dat_668A6`: the race's work 1.1%
   less).
 * ~~**The mountains as an option**~~: done (**F10**, `DrawMountains` returns at once): they cost
-  about 79,000 cycles a frame (11% of the work: 23 `ScanEdge` calls, mostly clipped at the view's
-  sides, at ~1,400 cycles each, and 6 `FillPolygon`s). Still to do, for when they are on: clip
-  them to the view's sides once (they are flat, at the horizon) rather than edge by edge.
+  about 75,000 cycles a frame (10% of the work). Measured since (the benchmark against F10, by
+  routine): about 6 small mountains in view, each the same 4-point shape (a quadrilateral 3-7
+  lines high on the horizon, 2 triangles' worth of edges): 24 `ScanEdge` calls and 6
+  `FillPolygon`s a frame. The edges about 29,000 cycles: half in the view (`ScanEdgeInView`,
+  about 500 each with the stepping), a third crossing a side and a sixth wholly off one (the
+  clipping path: about 2,200 each - 26,000 of the 29,000); the fill about 25,000 (about 40 lines
+  at 525 cycles: the partial words at both ends, 4 planes); `DrawMountains`' own loops 13,000; the
+  roll 5,000. No mountain is wholly outside the view (so nothing to cull: the angle window is only
+  a little wider than the view), and the cost is spread rather than in one place. Exact savings
+  found: a leaner path in `ScanEdge` for edges clipped only at the view's sides (about 12 a frame,
+  the track's included: the outcodes and the y tests skipped - about 500 cycles each) and for
+  edges wholly off a side (8 a frame, about 400 each); the roll's no-roll case inline in
+  `DrawMountains` (about 3,000) - together about 1.2% of the work. A larger cut would not be exact:
+  the mountains' spans kept per shape and phase (their x is the shape's x + the heading, rounded
+  by the projection's `asr #2`, so 4 phases a direction) and redrawn shifted, or drawn every other
+  frame.
 * ~~The blitter for the cockpit~~: done (`src/blitcutout.i`): `DrawCutout`'s cut-outs blitted
   (cookie-cut, from copies made at start-up in the blitter's form), the cockpit's time 54% less
   (15.6 ms to 7.2 ms a frame), the race's work 8.8% less than the released game's: 6.07 vertical
