@@ -14,7 +14,7 @@ vertical blanks, about 4.5 frames a second): drawing up to 2,000 lines, geometry
 
 It cannot be compared phase by phase with the emulator's benchmark: the race is another (other
 parts of the track in view, the opponent elsewhere) and even the cockpit's work changes with the
-race - the chains are drawn as more cut-outs while the car bounces (`RaceView`: `dat_1BB62`), so
+race - the chains are drawn as more cut-outs while the car bounces (`RaceView`: `BoostOn`), so
 its 264-294 lines a frame here against 185-193 in the benchmark are not the same work. The
 calibration run (below) compares like with like.
 

@@ -76,27 +76,40 @@ the rows in about 5,500 (`enhanced/src/textfast.i`).
 
 ## Status
 
-Named: the start-up, the interrupts and the hardware, the sound, the input, the text, the pictures,
-the menus and the league, the save disk, the computer link, the maths, the projection, and the 3D
-view's pipeline ([RENDER.md](RENDER.md): `RaceView`, `ProjectNearPiece`, `ProjectFarPieces`, the
-`Edges...` routines, `ScanEdge`, `DrawFarRows`, `DrawNearRows`, `FillRowSurface`,
-`FillBetweenEdges`, `DrawEdgeLine`, `DrawOpponentCar`, the row table and the edge buffers). Named by
-what they work on, not yet understood in detail (their descriptions say "probably"): the car's
-physics, the opponent's driving, the track's format, the opponent's car's model.
+Named: every routine (528, each with a header) and every label among the race's variables
+(`$1BAF8-$1CA41`: 519, none `dat_` now), with what each does or holds. Since November 2026 none of
+the descriptions is a guess ("probably"): each was checked against the code, a recording of the
+variables in play (`record`), or a knock-out (the routine made a `rts` and the picture compared),
+and where the purpose is not certain the description gives the mechanics only. What was found:
 
-Since November 2026 every routine has a name and a header (528; none is `sub_` now). The last 196
-were named from what they do and what calls them, many of them "probably": the race's input,
-clock, lamps (L the lead, B probably the best lap), messages and damage (`CarKnocks`,
-`GrowCrack`, `DrawDamageMark`); the physics (`VelocityToCarAxes`, `DriveForce`, `WheelForces`,
-`SuspensionForces`, `AddForce`, `AddTorque`, `MoveCar`, the drop: `UpdateDrop`); the opponent
-(`OpponentDrive`, its pace, `OpponentCollide`, `OpponentPhysics`); the sparks; the track's grid
-(`TrackGrid`, `BuildTrackGrid`), the pieces' sections and the rows' sides and lines
-(`DrawRowsLeftLines`, `FillRowsLeftSide`, `FillFarRowLeftSide`, ...); the save disk's scrambling
-(`ScrambleLeague`), the menus and the season's end (`SeasonEnd`). `CarPhysicsPieces` is named from
-where it is called only. Of the race's variables (`$1BAF8-$1CA35`), 163 are named - the car's
-place, angles, velocity, forces and turning in the world's and the car's axes, the springs, the
-knocks, the messages, the text cursor, the league's tables - and six shared work bytes
-(`WorkByte1-6`); about 330 labels there are still `dat_`: mostly parts of tables (the car model's
-corners, the horizon's and the cars' edge buffers, the pieces' data) and variables used by one
-routine whose role is not yet clear. `sub_`/`dat_` names are renamed across both sources, the docs
+* the controls: up accelerates (`EnginePower`, held by `AccelHeld`), down brakes then reverses,
+  left and right steer, fire is the boost (`BoostOn`, `BoostRate`); the super league's own values
+  (`RaceSettings`: 11 bytes from `dat_1FE6C`, also `KnockMargin`);
+* the physics: three points touch the track (the rear middle and the front corners: `RearHeight`,
+  `FrontHeightA`, `FrontHeightB`); each one's compression (`CompressFrontB`...) is damped into a
+  spring (`SpringFrontB`...), their mean (`SpringMean`) pushes along the slope of the ground under
+  them (`SuspensionForces`: the pitch and roll slopes' sines and cosines, `SlopeCosine`), their
+  differences turn the car (`SpringPitch`, `SpringRoll`); grip is twice the spring's force
+  (`SideForce`), beyond it the car skids (`Skidding`); the drag goes with the speed squared
+  (`DragForce`); `PitchRate`-`RollRate` are added to the angles (`MoveCar`); the points' places on
+  the track come from the car's rotation against it (`CarTrackMatrix`, `PointOffsets`);
+* the opponent: its lane (`OpponentTargetLane`, `OpponentLane`), its dodge, pass and follow, its
+  four corners on springs (`OpponentSpring0`..., `OpponentPhysics`) - it follows the track and is
+  not otherwise simulated;
+* the race: the lamps (L - `SetLeadLamp`, B - `SetBestLapLamp`), the league's points (2 a win, 1 a
+  best lap: `DriverWins`, `DriverBestLaps`, `DriverTotalPoints`), the dust (once called sparks),
+  the crack across the screen (`CrackLength`; at $F0 the car is wrecked: `CarWrecked`), the
+  knocks' marks (`DamageMarks`, `MarkCooldown`), leaving the track and being put back
+  (`CheckOffTrack`, `RestartDelay`, `RestartPiece`), the start's drop (`UpdateDrop`, `RaceStarted`);
+* the view: the camera (`CarToPieceCoords`: `ViewQuarter`, `ViewHeading`, `CameraHeight`), the
+  sections in view (`ViewSections`), the opponent's car on the screen (`CarModelEdges`: its length
+  and width as vectors, `CarAlongX`..., the parts' points `CarSideX0`...), the horizon
+  (`HorizonLine`), the drawing routines confirmed by knock-outs.
+
+Left as they are: `CarPhysicsPieces` (it holds the game's integrity check, so it is not studied:
+the variables only it uses say so), and a few variables nothing reads or nothing writes by name
+(their descriptions say so). `RaceViewUnused` was misnamed: only its first 4 instructions are
+unreachable (now `RaceViewNoTrack`), the rest is `RaceView`'s.
+
+`sub_`/`dat_` names are renamed across both sources, the docs
 and the tools at once (whole words), so the binaries stay the same.

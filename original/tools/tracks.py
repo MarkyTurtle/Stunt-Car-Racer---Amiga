@@ -66,16 +66,16 @@ def build(g, data, bend_speed=None):
     count, t['starting_piece'], t['lap_count_piece'], t['start_piece'] = hdr
     t['count'] = count
     lo = rd(); hi = rd()
-    acc_a = acc_b = hi << 8 | lo                     # dat_1BBF6 and dat_1BBF8: the two profiles' heights so far
+    acc_a = acc_b = hi << 8 | lo                     # WorkPointX and WorkPointZ: the two profiles' heights so far
     t['start_height'] = acc_a
     flags, grid, kinds, heights = [0] * count, [0] * count, [0] * count, [0] * count
     base_a, base_b, dist = [0] * count, [0] * count, [0] * count
     sections = [0] * count
-    parity = 0                                       # dat_1BBDC
-    total = 0                                        # dat_1BC2A: the sections so far
-    repeat = 0                                       # dat_1BB48
-    prev_flags = 0                                   # dat_1BC55
-    prev_grid = 0                                    # dat_1BB8B
+    parity = 0                                       # SideSwap
+    total = 0                                        # WorkAccum: the sections so far
+    repeat = 0                                       # WorkCount
+    prev_flags = 0                                   # PieceFlagsKept
+    prev_grid = 0                                    # WorkD1
     start_a, start_b = [0] * count, [0] * count
     d1 = 0
     while d1 < count:
@@ -174,7 +174,7 @@ def opponent_speeds(g, t, base):
     than the speed carried back from the next piece, up to $7F (bit 7: exact)"""
     count = t['count']
     out = [0] * count
-    hold = 0                                         # dat_1BB48
+    hold = 0                                         # WorkCount
     w6 = 0x7C
     tab = g.sym['ShapeTurns']
     for d1 in range(count - 1, -1, -1):

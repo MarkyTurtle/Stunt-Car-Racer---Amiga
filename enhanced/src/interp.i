@@ -32,7 +32,7 @@
 ; (InterpPost). A picture: the variables set back to InterpPre, the blended place and angles
 ; written over them, the whole of RaceView run (the opponent not moved: InterpMoveOpponent),
 ; and the variables set back to InterpPost - so the physics goes on from exactly where the step
-; left it. The variables: the block from dat_1BAF8 to TrackGrid (1,928 bytes: all the cars-placing
+; left it. The variables: the block from RaceSettings to TrackGrid (1,928 bytes: all the cars-placing
 ; half writes, with three others), less those the interrupts change meanwhile (the wheels'
 ; animation, the engine's revs) and the screens' parity (FrameFlip changes it with each picture).
 ;
@@ -46,7 +46,7 @@
 ;
 ; The blending: the car's place (CarX, CarY, CarZ: across, height, along: longs)
 ; and angles (CarPitch, CarHeading, CarRoll: words, the shorter way round), the camera's bob
-; (dat_1BD38) and the horizon's pitch (ViewPitch), the view's rotation (ViewMatrix, each of its
+; (SpringMean) and the horizon's pitch (ViewPitch), the view's rotation (ViewMatrix, each of its
 ; words - built by CarPhysics from the step before's angles, as in the release), the opponent's
 ; distance along its piece (OpponentPiecePos, onto the next piece when it has crossed: the piece's
 ; length kept from the step, InterpMoveOpponent) and its steering (WorkByte5).
@@ -79,7 +79,7 @@ IS_Z		equ	8			; CarZ.l
 IS_A1		equ	12			; CarPitch.w
 IS_A2		equ	14			; CarHeading.w
 IS_A3		equ	16			; CarRoll.w
-IS_BOB		equ	18			; dat_1BD38.w
+IS_BOB		equ	18			; SpringMean.w
 IS_PITCH	equ	20			; ViewPitch.w
 IS_OPOS		equ	22			; OpponentPiecePos.w
 IS_OPIECE	equ	24			; OpponentPiece.b
@@ -90,7 +90,7 @@ IS_SIZE		equ	IS_MATRIX+72
 InterpPrev:	dcb.b	IS_SIZE,0
 InterpCur:	dcb.b	IS_SIZE,0
 
-IB_SIZE		equ	TrackGrid-dat_1BAF8	; the variables' block
+IB_SIZE		equ	TrackGrid-RaceSettings	; the variables' block
 	ifne	IB_SIZE&3
 	fail	"interp.i: the variables' block is not a number of longs"
 	endc
@@ -353,7 +353,7 @@ InterpMoveOpponent:
 ; InterpBlockOut - a1: the variables copied to it. d0, a0-a1 used
 ;-------------------------------------------------------------------------------
 InterpBlockOut:
-	lea	(dat_1BAF8).l,a0
+	lea	(RaceSettings).l,a0
 	move.w	#IB_SIZE/4-1,d0
 .copy:	move.l	(a0)+,(a1)+
 	dbra	d0,.copy
@@ -377,7 +377,7 @@ InterpBlockIn:
 .k1:	move.w	(a3)+,d0
 	bmi.s	.nokeep
 	move.w	(a3)+,d1
-	lea	(dat_1BAF8).l,a1
+	lea	(RaceSettings).l,a1
 	adda.w	d0,a1
 	subq.w	#1,d1
 .k2:	move.b	(a1)+,(a2)+
@@ -389,8 +389,8 @@ InterpBlockIn:
 	move.w	(EngineRevs).l,d3		; the engine's revs (VBlankTick)
 	move.b	(FrameParity).l,d4		; the screens' parity (FrameFlip)
 	swap	d4
-	move.b	(dat_1BCC8).l,d4
-	lea	(dat_1BAF8).l,a1
+	move.b	(ScreenSecond).l,d4
+	lea	(RaceSettings).l,a1
 	move.w	#IB_SIZE/4-1,d0
 .copy:	move.l	(a0)+,(a1)+
 	dbra	d0,.copy
@@ -400,7 +400,7 @@ InterpBlockIn:
 	move.b	d1,(WheelTurn).l
 	move.b	d2,(WheelFrame).l
 	move.w	d3,(EngineRevs).l
-	move.b	d4,(dat_1BCC8).l
+	move.b	d4,(ScreenSecond).l
 	swap	d4
 	move.b	d4,(FrameParity).l
 	tst.b	d6
@@ -410,7 +410,7 @@ InterpBlockIn:
 .k3:	move.w	(a3)+,d0
 	bmi.s	.done
 	move.w	(a3)+,d1
-	lea	(dat_1BAF8).l,a1
+	lea	(RaceSettings).l,a1
 	adda.w	d0,a1
 	subq.w	#1,d1
 .k4:	move.b	(a2)+,(a1)+
@@ -429,7 +429,7 @@ InterpTake:
 	move.w	(CarPitch).l,IS_A1(a1)
 	move.w	(CarHeading).l,IS_A2(a1)
 	move.w	(CarRoll).l,IS_A3(a1)
-	move.w	(dat_1BD38).l,IS_BOB(a1)
+	move.w	(SpringMean).l,IS_BOB(a1)
 	move.w	(ViewPitch).l,IS_PITCH(a1)
 	move.w	(OpponentPiecePos).l,IS_OPOS(a1)
 	move.b	(OpponentPiece).l,IS_OPIECE(a1)
@@ -478,7 +478,7 @@ InterpBlend:
 	move.w	IS_BOB(a0),d0
 	move.w	IS_BOB(a1),d1
 	bsr.w	InterpWord
-	move.w	d0,(dat_1BD38).l
+	move.w	d0,(SpringMean).l
 	move.w	IS_PITCH(a0),d0
 	move.w	IS_PITCH(a1),d1
 	bsr.w	InterpWord

@@ -83,7 +83,7 @@ profile **A** (it decides the form for both of the piece's profiles):
 * bit 7 set: two bytes each, height = (b0 & `$7F`) x 256 + b1.
 
 Bit 7 of profile B in the file is not used. `BuildTrack` replaces it with a running parity, which
-`LoadPiece` passes on (`dat_1BBDC`). It flips with each piece by the number of the piece's points,
+`LoadPiece` passes on (`SideSwap`). It flips with each piece by the number of the piece's points,
 probably so that the track's stripes carry on from piece to piece.
 
 **Shapes 12-14** take their profiles not from the file but from the bytes at `l_5B2B8` + 12 on: 3,
@@ -133,8 +133,10 @@ A shape's data:
 | 8 | bend: the along scale (the angle's) |
 | 9-10 | bend: side A's radius (its across is that less the car's distance from the centre) |
 | n | the points: 2 at each section's end (18 to 28) |
-| n + 1 | bit 0: across measured the other way (`dat_1BC44`) |
-| n + 2, n + 3, n + 6 | `dat_1BB7B`, `dat_1BBD9`, `dat_1BBD4` (`TrackUnderWheels`, `CarPhysicsPieces`; not studied) |
+| n + 1 | bit 0: across measured the other way (`AcrossOtherWay`) |
+| n + 2 | `ShapeAcrossScale`: the scale (x 128) `TrackUnderWheels` puts the car's points' offsets across by |
+| n + 3 | `ShapeAlongScale`: the same for the offsets along, and for the opponent's speed (`MoveOpponent`) |
+| n + 6 | `ShapeByte6` (read only in `CarPhysicsPieces`, which is not studied) |
 | n + 7 on | the points: (x, z), two words each, the low byte first; side A then side B at each end |
 
 ## What `BuildTrack` works out
