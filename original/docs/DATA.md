@@ -91,7 +91,8 @@ emulator for each track): each ends where the next begins.
 | `roller_coaster.bin` | `$1FD04` | 192 |
 
 Their format - the header, the pieces (shape, direction, grid square, two height profiles), the
-settings and the opponent's lines after them - is in [TRACKS.md](TRACKS.md), read by
+settings and the opponent's speeds after them, the shapes' geometry and the draw bridge - is in
+[TRACKS.md](TRACKS.md), read by
 [`tools/tracks.py`](../tools/tracks.py) the way `BuildTrack` reads it. After the last track, up to `$1FE2C`,
 are bytes left from another version of the game (6502 code).
 

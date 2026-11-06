@@ -1,6 +1,6 @@
 """The 8 tracks' data decoded, as BuildTrack ($5AE46) reads it (docs/TRACKS.md).
 
-  python3 original/tools/tracks.py [TRACK...] [--check DIR] [--map OUT.png]
+  python3 original/tools/tracks.py [TRACK...] [--check DIR] [--map OUT.png] [--shapes OUT.png|-]
 
 Prints each track (all 8, or those named: 0-7 or a file's name) - its header, its pieces (the grid
 square, the direction, the shape, the two height profiles and what they make: the sections, the
@@ -11,6 +11,7 @@ build.py does, with a listing for the labels).
 --check DIR: compared with the game's own tables just after BuildTrack, from scremu snapshots
 DIR/t0.mem-t7.mem (tools/track_snapshots.py makes them): every table BuildTrack writes, byte for byte.
 --map OUT.png: the 8 tracks drawn on their 16 x 16 grids (needs Pillow).
+--shapes OUT.png: the shapes the tracks use, their geometry printed and drawn (- prints only).
 """
 import os, re, sys
 
@@ -52,9 +53,9 @@ class Game:
         return self.sym['Data6502'] + (p & 0xFFFF)
 
 
-def build(g, data, opp_line_base=None):
-    """BuildTrack on a track's bytes: the tables it makes (a dict). opp_line_base: dat_63CE1 (set by
-    SetOpponentSkill, from Random) - the opponent's lines on bends depend on it"""
+def build(g, data, bend_speed=None):
+    """BuildTrack on a track's bytes: the tables it makes (a dict). bend_speed: OpponentBendSpeed (set by
+    SetRaceLimits, within the track's limits) - the opponent's speeds on the bends and before them"""
     pos = [0]
 
     def rd():
@@ -124,15 +125,15 @@ def build(g, data, opp_line_base=None):
     lap = t['lap_count_piece'] + 1
     t['lap_start'] = lap if lap < count else 0
     t['length'] = (total * 32) & 0xFFFF
-    t['extra'] = [rd() for _ in range(6)]            # OpponentSetting-NoRestartCount
+    t['extra'] = [rd() for _ in range(6)]            # DamageSteps-NoRestartCount
     npairs, nlist = t['extra'][4], t['extra'][5]
-    t['line_pieces'], t['line_values'] = [], []
+    t['speed_pieces'], t['speed_values'] = [], []
     for _ in range(npairs):
-        t['line_pieces'].append(rd()); t['line_values'].append(rd())
+        t['speed_pieces'].append(rd()); t['speed_values'].append(rd())
     t['no_restart'] = [rd() for _ in range(nlist)]
     t['bytes'] = pos[0]
-    if opp_line_base is not None:
-        t['opp_lines'] = opponent_lines(g, t, opp_line_base)
+    if bend_speed is not None:
+        t['opp_speeds'] = opponent_speeds(g, t, bend_speed)
     return t
 
 
@@ -167,18 +168,19 @@ def profile(g, p, kind, i):
     return (v & 0xF) << 8 | (v << 1 & 0xE0)
 
 
-def opponent_lines(g, t, base):
-    """BuildTrack's last part: each piece's line for the opponent (PieceOpponentLines), from the
-    track's own pairs or, by the piece's shape (ShapeTurns), from the last one +/- 10"""
+def opponent_speeds(g, t, base):
+    """BuildTrack's last part: each piece's speed for the opponent (PieceOpponentSpeeds), from the last
+    piece back - the track's own, or OpponentBendSpeed on a bend (ShapeTurns bit 7), else 10 more
+    than the speed carried back from the next piece, up to $7F (bit 7: exact)"""
     count = t['count']
     out = [0] * count
     hold = 0                                         # dat_1BB48
     w6 = 0x7C
     tab = g.sym['ShapeTurns']
     for d1 in range(count - 1, -1, -1):
-        hit = [k for k in range(len(t['line_pieces']) - 1, -1, -1) if t['line_pieces'][k] == d1]
+        hit = [k for k in range(len(t['speed_pieces']) - 1, -1, -1) if t['speed_pieces'][k] == d1]
         if hit:
-            d0 = t['line_values'][hit[0]]
+            d0 = t['speed_values'][hit[0]]
             out[d1] = d0
             if d0 & 0x80:
                 hold = 3
@@ -200,6 +202,116 @@ def opponent_lines(g, t, base):
     return out
 
 
+SHAPES_USED = (0, 10, 4, 6, 7, 1, 3)
+
+
+def shape(g, typ):
+    """a shape's geometry from the 6502 data (Data6502 by the shape): its header read as LoadPiece,
+    CarPiecePosition and ReadPiecePoints read it, and its points - each section's end a pair (side A,
+    side B), (x, z) in the piece's own frame: a square 2048 across, entered at z = 0 going +z"""
+    p = g.d6502(g.w(g.sym['Data6502'] + 2 * typ))
+    off = g.b(p)
+
+    def sw(a):
+        v = g.b(a) | g.b(a + 1) << 8
+        return v - 0x10000 if v & 0x8000 else v
+    out = {'kind': g.b(p + 1), 'points': g.b(p + off), 'other_way': g.b(p + off + 1) & 1,
+           'bytes_after': [g.b(p + off + k) for k in (2, 3, 6)]}
+    out['sections'] = (out['points'] >> 1) - 1
+    kind = out['kind'] & 0xC0
+    if kind == 0x00:
+        out['edge'] = sw(p + 2)                          # the track's side A, across (x)
+    elif kind == 0x40:
+        out['edge'] = sw(p + 2)                          # across the diagonal
+        out['heading'] = sw(p + 4)                       # the piece's heading ($2000: 45 degrees)
+        out['along_scale'] = g.b(p + 7)                  # (x + z) x it / 256: along
+    else:
+        out['centre'] = (sw(p + 2), sw(p + 4))           # the bend's centre
+        out['start_angle'] = sw(p + 6) << 6 & 0xFFFF
+        out['along_scale'] = g.b(p + 8)
+        out['edge_radius'] = sw(p + 9)                   # side A's radius from the centre
+    base = p + off + 7
+    out['pts'] = [(sw(base + 4 * i), sw(base + 4 * i + 2)) for i in range(out['points'])]
+    return out
+
+
+def show_shapes(g):
+    print('shape  kind  sections  geometry')
+    for typ in SHAPES_USED:
+        sh = shape(g, typ)
+        c = [((sh['pts'][2 * i][0] + sh['pts'][2 * i + 1][0]) / 2, (sh['pts'][2 * i][1] + sh['pts'][2 * i + 1][1]) / 2) for i in range(sh['points'] // 2)]
+        geo = f'from ({c[0][0]:.0f}, {c[0][1]:.0f}) to ({c[-1][0]:.0f}, {c[-1][1]:.0f})'
+        if 'centre' in sh:
+            r = ((c[0][0] - sh['centre'][0]) ** 2 + (c[0][1] - sh['centre'][1]) ** 2) ** 0.5
+            geo += f', a bend about ({sh["centre"][0]}, {sh["centre"][1]}), radius {r:.0f} (side A {sh["edge_radius"]})'
+        else:
+            geo += f', side A across {sh["edge"]}'
+        print(f'{typ:5}  {sh["kind"]:#04x}  {sh["sections"]:8}  {geo}')
+
+
+def draw_shapes(g, out):
+    from PIL import Image, ImageDraw
+    sc, pad = 0.09, 30
+    side = int(2600 * sc)
+    im = Image.new('RGB', (len(SHAPES_USED) * (side + pad) + pad, side + 2 * pad + 10), (250, 250, 247))
+    dr = ImageDraw.Draw(im)
+    for k, typ in enumerate(SHAPES_USED):
+        sh = shape(g, typ)
+        ox, oy = pad + k * (side + pad) + int(300 * sc), pad + side - int(300 * sc)
+        P = lambda x, z: (ox + x * sc, oy - z * sc)
+        dr.rectangle([P(0, 2048), P(2048, 0)], outline=(200, 200, 195))
+        pts = sh['pts']
+        for i in range(0, len(pts) - 2, 2):
+            dr.polygon([P(*pts[i]), P(*pts[i + 1]), P(*pts[i + 3]), P(*pts[i + 2])], fill=(110, 160, 210) if i // 2 % 2 else (70, 120, 180))
+        dr.text((ox - int(300 * sc), oy + int(300 * sc) - 6), f'shape {typ}: {sh["sections"]} sections', fill=(40, 40, 40))
+    im.save(out)
+
+
+BRIDGE_PROFILE = 0x5F                                 # the draw bridge's leaves: profiles $5F-$62
+BRIDGE_BYTES = 0x48
+
+
+def bridge_profiles(g, phase):
+    """UpdateDrawBridge: the bytes 2-$47 of the profiles $5F-$62 (the Draw Bridge's leaves, pieces 51,
+    52, 54, 55: 2-byte entries) at a phase (BridgePhase) - each leaf a slope from its end, rising the
+    same each section, the slope from the phase (a triangle: 32 steps); a dict offset: byte"""
+    v = (phase & 0x1F) - 0x10
+    if v < 0:
+        v = -v - 1                                       # (not.w)
+    slope = (v + 4) << 5
+    acc = 0
+    out = {}
+    d2 = 2
+    for _ in range(15):
+        acc = (acc + slope) & 0xFFFF
+        while True:
+            hi = acc >> 8 | (0x80 if d2 == 0x20 else 0)
+            out[d2], out[d2 + 1] = hi, acc & 0xFF        # from the first leaf's end
+            d2 += 2
+            m = BRIDGE_BYTES - d2
+            out[m], out[m + 1] = hi, acc & 0xFF          # and the same from the second's
+            if d2 != 0x12:
+                break
+    return out
+
+
+def bridge_speeds(g, phase, held=False):
+    """UpdateDrawBridge: the opponent's speeds for pieces 48-50 (the approach) and, when the bridge
+    moves, 51-52 (the leaves) at a phase (a dict piece: speed with bit 7 set)"""
+    out = {}
+    d0 = (0xC + phase) & 0xFF if held else phase
+    if not held:
+        v = (phase & 0x1F) - 0x10
+        v = -v - 1 if v < 0 else v
+        out[51] = out[52] = g.b(g.sym['BridgeLeafSpeeds'] + v)
+    i = (d0 & 0x1F) >> 1
+    acc = 0xC6
+    for k in range(3):
+        acc = (acc + g.b(g.sym['BridgeApproachSteps'] + i)) & 0xFF
+        out[48 + k] = acc
+    return out
+
+
 def show(g, n, t):
     print(f'== {n}: {TITLES[n]} ({NAMES[n]}.bin, {t["bytes"]} bytes)')
     print(f'   {t["count"]} pieces; the cars start on piece {t["starting_piece"]}, the laps count from piece '
@@ -214,9 +326,12 @@ def show(g, n, t):
               f'{t["kinds"][i]:#04x}    {t["heights"][i]:#04x}  {t["sections"][i]:8}  {t["dist"][i]:#08x}  '
               f'         {t["start_a"][i]:#06x}  {t["start_b"][i]:#06x}')
     e = t['extra']
-    print(f'   the opponent\'s setting {e[0]} ({e[1]} in the super league), the boost {e[2]} ({e[3]}); the opponent\'s lines set: '
-          + ', '.join(f'piece {p} {v:#04x}' for p, v in zip(t['line_pieces'], t['line_values']))
-          + f'; not restarted on: {" ".join(str(b) for b in t["no_restart"]) or "none"}')
+    print(f'   damage from {e[0]} steps of a hard landing ({e[1]} in the super league), the boost {e[2]} ({e[3]}); '
+          f'the opponent\'s speeds set: ' + ', '.join(f'piece {p} {v & 0x7F}{" exact" if v & 0x80 else ""}' for p, v in zip(t['speed_pieces'], t['speed_values'])))
+    if 'opp_speeds' in t:
+        print('   the opponent\'s speeds (the leagues\' bend speed): ' + ' '.join(f'{v & 0x7F}{"!" if v & 0x80 else ""}' for v in t['opp_speeds']))
+    print(
+          f'   not restarted on: {" ".join(str(b) for b in t["no_restart"]) or "none"}')
 
 
 def check(g, n, t, mem):
@@ -242,11 +357,11 @@ def check(g, n, t, mem):
     cmp('PieceHeightBaseB', s['PieceHeightBaseB'], t['base_b'], 2)
     cmp('LapStartPiece', s['LapStartPiece'], [t['lap_start']])
     cmp('TrackLength', s['TrackLength'], [t['length']], 2)
-    cmp('OpponentSetting-NoRestartCount', s['OpponentSetting'], t['extra'])
-    cmp('OpponentLinePieces', s['OpponentLinePieces'], t['line_pieces'])
-    cmp('OpponentLineValues', s['OpponentLineValues'], t['line_values'])
+    cmp('DamageSteps-NoRestartCount', s['DamageSteps'], t['extra'])
+    cmp('OpponentSpeedPieces', s['OpponentSpeedPieces'], t['speed_pieces'])
+    cmp('OpponentSpeedValues', s['OpponentSpeedValues'], t['speed_values'])
     cmp('NoRestartPieces', s['NoRestartPieces'], t['no_restart'])
-    cmp('PieceOpponentLines', s['PieceOpponentLines'], t['opp_lines'])
+    cmp('PieceOpponentSpeeds', s['PieceOpponentSpeeds'], t['opp_speeds'])
     return bad
 
 
@@ -286,7 +401,14 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     chk = sys.argv[sys.argv.index('--check') + 1] if '--check' in sys.argv else None
     mp = sys.argv[sys.argv.index('--map') + 1] if '--map' in sys.argv else None
-    args = [a for a in args if a not in (chk, mp)]
+    shp = sys.argv[sys.argv.index('--shapes') + 1] if '--shapes' in sys.argv else None
+    args = [a for a in args if a not in (chk, mp, shp)]
+    if shp:
+        g = Game()
+        show_shapes(g)
+        if shp != '-':
+            draw_shapes(g, shp)
+        return
     which = [int(a) if a.isdigit() else NAMES.index(a) for a in args] or list(range(8))
     g = Game()
     failed = False
@@ -294,7 +416,8 @@ def main():
     for n in which:
         data = open(os.path.join(ORIG, 'tracks', NAMES[n] + '.bin'), 'rb').read()
         mem = open(os.path.join(chk, f't{n}.mem'), 'rb').read() if chk else None
-        t = build(g, data, mem[g.sym['dat_63CE1']] if mem else 0)
+        lim = g.sym['OpponentSpeedLimits']         # (the leagues' bend speed: its random mask is 0)
+        t = build(g, data, mem[g.sym['OpponentBendSpeed']] if mem else g.b(lim + 0x18 + n))
         if t['bytes'] != len(data):
             print(f'{NAMES[n]}: {t["bytes"]} bytes read of {len(data)}')
             failed = True

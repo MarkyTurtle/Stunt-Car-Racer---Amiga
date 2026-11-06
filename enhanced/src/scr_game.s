@@ -1033,7 +1033,7 @@ dat_1BB3C:
 dat_1BB3D:
 	dc.b	$00
 	dc.b	$00
-dat_1BB3F:
+BridgeHeld:				; non-zero ($C): a car on the draw bridge - the bridge stays as it is (UpdateDrawBridge)
 	dc.b	$00
 dat_1BB40:
 	dc.b	$00
@@ -1044,7 +1044,7 @@ dat_1BB43:
 	dc.b	$00
 OpponentRacing:				; non-zero: the opponent's car is racing (MoveOpponent and its routines) (probably)
 	dc.b	$00
-OpponentLineB:				; OpponentTargetLine's result (probably)
+OpponentBraking:				; $80: the opponent above its target speed - slowing (OpponentTargetSpeed)
 	dc.b	$00
 KnockPending:				; a knock from the opponent to add to the player's forces (OpponentCollide, ApplyCollision)
 	dc.b	$00
@@ -1053,7 +1053,7 @@ ControlBits:				; the controls read (ReadControls): bit 0 up, 1 down, 2 left, 3 
 dat_1BB48:
 	dc.b	$00
 	dc.b	$00
-OpponentLineA:				; OpponentTargetLine's result (probably)
+OpponentSpeedTarget:				; the opponent's target speed on its piece (OpponentTargetSpeed)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -1072,7 +1072,7 @@ KnockHappened:				; non-zero: a knock this step (CarKnocks)
 	dc.b	$00
 CrackState:				; GrowCrack's state (probably)
 	dc.b	$00
-dat_1BB56:
+HardLandingCount:				; the steps a wheel's spring has been hard pressed (more than $700) - counted against HardLandingSteps
 	dc.b	$00
 dat_1BB57:
 	dc.b	$00
@@ -1126,7 +1126,7 @@ dat_1BB6F:
 	dc.b	$00
 ThrottleOff:				; $10 when fire is not held: no throttle (RaceInput)
 	dc.b	$00
-dat_1BB71:
+BridgeUpdated:				; set after the draw bridge's first update: from then on its far model is moved too (UpdateDrawBridge)
 	dc.b	$00
 dat_1BB72:
 	dc.b	$00
@@ -1240,7 +1240,7 @@ dat_1BBAE:
 	dc.b	$00
 RaceWinner:				; the first car to finish (CheckRaceFinished)
 	dc.b	$00
-dat_1BBB0:
+BridgePhase:				; the draw bridge's phase: counted each step but the clock's ticks; 32 steps a rise and fall (UpdateDrawBridge)
 	dc.b	$00
 RaceResultFlags:				; the race's results (PrintRaceResults, CheckRecordTimes)
 	dc.b	$00
@@ -1359,7 +1359,7 @@ dat_1BBEC:
 	dc.b	$00
 dat_1BBED:
 	dc.b	$00
-dat_1BBEE:
+OpponentSpeed:				; the opponent's speed along the track (OpponentOnPiece, OpponentTargetSpeed, ApplyCollision)
 	dc.b	$00
 dat_1BBEF:
 	dc.b	$00
@@ -2256,9 +2256,9 @@ PieceHeightBaseB:				; each piece's base height for its side B (its odd points) 
 	dcb.b	200,$00
 PieceDistances:				; each piece's distance from the start (BuildTrack, UpdateOpponentDistance) (probably)
 	dcb.b	200,$00
-OpponentLinePieces:				; the pieces whose line for the opponent the track sets (BuildTrack)
+OpponentSpeedPieces:				; the pieces whose speed for the opponent the track sets (BuildTrack)
 	dcb.b	32,$00
-OpponentLineValues:				; those lines (bit 7: the 3 pieces before it marked too) (BuildTrack)
+OpponentSpeedValues:				; those speeds (bit 7: exact - and the 3 pieces before it made exact too) (BuildTrack)
 	dcb.b	32,$00
 NoRestartPieces:				; the pieces the car is not put back on after leaving the track (PlaceCarOnPiece) (probably)
 	dcb.b	32,$00
@@ -2348,15 +2348,15 @@ dat_1C947:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-PieceOpponentLines:				; each piece's line for the opponent (BuildTrack, OpponentTargetLine, OpponentSwerve) (probably)
+PieceOpponentSpeeds:				; each piece's speed for the opponent - bit 7: exactly that, not capped by its top speed (BuildTrack, OpponentTargetSpeed; docs/TRACKS.md)
 	dcb.b	48,$00
-dat_1C982:
+BridgeApproachSpeeds:				; PieceOpponentSpeeds for pieces 48-50: the draw bridge's approach (UpdateDrawBridge)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C985:
+BridgeLeafSpeed:				; PieceOpponentSpeeds for piece 51: the draw bridge's first leaf (UpdateDrawBridge)
 	dc.b	$00
-dat_1C986:
+PieceOpponentSpeedsFrom52:				; PieceOpponentSpeeds for pieces 52 on (UpdateDrawBridge writes piece 52's)
 	dcb.b	48,$00
 dat_1C9B6:
 	dc.b	$00
@@ -2501,15 +2501,15 @@ dat_1CA28:
 	dc.b	$00
 OpponentSkill:				; the opponent's driver, for its skill (OpponentDrive: dat_1ED8A) (probably)
 	dc.b	$00
-OpponentSetting:				; the track's setting for the opponent in the leagues (SetOpponentSkill: into dat_63CE2)
+DamageSteps:				; the steps of a hard landing that add to the damage, in the leagues (SetRaceLimits: into HardLandingSteps)
 	dc.b	$00
-OpponentSettingSuper:				; the same in the super league
+DamageStepsSuper:				; the same in the super league
 	dc.b	$00
 BoostAtStart:				; the boost at the race's start in the leagues (a count, made decimal: Race)
 	dc.b	$00
 BoostAtStartSuper:				; the same in the super league
 	dc.b	$00
-OpponentLineCount:				; how many lines for the opponent the track sets (OpponentLinePieces)
+OpponentSpeedCount:				; how many pieces' speeds for the opponent the track sets (OpponentSpeedPieces)
 	dc.b	$00
 NoRestartCount:				; how many pieces are in NoRestartPieces
 	dc.b	$00,$00
@@ -2521,7 +2521,7 @@ CurrentTrack:				; the track being raced or practised (0-7)
 	dc.b	$00
 dat_1CA34:
 	dc.b	$00
-RaceInSeason:				; the race of the season (ChooseTrack, SimulateOtherRaces, SetOpponentSkill) (probably)
+RaceInSeason:				; the race of the season (ChooseTrack, SimulateOtherRaces, SetRaceLimits) (probably)
 	dc.b	$00
 dat_1CA36:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -3218,7 +3218,7 @@ TrackOffsets:				; the 8 tracks' data: a word each, byte-swapped, minus $B100, p
 	dc.b	$62,$BA,$DE,$BA,$6F,$BB,$00,$BC,$8E,$BC,$1F,$BD,$F4,$BD,$82,$BE
 	dc.b	$F5,$A7,$4C,$00,$A5,$4C,$B2,$A3,$00,$17
 	dc.b	'Accura'
-ShapeTurns:				; each shape's turn ($80, $C0: the bends' two ways; 0, $40 none): bit 7 a bend for the opponent's line (BuildTrack)
+ShapeTurns:				; each shape's turn ($80, $C0: the bends' two ways; 0, $40 none): bit 7 a bend, taken at OpponentBendSpeed (BuildTrack)
 	dc.b	$00,$80,$20,$C0,$00,$73,$80,$C0,$A9,$59,$00,$02,$A9,$5E,$85,$4B
 	dc.b	$04,$00,$40,$03,$12,$00,$AB,$80,$80,$01,$20,$40,$03,$00,$00,$C0
 	dc.b	$04,$00,$00,$40,$03,$00,$01,$C0,$04,$00,$01,$40,$03,$00,$02,$C0
@@ -3379,7 +3379,7 @@ dat_1F800:
 	dc.b	$A5,$2B,$85,$38,$20,$E9,$B4,$A5,$26,$85,$27,$18,$69,$F9,$85,$4B
 	dc.b	$A9,$05,$85,$4C,$20,$5F,$9A,$F0,$AD,$BD,$F5,$04,$30,$04,$B0,$A6
 	dc.b	$90,$B4,$90,$A2,$B0,$B0,$4C,$96,$8B,$00,$22,$E3,$20,$76,$61
-dat_1FE2C:
+OpponentSpeedLimits:				; per track (8; +$20 the super league): the top speed's random mask and base (+0, +8), the bend speed's (+$10, +$18) (SetRaceLimits)
 	dc.b	$07,$07,$07,$07,$07,$07,$07,$07
 	dc.b	'A:>AHQHO'
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
@@ -3958,7 +3958,7 @@ l_57596:
         jsr     (LinkFlushInput).l              ; 575FA
         move.l  (dat_57C46).l,(OpponentCorners).l     ; 57600
         move.w  (dat_57C4A).l,(dat_1BD6A).l     ; 5760A
-        move.w  (dat_57C4C).l,(dat_1BBEE).l     ; 57614
+        move.w  (dat_57C4C).l,(OpponentSpeed).l     ; 57614
         move.w  (dat_57C4E).l,(dat_1BBEC).l     ; 5761E
         move.b  (dat_57C50).l,(dat_1BBA5).l     ; 57628
         move.b  (dat_57C51).l,(dat_1BB64).l     ; 57632
@@ -7122,8 +7122,12 @@ dat_5A757:
 	dc.b	$FF,$00
 
 ;-------------------------------------------------------------------------------
-; UpdateDrawBridge - on the Draw Bridge (track 5): the bridge's pieces ($33-$38) raised and
-; lowered, and the car on them
+; UpdateDrawBridge - on the Draw Bridge (track 5), at the race's start and each step: the bridge's
+; two leaves raised and lowered by rewriting their height profiles (HeightProfiles $5F-$62: pieces 51,
+; 52, 54, 55) - each leaf a straight slope from its end, steeper and less steep with the phase
+; (BridgePhase: 32 steps); held while a car is on the bridge (pieces 51-55: BridgeHeld); the leaves'
+; far model moved with them (the model of piece 51); the opponent's speeds for the approach and the
+; first leaf (pieces 48-51) set for the phase, so that it jumps the gap (docs/TRACKS.md)
 ;-------------------------------------------------------------------------------
 UpdateDrawBridge:
         move.b  (CurrentTrack).l,d0             ; 5A794
@@ -7140,23 +7144,23 @@ l_5A7BC:
         bcc.w   l_5A7FE                         ; 5A7C4
         cmpi.b  #$33,(OpponentPiece).l          ; 5A7C8
         bcc.w   l_5A7EA                         ; 5A7D0
-        tst.b   (dat_1BB3F).l                   ; 5A7D4
+        tst.b   (BridgeHeld).l                   ; 5A7D4
         beq.w   l_5A7FE                         ; 5A7DA
         cmpi.b  #$30,(OpponentPiece).l          ; 5A7DE
         bcs.w   l_5A7FE                         ; 5A7E6
 l_5A7EA:
         move.b  #$c,d0                          ; 5A7EA
-        move.b  d0,(dat_1BB3F).l                ; 5A7EE
-        add.b   (dat_1BBB0).l,d0                ; 5A7F4
+        move.b  d0,(BridgeHeld).l                ; 5A7EE
+        add.b   (BridgePhase).l,d0                ; 5A7F4
         bra.w   l_5A966                         ; 5A7FA
 l_5A7FE:
         tst.b   (ClockTick).l                   ; 5A7FE
         bmi.w   l_5A80E                         ; 5A804
-        addq.b  #$1,(dat_1BBB0).l               ; 5A808
+        addq.b  #$1,(BridgePhase).l               ; 5A808
 l_5A80E:
         move.w  #$0,(dat_1BC2A).l               ; 5A80E
-        move.b  #$0,(dat_1BB3F).l               ; 5A816
-        move.b  (dat_1BBB0).l,d0                ; 5A81E
+        move.b  #$0,(BridgeHeld).l               ; 5A816
+        move.b  (BridgePhase).l,d0                ; 5A81E
         andi.w  #$1f,d0                         ; 5A824
         subi.w  #$10,d0                         ; 5A828
         bpl.w   l_5A832                         ; 5A82C
@@ -7164,9 +7168,9 @@ l_5A80E:
 l_5A832:
         move.b  d0,d2                           ; 5A832
         addq.w  #$4,d0                          ; 5A834
-        movea.l #dat_5A996,a0                   ; 5A836
-        move.b  (a0,d2.w),(dat_1C985).l         ; 5A83C
-        move.b  (a0,d2.w),(dat_1C986).l         ; 5A844
+        movea.l #BridgeLeafSpeeds,a0                   ; 5A836
+        move.b  (a0,d2.w),(BridgeLeafSpeed).l         ; 5A83C
+        move.b  (a0,d2.w),(PieceOpponentSpeedsFrom52).l         ; 5A844
         asl.w   #$5,d0                          ; 5A84C
         move.w  d0,(dat_1BBF6).l                ; 5A84E
         move.b  #$2,d2                          ; 5A854
@@ -7206,7 +7210,7 @@ l_5A8AC:
         beq.w   l_5A89A                         ; 5A8E6
         subq.b  #$1,d1                          ; 5A8EA
         bne.w   l_5A888                         ; 5A8EC
-        tst.b   (dat_1BB71).l                   ; 5A8F0
+        tst.b   (BridgeUpdated).l                   ; 5A8F0
         beq.w   l_5A94A                         ; 5A8F6
         movea.l #$7aae6,a1                      ; 5A8FA
         movea.l (a1),a1                         ; 5A900
@@ -7229,14 +7233,14 @@ l_5A8AC:
         move.w  d0,$3e(a1)                      ; 5A942
         move.w  d0,$44(a1)                      ; 5A946
 l_5A94A:
-        move.b  #$80,(dat_1BB71).l              ; 5A94A
+        move.b  #$80,(BridgeUpdated).l              ; 5A94A
         move.b  (OpponentPiece).l,d0            ; 5A952
         cmpi.b  #$2f,d0                         ; 5A958
         bne.w   l_5A994                         ; 5A95C
-        move.b  (dat_1BBB0).l,d0                ; 5A960
+        move.b  (BridgePhase).l,d0                ; 5A960
 l_5A966:
-        movea.l #dat_5A9A6,a1                   ; 5A966
-        movea.l #dat_1C982,a2                   ; 5A96C
+        movea.l #BridgeApproachSteps,a1                   ; 5A966
+        movea.l #BridgeApproachSpeeds,a2                   ; 5A96C
         andi.b  #$1f,d0                         ; 5A972
         lsr.b   #$1,d0                          ; 5A976
         move.b  d0,d2                           ; 5A978
@@ -7250,9 +7254,9 @@ l_5A982:
         bne.w   l_5A982                         ; 5A990
 l_5A994:
         rts                                     ; 5A994
-dat_5A996:
+BridgeLeafSpeeds:				; the opponent's speed on the bridge's leaves (pieces 51-52) by how far they are raised (UpdateDrawBridge)
 	dc.b	$D2,$BB,$B7,$B3,$B1,$AD,$AB,$A7,$A6,$A4,$A2,$A1,$9F,$9F,$9F,$9E
-dat_5A9A6:
+BridgeApproachSteps:				; the opponent's speeds on the bridge's approach (pieces 48-50) by the bridge's phase: steps added to $C6 (UpdateDrawBridge)
 	dc.b	$F7,$F7,$F6,$F6,$F5,$F5,$F6,$F7,$F8,$F9,$FB,$FD,$FF,$02,$05,$FD
 
 ;-------------------------------------------------------------------------------
@@ -7754,23 +7758,23 @@ l_5B122:
         move.b  #$0,d1                          ; 5B136
 l_5B13A:
         jsr     (TrackReadByte).l               ; 5B13A
-        movea.l #OpponentSetting,a1                   ; 5B140
+        movea.l #DamageSteps,a1                   ; 5B140
         move.b  d0,(a1,d1.w)                    ; 5B146
         addq.b  #$1,d1                          ; 5B14A
         cmpi.b  #$6,d1                          ; 5B14C
         bne.w   l_5B13A                         ; 5B150
-        move.b  (OpponentLineCount).l,d0                ; 5B154
+        move.b  (OpponentSpeedCount).l,d0                ; 5B154
         beq.w   l_5B18E                         ; 5B15A
         move.b  #$0,d1                          ; 5B15E
 l_5B162:
         jsr     (TrackReadByte).l               ; 5B162
-        movea.l #OpponentLinePieces,a1                   ; 5B168
+        movea.l #OpponentSpeedPieces,a1                   ; 5B168
         move.b  d0,(a1,d1.w)                    ; 5B16E
         jsr     (TrackReadByte).l               ; 5B172
-        movea.l #OpponentLineValues,a1                   ; 5B178
+        movea.l #OpponentSpeedValues,a1                   ; 5B178
         move.b  d0,(a1,d1.w)                    ; 5B17E
         addq.b  #$1,d1                          ; 5B182
-        cmp.b   (OpponentLineCount).l,d1                ; 5B184
+        cmp.b   (OpponentSpeedCount).l,d1                ; 5B184
         bne.w   l_5B162                         ; 5B18A
 l_5B18E:
         move.b  (NoRestartCount).l,d0                ; 5B18E
@@ -7784,7 +7788,7 @@ l_5B19C:
         cmp.b   (NoRestartCount).l,d1                ; 5B1AE
         bne.w   l_5B19C                         ; 5B1B4
 l_5B1B8:
-        jsr     (SetOpponentSkill).l                   ; 5B1B8
+        jsr     (SetRaceLimits).l                   ; 5B1B8
         move.b  #$0,d0                          ; 5B1BE
         move.b  d0,(dat_1BB48).l                ; 5B1C2
         move.b  #$7c,d0                         ; 5B1C8
@@ -7793,11 +7797,11 @@ l_5B1B8:
         move.b  d0,(dat_1BB90).l                ; 5B1D6
         bne.w   l_5B2B0                         ; 5B1DC
 l_5B1E0:
-        move.b  (OpponentLineCount).l,d2                ; 5B1E0
+        move.b  (OpponentSpeedCount).l,d2                ; 5B1E0
         jmp     (l_5B1FC).l                     ; 5B1E6
 l_5B1EC:
         move.b  d1,d0                           ; 5B1EC
-        movea.l #OpponentLinePieces,a2                   ; 5B1EE
+        movea.l #OpponentSpeedPieces,a2                   ; 5B1EE
         cmp.b   (a2,d2.w),d0                    ; 5B1F4
         beq.w   l_5B208                         ; 5B1F8
 l_5B1FC:
@@ -7805,9 +7809,9 @@ l_5B1FC:
         bpl.w   l_5B1EC                         ; 5B1FE
         jmp     (l_5B238).l                     ; 5B202
 l_5B208:
-        movea.l #OpponentLineValues,a2                   ; 5B208
+        movea.l #OpponentSpeedValues,a2                   ; 5B208
         move.b  (a2,d2.w),d0                    ; 5B20E
-        movea.l #PieceOpponentLines,a1                   ; 5B212
+        movea.l #PieceOpponentSpeeds,a1                   ; 5B212
         move.b  d0,(a1,d1.w)                    ; 5B218
         bpl.w   l_5B22A                         ; 5B21C
         move.b  #$3,d2                          ; 5B220
@@ -7824,10 +7828,10 @@ l_5B238:
         movea.l #ShapeTurns,a2                   ; 5B248
         move.b  (a2,d2.w),d0                    ; 5B24E
         bpl.w   l_5B272                         ; 5B252
-        move.b  (dat_63CE1).l,d0                ; 5B256
+        move.b  (OpponentBendSpeed).l,d0                ; 5B256
         subi.b  #$a,d0                          ; 5B25C
         move.b  d0,(WorkByte6).l                ; 5B260
-        move.b  (dat_63CE1).l,d0                ; 5B266
+        move.b  (OpponentBendSpeed).l,d0                ; 5B266
         jmp     (l_5B28C).l                     ; 5B26C
 l_5B272:
         move.b  (WorkByte6).l,d0                ; 5B272
@@ -7842,7 +7846,7 @@ l_5B28C:
         subq.b  #$1,(dat_1BB48).l               ; 5B296
         ori.b   #$80,d0                         ; 5B29C
 l_5B2A0:
-        movea.l #PieceOpponentLines,a1                   ; 5B2A0
+        movea.l #PieceOpponentSpeeds,a1                   ; 5B2A0
         move.b  d0,(a1,d1.w)                    ; 5B2A6
 l_5B2AA:
         subq.b  #$1,d1                          ; 5B2AA
@@ -8631,7 +8635,7 @@ l_5BD80:
         jmp     (l_5BE1C).l                     ; 5BDA0
 l_5BDA6:
         move.b  (OpponentPiece).l,d2            ; 5BDA6
-        movea.l #PieceOpponentLines,a0                   ; 5BDAC
+        movea.l #PieceOpponentSpeeds,a0                   ; 5BDAC
         tst.b   (a0,d2.w)                       ; 5BDB2
         bmi.w   l_5BE1C                         ; 5BDB6
         tst.b   (dat_1BBB8).l                   ; 5BDBA
@@ -14918,9 +14922,9 @@ l_61C88:
         subi.w  #$600,d0                        ; 61C88
         tst.b   (ClockTick).l                   ; 61C8C
         bmi.w   l_61CD0                         ; 61C92
-        addq.b  #$1,(dat_1BB56).l               ; 61C96
-        move.b  (dat_1BB56).l,d3                ; 61C9C
-        cmp.b   (dat_63CE2).l,d3                ; 61CA2
+        addq.b  #$1,(HardLandingCount).l               ; 61C96
+        move.b  (HardLandingCount).l,d3                ; 61C9C
+        cmp.b   (HardLandingSteps).l,d3                ; 61CA2
         bge.w   l_61CD0                         ; 61CA8
         lsr.w   #$8,d0                          ; 61CAC
         move.b  d0,d3                           ; 61CAE
@@ -14942,7 +14946,7 @@ l_61CE6:
 l_61CEA:
         move.w  #$0,(dat_1BD20).l               ; 61CEA
 l_61CF2:
-        move.b  #$0,(dat_1BB56).l               ; 61CF2
+        move.b  #$0,(HardLandingCount).l               ; 61CF2
 l_61CFA:
         move.w  (WheelSuspension).l,(dat_1BD1A).l     ; 61CFA
         move.l  (dat_1BCA8).l,d0                ; 61D04
@@ -14989,9 +14993,9 @@ l_61DB0:
         subi.w  #$600,d0                        ; 61DB0
         tst.b   (ClockTick).l                   ; 61DB4
         bmi.w   l_61DF8                         ; 61DBA
-        addq.b  #$1,(dat_1BB56).l               ; 61DBE
-        move.b  (dat_1BB56).l,d3                ; 61DC4
-        cmp.b   (dat_63CE2).l,d3                ; 61DCA
+        addq.b  #$1,(HardLandingCount).l               ; 61DBE
+        move.b  (HardLandingCount).l,d3                ; 61DC4
+        cmp.b   (HardLandingSteps).l,d3                ; 61DCA
         bge.w   l_61DF8                         ; 61DD0
         lsr.w   #$8,d0                          ; 61DD4
         move.b  d0,d3                           ; 61DD6
@@ -15013,7 +15017,7 @@ l_61E0E:
 l_61E12:
         move.w  #$0,(dat_1BD22).l               ; 61E12
 l_61E1A:
-        move.b  #$0,(dat_1BB56).l               ; 61E1A
+        move.b  #$0,(HardLandingCount).l               ; 61E1A
 l_61E22:
         move.w  (dat_1BD16).l,(dat_1BD1C).l     ; 61E22
         move.l  (dat_1BCAC).l,d0                ; 61E2C
@@ -15060,9 +15064,9 @@ l_61ED8:
         subi.w  #$600,d0                        ; 61ED8
         tst.b   (ClockTick).l                   ; 61EDC
         bmi.w   l_61F20                         ; 61EE2
-        addq.b  #$1,(dat_1BB56).l               ; 61EE6
-        move.b  (dat_1BB56).l,d3                ; 61EEC
-        cmp.b   (dat_63CE2).l,d3                ; 61EF2
+        addq.b  #$1,(HardLandingCount).l               ; 61EE6
+        move.b  (HardLandingCount).l,d3                ; 61EEC
+        cmp.b   (HardLandingSteps).l,d3                ; 61EF2
         bge.w   l_61F20                         ; 61EF8
         lsr.w   #$8,d0                          ; 61EFC
         move.b  d0,d3                           ; 61EFE
@@ -15084,7 +15088,7 @@ l_61F36:
 l_61F3A:
         move.w  #$0,(dat_1BD24).l               ; 61F3A
 l_61F42:
-        move.b  #$0,(dat_1BB56).l               ; 61F42
+        move.b  #$0,(HardLandingCount).l               ; 61F42
 l_61F4A:
         move.w  (dat_1BD18).l,(dat_1BD1E).l     ; 61F4A
         move.w  (dat_1BD20).l,d0                ; 61F54
@@ -17266,11 +17270,11 @@ MoveOpponent:
         jsr     (OpponentPhysics).l                   ; 639B6
         jsr     (OpponentSwerve).l                   ; 639BC
         jsr     (OpponentControls).l                   ; 639C2
-        jsr     (OpponentTargetLine).l                   ; 639C8
+        jsr     (OpponentTargetSpeed).l                   ; 639C8
         jsr     (OpponentOnPiece).l                   ; 639CE
         move.b  (dat_1BBD9).l,d0                ; 639D4
         move.b  d0,(WorkByte5).l                ; 639DA
-        move.w  (dat_1BBEE).l,d0                ; 639E0
+        move.w  (OpponentSpeed).l,d0                ; 639E0
         move.b  (WorkByte5).l,d3                ; 639E6
         asl.w   #$7,d3                          ; 639EC
         bclr    #$f,d3                          ; 639EE
@@ -17327,11 +17331,11 @@ l_63A7C:
         rts                                     ; 63A8C
 
 ;-------------------------------------------------------------------------------
-; SetOpponentSkill - BuildTrack: Random run 256 times, then the opponent's settings for the track
-; (dat_63CE0-dat_63CE2, from dat_1FE2C by CurrentTrack and OpponentSetting; the super league: SuperLeague)
-; (probably)
+; SetRaceLimits - BuildTrack: Random run 256 times, then the race's limits for the track (by
+; CurrentTrack; the super league's from SuperLeague): HardLandingSteps (the track's DamageSteps),
+; OpponentTopSpeed and OpponentBendSpeed (each Random within OpponentSpeedLimits' mask and base)
 ;-------------------------------------------------------------------------------
-SetOpponentSkill:
+SetRaceLimits:
         tst.b   (dat_5EB76).l                   ; 63A8E
         beq.w   l_63AA2                         ; 63A94
         tst.b   (RaceInSeason).l                   ; 63A98
@@ -17343,34 +17347,34 @@ l_63AA6:
         dbra    d4,l_63AA6                      ; 63AAC
         clr.w   d1                              ; 63AB0
         move.b  (CurrentTrack).l,d1             ; 63AB2
-        move.b  (OpponentSetting).l,d2                ; 63AB8
+        move.b  (DamageSteps).l,d2                ; 63AB8
         tst.b   (SuperLeague).l                   ; 63ABE
         beq.w   l_63AD2                         ; 63AC4
         addi.b  #$20,d1                         ; 63AC8
-        move.b  (OpponentSettingSuper).l,d2                ; 63ACC
+        move.b  (DamageStepsSuper).l,d2                ; 63ACC
 l_63AD2:
-        move.b  d2,(dat_63CE2).l                ; 63AD2
+        move.b  d2,(HardLandingSteps).l                ; 63AD2
         jsr     (Random).l                      ; 63AD8
-        movea.l #dat_1FE2C,a0                   ; 63ADE
+        movea.l #OpponentSpeedLimits,a0                   ; 63ADE
         and.b   (a0,d1.w),d0                    ; 63AE4
         add.b   $8(a0,d1.w),d0                  ; 63AE8
-        move.b  d0,(dat_63CE0).l                ; 63AEC
+        move.b  d0,(OpponentTopSpeed).l                ; 63AEC
         jsr     (Random).l                      ; 63AF2
         and.b   $10(a0,d1.w),d0                 ; 63AF8
         add.b   $18(a0,d1.w),d0                 ; 63AFC
-        move.b  d0,(dat_63CE1).l                ; 63B00
+        move.b  d0,(OpponentBendSpeed).l                ; 63B00
 l_63B06:
         rts                                     ; 63B06
 
 ;-------------------------------------------------------------------------------
 ; OpponentOnPiece - MoveOpponent: the opponent's place along its piece (PiecePoints, MulFraction
-; by dat_1BBEE) and across it (dat_1BBF0), dat_1BD88, dat_1BD8A (probably)
+; by OpponentSpeed) and across it (dat_1BBF0), dat_1BD88, dat_1BD8A (probably)
 ;-------------------------------------------------------------------------------
 OpponentOnPiece:
         move.w  #$0,(WorkByte3).l               ; 63B08
         move.b  (dat_1BBEF).l,d0                ; 63B10
         asl.b   #$1,d0                          ; 63B16
-        move.b  (dat_1BBEE).l,d0                ; 63B18
+        move.b  (OpponentSpeed).l,d0                ; 63B18
         bmi.w   l_63B94                         ; 63B1E
         roxl.b  #$1,d0                          ; 63B22
         tst.b   (dat_1BBC7).l                   ; 63B24
@@ -17382,7 +17386,7 @@ OpponentOnPiece:
         move.b  #$0,d0                          ; 63B40
 l_63B44:
         move.b  d0,(WorkByte5).l                ; 63B44
-        move.b  (dat_1BBEE).l,d0                ; 63B4A
+        move.b  (OpponentSpeed).l,d0                ; 63B4A
         jsr     (MulFraction).l                 ; 63B50
         asr.w   #$6,d3                          ; 63B56
         move.w  d3,(WorkByte3).l                ; 63B58
@@ -17391,7 +17395,7 @@ l_63B44:
         move.w  (dat_1BBF0).l,d0                ; 63B68
         bmi.w   l_63B94                         ; 63B6E
         move.w  #$0,d3                          ; 63B72
-        move.b  (dat_1BBEE).l,d3                ; 63B76
+        move.b  (OpponentSpeed).l,d3                ; 63B76
         sub.w   d3,d0                           ; 63B7C
         tst.b   (PieceDirection).l                   ; 63B7E
         bpl.w   l_63B8E                         ; 63B84
@@ -17431,9 +17435,9 @@ l_63BE4:
         muls.w  d2,d0                           ; 63BEC
         asr.l   #$8,d0                          ; 63BEE
 l_63BF0:
-        add.w   d0,(dat_1BBEE).l                ; 63BF0
+        add.w   d0,(OpponentSpeed).l                ; 63BF0
         bpl.w   l_63C02                         ; 63BF6
-        move.w  #$0,(dat_1BBEE).l               ; 63BFA
+        move.w  #$0,(OpponentSpeed).l               ; 63BFA
 l_63C02:
         rts                                     ; 63C02
 
@@ -17458,55 +17462,57 @@ l_63C2E:
         rts                                     ; 63C3A
 
 ;-------------------------------------------------------------------------------
-; OpponentTargetLine - MoveOpponent: OpponentLineA, OpponentLineB from the piece's entry in PieceOpponentLines,
-; dat_63CE0, dat_1BBEE, dat_1BBF0 (probably the line it aims for)
+; OpponentTargetSpeed - MoveOpponent: the opponent's target speed on its piece (OpponentSpeedTarget:
+; PieceOpponentSpeeds, at most OpponentTopSpeed unless its bit 7 is set) against its speed
+; (OpponentSpeed): above it, braking (OpponentBraking, dat_1BBF0 negated); its acceleration doubled
+; when well below it
 ;-------------------------------------------------------------------------------
-OpponentTargetLine:
+OpponentTargetSpeed:
         tst.b   (OpponentRacing).l                   ; 63C3C
         bne.w   l_63C48                         ; 63C42
         rts                                     ; 63C46
 l_63C48:
         move.b  (OpponentPiece).l,d1            ; 63C48
-        movea.l #PieceOpponentLines,a0                   ; 63C4E
+        movea.l #PieceOpponentSpeeds,a0                   ; 63C4E
         move.b  (a0,d1.w),d0                    ; 63C54
         bmi.w   l_63C6C                         ; 63C58
-        cmp.b   (dat_63CE0).l,d0                ; 63C5C
+        cmp.b   (OpponentTopSpeed).l,d0                ; 63C5C
         bcs.w   l_63C6C                         ; 63C62
-        move.b  (dat_63CE0).l,d0                ; 63C66
+        move.b  (OpponentTopSpeed).l,d0                ; 63C66
 l_63C6C:
         andi.b  #$7f,d0                         ; 63C6C
-        move.b  d0,(OpponentLineA).l                ; 63C70
-        move.b  (dat_1BBEE).l,d0                ; 63C76
-        sub.b   (OpponentLineA).l,d0                ; 63C7C
+        move.b  d0,(OpponentSpeedTarget).l                ; 63C70
+        move.b  (OpponentSpeed).l,d0                ; 63C76
+        sub.b   (OpponentSpeedTarget).l,d0                ; 63C7C
         bcs.w   l_63CA0                         ; 63C82
         beq.w   l_63CD6                         ; 63C86
-        move.b  #$80,(OpponentLineB).l              ; 63C8A
+        move.b  #$80,(OpponentBraking).l              ; 63C8A
         neg.w   (dat_1BBF0).l                   ; 63C92
         cmpi.b  #$e,d0                          ; 63C98
         bcs.w   l_63CD4                         ; 63C9C
 l_63CA0:
-        movea.l #PieceOpponentLines,a1                   ; 63CA0
+        movea.l #PieceOpponentSpeeds,a1                   ; 63CA0
         tst.b   (a1,d1.w)                       ; 63CA6
         bmi.w   l_63CCE                         ; 63CAA
         tst.b   d0                              ; 63CAE
         bpl.w   l_63CCE                         ; 63CB0
-        move.b  (OpponentLineB).l,d2                ; 63CB4
+        move.b  (OpponentBraking).l,d2                ; 63CB4
         beq.w   l_63CCE                         ; 63CBA
         cmpi.b  #$fe,d0                         ; 63CBE
         bcc.w   l_63CD4                         ; 63CC2
-        bclr    #$7,(OpponentLineB).l               ; 63CC6
+        bclr    #$7,(OpponentBraking).l               ; 63CC6
 l_63CCE:
         asl.w   (dat_1BBF0).l                   ; 63CCE
 l_63CD4:
         rts                                     ; 63CD4
 l_63CD6:
-        move.b  #$80,(OpponentLineB).l              ; 63CD6
+        move.b  #$80,(OpponentBraking).l              ; 63CD6
         rts                                     ; 63CDE
-dat_63CE0:
+OpponentTopSpeed:				; the opponent's top speed in this race: Random within the track's limits (SetRaceLimits, OpponentSpeedLimits)
 	dc.b	$00
-dat_63CE1:
+OpponentBendSpeed:				; the opponent's speed on the bends in this race (SetRaceLimits; BuildTrack's PieceOpponentSpeeds)
 	dc.b	$00
-dat_63CE2:
+HardLandingSteps:				; how many steps of a hard landing add to the damage (the track's DamageSteps: WheelsOnTrack)
 	dc.b	$00,$00
 
 ;-------------------------------------------------------------------------------
@@ -17566,7 +17572,7 @@ l_63D88:
         move.w  #$0,d0                          ; 63D96
         tst.b   (dat_1BB74).l                   ; 63D9A
         bne.w   l_63DAA                         ; 63DA0
-        move.w  (dat_1BBEE).l,d0                ; 63DA4
+        move.w  (OpponentSpeed).l,d0                ; 63DA4
 l_63DAA:
         sub.w   (SpeedForward).l,d0                ; 63DAA
         bpl.w   l_63DB8                         ; 63DB0
@@ -17611,7 +17617,7 @@ l_63E1A:
 
 ;-------------------------------------------------------------------------------
 ; ApplyCollision - WheelsOnTrack: a knock from the opponent (KnockPending) added to the player's
-; forces (SpringForceSide-SpringForceForward from KnockForceX-KnockForceZ), dat_1BBEE slowed, its sound (probably)
+; forces (SpringForceSide-SpringForceForward from KnockForceX-KnockForceZ), OpponentSpeed slowed, its sound (probably)
 ;-------------------------------------------------------------------------------
 ApplyCollision:
         tst.b   (dat_63EE0).l                   ; 63E2E
@@ -17621,12 +17627,12 @@ l_63E3E:
         tst.b   (KnockPending).l                   ; 63E3E
         beq.w   l_63EDC                         ; 63E44
         move.b  #$0,(KnockPending).l               ; 63E48
-        move.w  (dat_1BBEE).l,d0                ; 63E50
+        move.w  (OpponentSpeed).l,d0                ; 63E50
         sub.w   (KnockForceZ).l,d0                ; 63E56
         bpl.w   l_63E64                         ; 63E5C
         move.w  #$0,d0                          ; 63E60
 l_63E64:
-        move.w  d0,(dat_1BBEE).l                ; 63E64
+        move.w  d0,(OpponentSpeed).l                ; 63E64
         move.w  (KnockForceY).l,d0                ; 63E6A
         asr.w   #$4,d0                          ; 63E70
         sub.w   d0,(OpponentCornerSpeeds).l                ; 63E72

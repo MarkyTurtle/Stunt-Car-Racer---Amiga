@@ -63,7 +63,7 @@ Load what a race needs when it is set up instead of keeping everything in memory
 * ~~First work out the track format~~: done (`original/docs/TRACKS.md`, `original/tools/tracks.py`,
   checked against the game by `tools/test_tracks.py`). Per track: the track's bytes only - the
   shapes' geometry and the height profiles are shared by all 8 (`Data6502`, `HeightProfiles`); the
-  draw bridge's moving part (`UpdateDrawBridge`) and the opponent's limits (`dat_1FE2C`) are kept
+  draw bridge's moving part (`UpdateDrawBridge`) and the opponent's limits (`OpponentSpeedLimits`) are kept
   per track in the game's tables.
 * One file per track in the file table; on machines with more memory, keep loaded tracks in a cache
   so the next race on the same track does not touch the disk.

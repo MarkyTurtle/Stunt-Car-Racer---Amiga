@@ -6,7 +6,9 @@ The original game (original/scr_game.s, assembled with a listing) is run in scre
 way to the race; at the track preview (the second press on the race's screens) CurrentTrack is
 set to each of the 8 tracks in turn just before BuildTrack, and the memory is kept just after it.
 tracks.py --check then compares every table BuildTrack writes with its own reading of the track's
-bytes. Fails on any difference.
+bytes. Then a race on the Draw Bridge (track 5, set the same way): at 40 points in it the bridge's
+height profiles (HeightProfiles $5F-$62, rewritten each step by UpdateDrawBridge) are compared with
+tracks.py's bridge_profiles for the bridge's phase then. Fails on any difference.
 """
 import os, subprocess, sys, tempfile
 
@@ -45,7 +47,34 @@ def main():
         if out.count(': reached') < 3:
             sys.exit(f'track {t}: the track preview not reached\n{out}')
     r = subprocess.run([sys.executable, os.path.join(ORIG, 'tools', 'tracks.py'), '--check', work])
-    sys.exit(r.returncode)
+    rest = '\n'.join(L[second + 3:]).split('joy f\nframes 10')[0]      # the race's presses, to its start
+    sc = (head + f'\nuntil {BEFORE:#x} 400\npoke {sym["CurrentTrack"]:#x} 5 b\n' + rest + 'joy f\n' +
+          ''.join(f'frames 61\nsnap {os.path.join(work, f"b{k}")}\n' for k in range(40)))
+    open(os.path.join(work, 'bridge.txt'), 'w').write(sc)
+    subprocess.run([bench.EMU, game, os.path.join(ORIG, 'bin', 'lowmem_c0.bin'),
+                    os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), os.path.join(work, 'bridge.txt')],
+                   check=True, capture_output=True)
+    sys.path.insert(0, os.path.join(ORIG, 'tools'))
+    import tracks
+    g = tracks.Game()
+    s = g.sym
+    compared = held = bad = 0
+    phases = set()
+    for k in range(40):
+        mem = open(os.path.join(work, f'b{k}.mem'), 'rb').read()
+        if mem[s['CurrentTrack']] != 5:
+            sys.exit('the Draw Bridge not raced')
+        if mem[s['BridgeHeld']]:
+            held += 1
+            continue
+        p = g.d6502(mem[s['HeightProfiles'] + 2 * tracks.BRIDGE_PROFILE] << 8 | mem[s['HeightProfiles'] + 2 * tracks.BRIDGE_PROFILE + 1])
+        want = tracks.bridge_profiles(g, mem[s['BridgePhase']])
+        compared += 1
+        phases.add(mem[s['BridgePhase']] & 0x1F)
+        bad += any(mem[p + o] != v for o, v in want.items())
+    print(f'the Draw Bridge: {compared} times its profiles compared ({len(phases)} phases of 32), {held} with a car on it; '
+          f'{bad} differ - {"ok" if not bad and compared else "FAILED"}')
+    sys.exit(r.returncode or (1 if bad or not compared else 0))
 
 
 if __name__ == '__main__':
