@@ -19991,6 +19991,8 @@ l_66924:
         bcc.s   .clip
         bra.w   ScanEdgeInView                  ; (enhanced) its own stepping and tail
 .clip:
+        bra.w   ScanSides                       ; (enhanced) clipped at the sides only: scanside.i
+ScanEdgeClip:
         move.w  #$0,(dat_668A6).l               ; 668AE (enhanced: here, not at the start - the
         move.w  #$ffff,(dat_668A2).l            ; 668B6  edges in the view do not need them)
         move.w  #$0,d0                          ; 66924
@@ -20042,6 +20044,7 @@ l_66992:
         and.b   d2,d0                           ; 669A6
         andi.b  #$f,d0                          ; 669A8
         beq.w   l_669BC                         ; 669AC
+l_669B0:
         jsr     (EdgeOffSide).l                   ; 669B0
         clr.w   d1                              ; 669B6
         clr.w   d2                              ; 669B8
@@ -23823,10 +23826,37 @@ l_695E6:
         movea.l #ViewMatrix,a3                  ; 695F2
         movea.l #PointScreenX,a5                ; 695F8
         movea.l #PointScreenY,a4                ; 695FE
+        tst.w   $20(a3)                         ; (enhanced) the car level (no roll): RollPointXY's
+        bne.s   l_69604                         ; level case done here, its calls and tests saved -
+        cmpi.w  #$7fff,$22(a3)                  ; the same points and registers
+        bne.s   l_69604
+        moveq   #0,d3
+.level: move.w  (a5,d1.w),d5
+        move.w  (a4,d1.w),d4
+        move.w  d5,d0
+        ble.s   .x
+        subq.w  #1,d0
+.x:     asr.w   #2,d0
+        addi.w  #$80,d0
+        move.w  d0,(a5,d1.w)
+        move.w  d4,d0
+        neg.w   d0
+        add.w   d0,d0
+        swap    d0
+        move.w  d4,d0
+        ble.s   .y
+        subq.w  #1,d0
+.y:     asr.w   #2,d0
+        addi.w  #$40,d0
+        move.w  d0,(a4,d1.w)
+        subq.b  #$2,d1
+        bpl.s   .level
+        bra.s   l_69610
 l_69604:
         jsr     (RollPointXY).l                 ; 69604
         subq.b  #$2,d1                          ; 6960A
         bpl.w   l_69604                         ; 6960C
+l_69610:
         movea.l (a7)+,a6                        ; 69610
         move.w  #$0,(RowOffset).l               ; 69612
         move.b  (a6)+,(dat_69797).l             ; 6961A
@@ -24575,6 +24605,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"blitqueue.i"			; (the enhanced game) the sky and ground filled during the geometry
 	include	"readout.i"			; (the enhanced game) the opponent's distance: only what changed printed
 	include	"textfast.i"			; (the enhanced game) PrintCharNow's rows drawn faster
+	include	"scanside.i"			; (the enhanced game) ScanEdge: edges clipped at the view's sides only
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

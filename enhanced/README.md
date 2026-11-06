@@ -42,7 +42,10 @@ workflow). So far it differs from the original in:
   `PlotWord<colour>` at once and work out the edge masks; `FillPolygon`'s whole words unrolled;
 * **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels
   written a word at a time, not one `PlotPixel` call a pixel; edges with both ends in the view skip
-  `ScanEdge`'s clipping, and step on their own lean path (`ScanEdgeInView`);
+  `ScanEdge`'s clipping, and step on their own lean path (`ScanEdgeInView`); edges clipped only at
+  the view's sides skip the outcodes' y tests ([`src/scanside.i`](src/scanside.i), checked edge by
+  edge by `tools/test_scanside.py`), and the mountains' points are worked out without
+  `RollPointXY`'s calls when the car is level (the race's work 0.5% less);
 * **the sky and ground are filled by the blitter while the CPU works out the view**
   ([`src/blitqueue.i`](src/blitqueue.i)): the horizon's line found before the geometry and the 8
   fills queued, each started by the blitter's interrupt when the one before is done - 4.6 ms of
@@ -53,7 +56,7 @@ workflow). So far it differs from the original in:
   opponent's car beyond it is not drawn;
 * **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
   (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain
-  polygons and their 23 edges (most of them clipped at the view's sides) are not drawn;
+  polygons and their 24 edges (a third crossing the view's sides) are not drawn;
 * **F6 in a race turns the cockpit off and on**: its parts are not drawn over the view, to see
   the track to the bottom of the view and what the cockpit costs.
 * **the pictures shown between races and in the Hall of Fame are loaded from the disk** when they

@@ -141,10 +141,13 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   at 525 cycles: the partial words at both ends, 4 planes); `DrawMountains`' own loops 13,000; the
   roll 5,000. No mountain is wholly outside the view (so nothing to cull: the angle window is only
   a little wider than the view), and the cost is spread rather than in one place. Exact savings
-  found: a leaner path in `ScanEdge` for edges clipped only at the view's sides (about 12 a frame,
-  the track's included: the outcodes and the y tests skipped - about 500 cycles each) and for
-  edges wholly off a side (8 a frame, about 400 each); the roll's no-roll case inline in
-  `DrawMountains` (about 3,000) - together about 1.2% of the work. A larger cut would not be exact:
+  ~~done~~ (`src/scanside.i`, `DrawMountains`): edges clipped only at the view's sides (about 15 a
+  frame, the track's included) skip the bit-by-bit outcodes and the four y tests, and join the
+  release's clipping where it deals with the sides - about 140 cycles an edge (the estimate of 500
+  counted `ScanEdge`'s entry, which every edge needs); the level case of the roll done inline for
+  the mountains' 24 points. Together 0.5% of the work (101.2 to 100.75 ms), not the 1.2% estimated.
+  Checked edge by edge by `tools/test_scanside.py`, and frame by frame against the build before.
+  A larger cut would not be exact:
   the mountains' spans kept per shape and phase (their x is the shape's x + the heading, rounded
   by the projection's `asr #2`, so 4 phases a direction) and redrawn shifted, or drawn every other
   frame.
