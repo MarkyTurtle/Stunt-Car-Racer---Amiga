@@ -101,6 +101,13 @@ DrawCutoutBlit:
 	add.w	d5,d5
 	lea	(CutoutRects+4).l,a2
 	adda.w	d5,a2
+	moveq	#0,d4				; its bottom line at the opponent's distance's cells or
+	move.b	7(a2),d4			; below: they may be drawn over (readout.i). The
+	add.w	2(a2),d4			; cockpit's parts end above them
+	cmpi.w	#READOUT_Y0,d4
+	blo.s	.above
+	jsr	(ReadoutCutoutCheck).l
+.above:
 	move.w	(a2),d1				; width - 1 (words)
 	addq.w	#1,d1
 	move.w	2(a2),d4			; height - 1

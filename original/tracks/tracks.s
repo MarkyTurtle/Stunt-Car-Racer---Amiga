@@ -21,7 +21,6 @@ Track_SkiJump:
 
 Track_DrawBridge:
 	incbin	"tracks/draw_bridge.bin"		; $1FBA1-$1FC75, 213 bytes
-dat_1FC00	equ	Track_DrawBridge+$5F
 
 Track_HighJump:
 	incbin	"tracks/high_jump.bin"		; $1FC76-$1FD03, 142 bytes

@@ -6049,6 +6049,7 @@ l_595CA:
         asl.b   #$3,d0                          ; 595D0
         add.b   (dat_1BB6E).l,d0                ; 595D2
         andi.l  #$ff,d0                         ; 595D8
+        jsr     (ReadoutTextCheck).l            ; (enhanced) other text over the readout's cells (readout.i)
         move.l  d0,d4                           ; 595DE
         asl.l   #$2,d4                          ; 595E0
         add.l   d4,d0                           ; 595E2
@@ -6079,12 +6080,12 @@ l_59644:
         tst.b   (dat_5924A).l                   ; 59644
         beq.w   l_5965E                         ; 5964A
         jsr     (GlyphRow).l                    ; 5964E
-        move.l  #dat_1F800,d5                   ; 59654
+        move.l  #$1F800,d5                      ; 59654 the glyph's mask (a number, not dat_1F800)
         bra.w   l_5966C                         ; 5965A
 l_5965E:
         move.b  (a0)+,d7                        ; 5965E
         andi.l  #$ff,d7                         ; 59660
-        move.l  #dat_1FC00,d5                   ; 59666
+        move.l  #$1FC00,d5                      ; 59666 the glyph's mask: 7 columns (a number)
 l_5966C:
         asl.l   #$8,d7                          ; 5966C
         asl.l   #$1,d7                          ; 5966E
@@ -9715,7 +9716,7 @@ l_5D348:
         move.b  #$0,(dat_57C5B).l               ; 5D348
         move.b  #$0,(LinkFrameFlags).l          ; 5D350
         jsr     (ClearRaceVariables).l          ; 5D358
-        jsr     (UnpackCockpit).l               ; 5D35E
+        jsr     (ReadoutUnpackCockpit).l        ; 5D35E (enhanced: UnpackCockpit, the readout's cells drawn over - readout.i)
         movea.l #dat_20184,a1                   ; 5D364
         jsr     (SetPictureColours).l           ; 5D36A
         move.b  #$e,d0                          ; 5D370
@@ -10652,6 +10653,7 @@ l_5E186:
         move.b  d5,(dat_1BB17).l                ; 5E1A0
         move.b  #$1,(dat_1BB6D).l               ; 5E1A6
         move.b  #$4,(dat_1BB6E).l               ; 5E1AE
+        jsr     (ReadoutStart).l                ; (enhanced) only the characters that changed printed (readout.i)
         move.b  #$1f,d0                         ; 5E1B6
         jsr     (PrintChar).l                   ; 5E1BA
         move.b  #$6,d0                          ; 5E1C0
@@ -10663,15 +10665,16 @@ l_5E186:
         bpl.w   l_5E1E6                         ; 5E1DE
         move.b  #$fd,d0                         ; 5E1E2
 l_5E1E6:
-        jsr     (PrintDigitNext).l              ; 5E1E6
+        jsr     (ReadoutDigit).l                ; 5E1E6 (enhanced: PrintDigitNext, unless the cell shows it)
         move.b  (dat_1BB17).l,d0                ; 5E1EC
-        jsr     (PrintDigitNext).l              ; 5E1F2
+        jsr     (ReadoutDigit).l                ; 5E1F2 (enhanced: PrintDigitNext, unless the cell shows it)
         move.b  (dat_1BB19).l,d0                ; 5E1F8
-        jsr     (PrintDigitNext).l              ; 5E1FE
+        jsr     (ReadoutDigit).l                ; 5E1FE (enhanced: PrintDigitNext, unless the cell shows it)
         move.b  (dat_1BB1A).l,d0                ; 5E204
-        jsr     (PrintDigitNext).l              ; 5E20A
+        jsr     (ReadoutDigit).l                ; 5E20A (enhanced: PrintDigitNext, unless the cell shows it)
         move.b  (dat_1BB18).l,d0                ; 5E210
-        jsr     (PrintDigitNext).l              ; 5E216
+        jsr     (ReadoutDigit).l                ; 5E216 (enhanced: PrintDigitNext, unless the cell shows it)
+        jsr     (ReadoutEnd).l                  ; (enhanced)
         move.b  #$0,(dat_1BB6D).l               ; 5E21C
         move.b  #$0,(dat_1BB6E).l               ; 5E224
         tst.b   (dat_1BBAF).l                   ; 5E22C
@@ -24428,6 +24431,7 @@ DrawCutout:
         andi.w  #$ff,d0                         ; 69F4A
         bsr.w   DrawCutoutBlit                  ; (enhanced) by the blitter (blitcutout.i)
         beq.w   l_69FDE
+        jsr     (ReadoutCutoutCheck).l          ; (enhanced) by the CPU: over the readout's cells? (readout.i)
         asl.w   #$2,d0                          ; 69F4E
         movea.l #CutoutPointers,a1              ; 69F50
         movea.l (a1,d0.w),a1                    ; 69F56
@@ -24705,6 +24709,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"interp.i"			; (the enhanced game) the physics to the clock, the view between
 	include	"halfres.i"			; (the enhanced game) F9: the view at half its height, doubled
 	include	"blitqueue.i"			; (the enhanced game) the sky and ground filled during the geometry
+	include	"readout.i"			; (the enhanced game) the opponent's distance: only what changed printed
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

@@ -7,8 +7,11 @@ worked out from constants).
 Assembles src/scr_game.s twice: as it is, and with 16 bytes put in after the entry (so that all the
 rest - code, data, pictures - is 16 bytes later), then plays the benchmark's race (tools/bench.py:
 the menus, the season's first race, N vertical blanks of it, default 3,000) in scremu with both, and
-compares how often each routine was called. Any difference means something in the game still uses
-an address that did not move with the code. Fails too on any word or long read or written at an
+compares how often each routine was called, and the two screens at the end. Any difference means
+something in the game still uses an address that did not move with the code - or a number written
+as a label, which moved when it should not have (the text's glyph masks were: `#dat_1FC00`, a
+label that happened to equal the mask $1FC00, drew 2 stray pixels beside every character once
+the code before it grew). Fails too on any word or long read or written at an
 odd address (an address error on a 68000; scremu reports them).
 """
 import os, subprocess, sys, tempfile
@@ -55,7 +58,7 @@ def main():
     results = []
     for b in bins:
         sc = os.path.join(work, 'script.txt')
-        txt = bench.script(vblanks, os.path.join(work, 'snap')).replace("joy f\nframes", "calls 1\njoy f\nframes", 1)
+        txt = bench.script(vblanks, b + '.snap').replace("joy f\nframes", "calls 1\njoy f\nframes", 1)
         lines = [f'log {b}.log'] + txt.split('\n')
         lines.insert(len(lines) - 2, f'callsdump {b}.calls')
         open(sc, 'w').write('\n'.join(lines))
@@ -73,6 +76,16 @@ def main():
         print(f'  ${x:05X}: {a.get(x, 0)} calls as it is, {m.get(x, 0)} moved')
     if diff:
         sys.exit('the game behaves differently when its code moves: an address in src/scr_game.s is not a label')
+    front = next(int(l.split()[1][2:], 16) for l in open(lst, errors='replace') if l.startswith('ScreenFront '))
+    screens = []                                # the two screens (ScreenFront's, and the next) at the end
+    for b, at in zip(bins, (front, front + SHIFT if front >= entry else front)):
+        mem = open(b + '.snap.mem', 'rb').read()
+        s = int.from_bytes(mem[at:at + 4], 'big')
+        screens.append(mem[s:s + 2 * 32000])
+    bad = sum(1 for x, y in zip(*screens) if x != y)
+    print(f'the screens at the end: {bad} bytes differ')
+    if bad:
+        sys.exit('the screens differ when the code moves: a number in src/scr_game.s is written as a label (or an address as a number)')
 
 
 def bench_vasm(src, out, listing=None):

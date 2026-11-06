@@ -6063,12 +6063,12 @@ l_59644:
         tst.b   (dat_5924A).l                   ; 59644
         beq.w   l_5965E                         ; 5964A
         jsr     (GlyphRow).l                    ; 5964E
-        move.l  #dat_1F800,d5                   ; 59654
+        move.l  #$1F800,d5                      ; 59654 the glyph's mask (a number, not dat_1F800)
         bra.w   l_5966C                         ; 5965A
 l_5965E:
         move.b  (a0)+,d7                        ; 5965E
         andi.l  #$ff,d7                         ; 59660
-        move.l  #dat_1FC00,d5                   ; 59666
+        move.l  #$1FC00,d5                      ; 59666 the glyph's mask: 7 columns (a number)
 l_5966C:
         asl.l   #$8,d7                          ; 5966C
         asl.l   #$1,d7                          ; 5966E

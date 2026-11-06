@@ -23,6 +23,13 @@ they are shown: about 89K of chip memory is free now.
   the start: in the free memory under the telemetry) and replay them in the emulator: the same
   race, frame by frame, on both - the real machine's costs and the emulator's side by side, and
   the worst moments found in play (frames of 3,500 lines on the A500) made into benchmarks.
+* ~~A number written as a label~~: found and fixed (November 2026) - `PrintCharNow`'s glyph
+  masks were `#dat_1F800` and `#dat_1FC00`, labels that equal the numbers $1F800 and $1FC00 only
+  in the release. In the enhanced game they had moved to $1F828 and $1FC28, and every character
+  painted two background pixels 11 and 13 pixels to its right (seen after the last character of
+  any text). Both sources now have the numbers; `tools/reloc_test.py` now compares the screens
+  too (it caught this one: 60 bytes), not only the routines' calls. Others like it may remain
+  where a value is used only as data.
 * Annotate the rest of the game's source: 196 routines and most of the race's variables are not
   named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
   track format.
@@ -215,11 +222,17 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   * `MatrixTimes` inlined (20 calls a step): ~0.2%.
   Together about 1.5%. A cheaper integrator or fewer samples of the track would change the
   handling: not recommended.
-* **The opponent's distance on the instruments** (`sub_5E12A`): printed every 4th step with the
-  proportional font a row of pixels at a time - about 11,000 cycles a character, about 60,000
-  (8.5 ms) on those steps: 2% of the work on average, and a regular hitch (more visible with the
-  pictures between steps). Print only when the number changes, or copy ready-drawn digits: most
-  of the 2%, and the hitch gone. The first to do of these.
+* ~~**The opponent's distance on the instruments**~~ (`sub_5E12A`): done (`src/readout.i`) -
+  printed every 4th step a row of pixels at a time into both screens, about 11,400 cycles a
+  character, 63,000 on those steps. Now a character the cells already show is not drawn again
+  (the cursor moved on as printing it would): on average 2.1 of the 5 change, so 15,800 cycles a
+  frame became 8,100 (the steps that print: about 32,000). Kept only while nothing else has drawn
+  there (the race's start, other text on those lines, a cut-out over them) and the text's colours
+  and way of drawing are the same. Checked by `tools/test_readout.py` (in the workflow): each
+  character left as it is printed anyway in four kinds of race - no byte of the screens changes.
+  Still to do: the rest of the hitch - `PrintCharNow` itself (11,400 cycles a character: each
+  row read, masked and written three times, in both screens) - a faster exact version would
+  help all the game's text.
 * **The vertical blank's work** (`VBlankTick`): about 10,700 cycles a frame (1.4%), much of it the
   wheels' sprites rebuilt (`SpriteFromCutout`, 12 a frame): rebuild them only when the wheels'
   animation frame changes.

@@ -56,7 +56,11 @@ vertical blanks on average, so the limit rarely waits and the release's turbo (F
 
 `PrintChar` (control code `$1F x y` moves the cursor), its glyphs taken from the title picture
 (`FindGlyph`: 6 pixels wide); `SetTextColour`, `SetTextBackground`; tables of texts ending `$FF`
-(`MenuTexts`, `ResultTexts`, `MessageTexts`, ...).
+(`MenuTexts`, `ResultTexts`, `MessageTexts`, ...). `PrintCharNow` draws a character a row at a
+time, into both screens: its glyph's 8 columns, over a background of 7 (the masks `$1FC00`, or
+`$1F800` for the proportional font - numbers, though they look like addresses: the disassembly had
+them as `dat_1FC00` and `dat_1F800`, which moved with the code in the enhanced game and put two
+stray pixels beside every character).
 
 ## How the names were found
 
