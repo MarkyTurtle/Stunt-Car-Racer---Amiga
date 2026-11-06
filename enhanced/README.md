@@ -36,6 +36,8 @@ workflow). So far it differs from the original in:
 * **the opponent's distance on the instruments printed only where it changed**
   ([`src/readout.i`](src/readout.i)): a character the cells already show is not drawn again -
   the readout's cost halved (about 1 ms a frame, and the hitch every 4th step halved);
+* **all text drawn twice as fast** ([`src/textfast.i`](src/textfast.i)): `PrintCharNow`'s rows
+  worked out once and written a plane at a time, two words at once - the same bytes;
 * **the fills' partial words without the calls**: `FillBetweenEdges` and `FillPolygon` call
   `PlotWord<colour>` at once and work out the edge masks; `FillPolygon`'s whole words unrolled;
 * **the track's lines are drawn a run at a time** (`DrawEdgeLine`): each screen line's pixels

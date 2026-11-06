@@ -60,7 +60,8 @@ vertical blanks on average, so the limit rarely waits and the release's turbo (F
 time, into both screens: its glyph's 8 columns, over a background of 7 (the masks `$1FC00`, or
 `$1F800` for the proportional font - numbers, though they look like addresses: the disassembly had
 them as `dat_1FC00` and `dat_1F800`, which moved with the code in the enhanced game and put two
-stray pixels beside every character).
+stray pixels beside every character). About 11,400 cycles a character; the enhanced game draws
+the rows in about 5,500 (`enhanced/src/textfast.i`).
 
 ## How the names were found
 
