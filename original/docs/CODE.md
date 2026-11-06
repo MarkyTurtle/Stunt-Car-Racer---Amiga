@@ -83,6 +83,6 @@ view's pipeline ([RENDER.md](RENDER.md): `RaceView`, `ProjectNearPiece`, `Projec
 `FillBetweenEdges`, `DrawEdgeLine`, `DrawOpponentCar`, the row table and the edge buffers). Named by
 what they work on, not yet understood in detail (their descriptions say "probably"): the car's
 physics, the opponent's driving, the track's format, the opponent's car's model. Not named yet:
-196 routines - the rows' sides and lines (`sub_688FC`-`sub_68BEC`, `sub_691B4`,
-`sub_69270`), the physics (`$61950-$62424`), the opponent (`$636C0-$63EE2`) - and most of the
+196 routines - the rows' sides and lines (`DrawRowMidLine`-`FillRowsRightSide`, `FillFarRowLeftSide`,
+`FillFarRowRightSide`), the physics (`$61950-$62424`), the opponent (`$636C0-$63EE2`) - and most of the
 race's variables (`$1BAF8-$1CA35`).

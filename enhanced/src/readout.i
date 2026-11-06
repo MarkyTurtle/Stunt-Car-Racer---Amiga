@@ -2,7 +2,7 @@
 ; readout.i - (the enhanced game) the opponent's distance on the instruments, only the
 ; characters that changed printed again.
 ;
-; Every 4th step sub_5E12A prints the distance: a sign (space or '-') and 4 digits, at the
+; Every 4th step PrintOpponentDistance prints the distance: a sign (space or '-') and 4 digits, at the
 ; text cursor (6, $17) a pixel further right each (dat_1BB6D 2-6) and 4 lines down (dat_1BB6E):
 ; the cells at x 44-83, lines 188-195, in both screens. PrintCharNow draws a character a row at a
 ; time into both screens - about 11,400 cycles each, 57,000 on those steps (2% of the race's
@@ -35,11 +35,11 @@ ReadoutChars:	dcb.b	5,0			; the characters last printed (sign, 4 digits)
 ReadoutValid:	dc.b	0			; non-zero: the cells hold ReadoutChars
 ReadoutOk:	dc.b	0			; this print: the same characters may be left as they are
 ReadoutKeep:	dc.b	0			; this print: what it prints may be kept
-ReadoutPrinting: dc.b	0			; non-zero: sub_5E12A printing (PrintCharNow: not another text)
+ReadoutPrinting: dc.b	0			; non-zero: PrintOpponentDistance printing (PrintCharNow: not another text)
 	even
 
 ;-------------------------------------------------------------------------------
-; ReadoutStart - sub_5E12A, before the readout's characters. All registers kept
+; ReadoutStart - PrintOpponentDistance, before the readout's characters. All registers kept
 ;-------------------------------------------------------------------------------
 ReadoutStart:
 	movem.l	d0-d3/a0-a1,-(a7)
@@ -84,7 +84,7 @@ ReadoutStart:
 	rts
 
 ;-------------------------------------------------------------------------------
-; ReadoutEnd - sub_5E12A, after them. All registers kept
+; ReadoutEnd - PrintOpponentDistance, after them. All registers kept
 ;-------------------------------------------------------------------------------
 ReadoutEnd:
 	sf	ReadoutPrinting
@@ -92,7 +92,7 @@ ReadoutEnd:
 	rts
 
 ;-------------------------------------------------------------------------------
-; ReadoutDigit - sub_5E12A, for PrintDigitNext: d0 a digit (or $F0, $FD: space, '-') printed -
+; ReadoutDigit - PrintOpponentDistance, for PrintDigitNext: d0 a digit (or $F0, $FD: space, '-') printed -
 ; or, if the cell already shows it, the cursor moved on as printing it would. d0 = the character
 ; on return (as PrintDigitNext); the rest kept
 ;-------------------------------------------------------------------------------

@@ -43,8 +43,8 @@ def main():
     work = tempfile.mkdtemp()
     src = open(os.path.join(ENH, 'src', 'scr_game.s')).read()
     for old, new in (("l_64F80:\n", "l_64F80:\n        move.b  #1,($3700).w            ; (measure_keep.py: the drawing half)\n"),
-                     ("        jsr     (sub_5E508).l                   ; 651B0\n        rts                                     ; 651B6\n",
-                      "        jsr     (sub_5E508).l                   ; 651B0\n        clr.b   ($3700).w\n        rts                                     ; 651B6\n")):
+                     ("        jsr     (ShowMessage).l                   ; 651B0\n        rts                                     ; 651B6\n",
+                      "        jsr     (ShowMessage).l                   ; 651B0\n        clr.b   ($3700).w\n        rts                                     ; 651B6\n")):
         if src.count(old) != 1:
             sys.exit('the marker points (l_64F80, the end of RaceView) not found')
         src = src.replace(old, new)

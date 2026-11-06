@@ -172,7 +172,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   CPU access to what a running blit writes: none; in the workflow, `bench.py --blitcheck`).
   To check on an A500: the blitter's share of the bus while the CPU works (not modelled).
 * The cockpit's blits beside the CPU: looked at, not done - the race loop draws on the screen
-  right after the view (`sub_5E12A`'s text, `sub_5DB34`'s times, cut-outs drawn on both screens)
+  right after the view (`PrintOpponentDistance`'s text, `UpdateRaceTime`'s times, cut-outs drawn on both screens)
   and the blits are per plane (the screen's planes are not interleaved), so a queue would mean an
   interrupt for each of about 28 blits and waits before each of those writes: about 1% at best.
 * `ArcTan`, `RollPointXY`: ~~the car level (no roll) without `RollPointXY`'s 4 `muls`~~ (done:
@@ -222,7 +222,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
 * **The physics and the race loop** (measured November 2026, a call profile of the benchmark's
   race; the work then 107 ms a frame, about 760,000 cycles). The physics is about 6% of it:
   `CarPhysics` 29,900 cycles a step (`BuildViewMatrix` 5,800, the track under the wheels
-  `sub_5C1D0` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
+  `TrackUnderWheels` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
   `PlaceCarOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
   it is not simulated). Each step the car is a rigid body on four wheels: its matrix from its
   angles (`Sin`/`Cos`: a 512-entry table, interpolated), the track's height under each wheel from
@@ -240,7 +240,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   * `MatrixTimes` inlined (20 calls a step): ~0.2%.
   Together about 1.5%. A cheaper integrator or fewer samples of the track would change the
   handling: not recommended.
-* ~~**The opponent's distance on the instruments**~~ (`sub_5E12A`): done (`src/readout.i`) -
+* ~~**The opponent's distance on the instruments**~~ (`PrintOpponentDistance`): done (`src/readout.i`) -
   printed every 4th step a row of pixels at a time into both screens, about 11,400 cycles a
   character, 63,000 on those steps. Now a character the cells already show is not drawn again
   (the cursor moved on as printing it would): on average 2.1 of the 5 change, so 15,800 cycles a

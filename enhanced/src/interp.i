@@ -235,7 +235,7 @@ InterpRender:
 	bsr.w	InterpBlend			; the place and angles of the moment
 	st	InterpRendering
 	moveq	#0,d0				; (the release's view relies on clear upper bytes in its registers:
-	moveq	#0,d1				; sub_5FE04 indexes the grid with d1.w, setting only its low byte)
+	moveq	#0,d1				; GridSquarePiece indexes the grid with d1.w, setting only its low byte)
 	moveq	#0,d2
 	moveq	#0,d3
 	moveq	#0,d4
@@ -384,7 +384,7 @@ InterpBlockIn:
 	dbra	d1,.k2
 	bra.s	.k1
 .nokeep:
-	move.b	(dat_1BBE3).l,d1		; the wheels' animation (VBlankTick: sub_651B8)
+	move.b	(dat_1BBE3).l,d1		; the wheels' animation (VBlankTick: UpdateWheelSprites)
 	move.b	(dat_1BBDB).l,d2
 	move.w	(dat_1BC34).l,d3		; the engine's revs (VBlankTick)
 	move.b	(dat_1BBC8).l,d4		; the screens' parity (FrameFlip)

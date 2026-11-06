@@ -31,7 +31,7 @@ often than the physics, the cars' positions in between interpolated), or the phy
 a shorter step.
 
 The enhanced game does the first (`enhanced/src/interp.i`). `RaceView` is two halves: the cars
-placed (the piece the car is on, the camera's place on it: `sub_600A6`, `sub_60190`; the opponent
+placed (the piece the car is on, the camera's place on it: `CarGridSquare`, `CarToPieceCoords`; the opponent
 moved: `MoveOpponent`, and placed) and the drawing (from `l_64F80`). Measured with scremu's
 `phasetrack` - which code's writes other code reads - over whole races, the drawing writes
 nothing the physics reads but the text's colours and the random numbers, and keeps a few
