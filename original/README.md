@@ -42,7 +42,7 @@ the rest is data: the sound, the pictures, the screens and the tracks are in the
 `scr_game.s`. The trace follows the
 code from the entry, the vectors it sets (levels 1-7, trap 0) and the sweep for code nothing
 references; untraced bytes are `dc.b`. Labels are `sub_`/`l_`/`dat_` and the run address until
-named. 332 routines are named so far (196 are still `sub_`), with a header saying what each does, and the
+named. All 528 routines are named, with a header saying what each does, and the
 known variables and tables, with a comment ([`docs/CODE.md`](docs/CODE.md)). The names are in the
 source: name things by editing it.
 

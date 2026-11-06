@@ -30,9 +30,10 @@ they are shown: about 89K of chip memory is free now.
   any text). Both sources now have the numbers; `tools/reloc_test.py` now compares the screens
   too (it caught this one: 60 bytes), not only the routines' calls. Others like it may remain
   where a value is used only as data.
-* Annotate the rest of the game's source: 196 routines and most of the race's variables are not
-  named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
-  track format.
+* ~~Annotate the rest of the game's source~~: the routines done (November 2026: all named, with
+  headers, many "probably"), and 163 of the race's variables. Still to do: the rest of the race's
+  variables (about 330 labels, mostly table parts and one-routine variables), the track format
+  (`docs/DATA.md`), and the "probably"s worked through - the physics and the opponent first.
 * ~~Make the source safe to change~~: done - every address in it is a label, checked by
   `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
   code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
@@ -172,7 +173,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   CPU access to what a running blit writes: none; in the workflow, `bench.py --blitcheck`).
   To check on an A500: the blitter's share of the bus while the CPU works (not modelled).
 * The cockpit's blits beside the CPU: looked at, not done - the race loop draws on the screen
-  right after the view (`sub_5E12A`'s text, `sub_5DB34`'s times, cut-outs drawn on both screens)
+  right after the view (`PrintOpponentDistance`'s text, `UpdateRaceTime`'s times, cut-outs drawn on both screens)
   and the blits are per plane (the screen's planes are not interleaved), so a queue would mean an
   interrupt for each of about 28 blits and waits before each of those writes: about 1% at best.
 * `ArcTan`, `RollPointXY`: ~~the car level (no roll) without `RollPointXY`'s 4 `muls`~~ (done:
@@ -187,7 +188,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `dat_667E0`; the line's end tested from the line count (`subq`/`bgt`) instead of comparing a6
   with `ScreenDrawTop`; the same in `FillPolygon` (the mountains, the cars), whose whole words are
   now written as `FillBetweenEdges`' (two a plane at once, unrolled). The race's work 1.3% less,
-  the screens the same frame for frame. Still to do: its variables in registers (`dat_1BC5A`,
+  the screens the same frame for frame. Still to do: its variables in registers (`FillLines`,
   `dat_69ACE` and the edge list's bounds read from memory each line: no register is free in the
   loop as it is).
 * ~~`PlotPixel` / `DrawEdgeLine`~~: done - `DrawEdgeLine` notes each screen line's run of pixels
@@ -222,7 +223,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
 * **The physics and the race loop** (measured November 2026, a call profile of the benchmark's
   race; the work then 107 ms a frame, about 760,000 cycles). The physics is about 6% of it:
   `CarPhysics` 29,900 cycles a step (`BuildViewMatrix` 5,800, the track under the wheels
-  `sub_5C1D0` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
+  `TrackUnderWheels` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
   `PlaceCarOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
   it is not simulated). Each step the car is a rigid body on four wheels: its matrix from its
   angles (`Sin`/`Cos`: a 512-entry table, interpolated), the track's height under each wheel from
@@ -240,7 +241,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   * `MatrixTimes` inlined (20 calls a step): ~0.2%.
   Together about 1.5%. A cheaper integrator or fewer samples of the track would change the
   handling: not recommended.
-* ~~**The opponent's distance on the instruments**~~ (`sub_5E12A`): done (`src/readout.i`) -
+* ~~**The opponent's distance on the instruments**~~ (`PrintOpponentDistance`): done (`src/readout.i`) -
   printed every 4th step a row of pixels at a time into both screens, about 11,400 cycles a
   character, 63,000 on those steps. Now a character the cells already show is not drawn again
   (the cursor moved on as printing it would): on average 2.1 of the 5 change, so 15,800 cycles a
@@ -264,7 +265,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   (`RACE_SEED`) and presses the track's keys a set time after it; the slow-text and fast-text builds
   then run the same race (the geometry within 0.01 ms; the cockpit 0.53 ms and the instruments 0.33 ms
   less: the text). Left as it is: the race still depends on the race's own speed - the engine's revs
-  (`dat_1BC34`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
+  (`EngineRevs`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
   them, so a frame taking 7 vertical blanks instead of 6 moves the opponent a little (the game's own
   behaviour). The baselines regenerated: the released game (the telemetry build of 21b21ba with the
   release's helper, `original/bin/lowmem_c0.bin`) 6.61 vertical blanks of work, 7.55 frames a second.

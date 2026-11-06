@@ -54,7 +54,7 @@ x_{screen} = \frac{\operatorname{atan2}(x, z) - heading}{32} + 128 \qquad y_{scr
 Angles are 16-bit, with `$10000` a full turn. One pixel is 32 angle units, about 0.18 degrees, so the 256-pixel view spans 45 degrees across and 22.5 degrees down.
 
 1. **Across (`ProjectPointX`):** `ArcTan` of the point's x and z relative to the camera, less the heading (`dat_1BC2E`), shifted down by 3. Far points (`ProjectPointXFar`) also get their distance from `VectorLength`.
-2. **Up (`ProjectPointY`):** the camera's height less the point's (`PointHeights`), against its distance, through `ArcTan`, less the pitch (`dat_1BC42`). Near points scale the height by 0.594 first (`muls #$4C1B`).
+2. **Up (`ProjectPointY`):** the camera's height less the point's (`PointHeights`), against its distance, through `ArcTan`, less the pitch (`ViewPitch`). Near points scale the height by 0.594 first (`muls #$4C1B`).
 3. **Roll (`RollPointXY`):** the x, y pair is turned about the view's centre by the car's roll, with 4 `muls` using the matrix's sine and cosine (`ViewMatrix+$20`, `+$22`). It is then divided by 4 and centred (`+$80`, `+$40`). Points behind the camera are not turned.
 4. **Results:** `PointScreenX` and `PointScreenY`, one word per point, in view pixels. They can lie far outside 0-255 and 0-127; clipping happens per edge, next.
 

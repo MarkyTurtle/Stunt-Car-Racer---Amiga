@@ -168,7 +168,7 @@ Level1Handler:
 l_0EEE4:
         btst    #$1,$dff01f.l                   ; 0EEE4
         beq.w   l_0EF00                         ; 0EEEC
-        jsr     (sub_0F2CA).l                   ; 0EEF0
+        jsr     (Level1Nothing).l                   ; 0EEF0
         move.w  #$2,(CUSTOM+INTREQ).l           ; 0EEF6
         rte                                     ; 0EEFE
 l_0EF00:
@@ -248,7 +248,7 @@ Level5Handler:
         move.w  #$800,(CUSTOM+INTREQ).l         ; 0EFD6
         rte                                     ; 0EFDE
 l_0EFE0:
-        jsr     (sub_0F2C8).l                   ; 0EFE0
+        jsr     (Level5Nothing).l                   ; 0EFE0
         move.w  #$1000,(CUSTOM+INTREQ).l        ; 0EFE6
         rte                                     ; 0EFEE
 
@@ -519,9 +519,17 @@ SerialPutByte:
         jsr     (SerialSend).l                  ; 0F2C0
 l_0F2C6:
         rts                                     ; 0F2C6
-sub_0F2C8:
+
+;-------------------------------------------------------------------------------
+; Level5Nothing - an rts: what the level 5 handler calls (nothing to do)
+;-------------------------------------------------------------------------------
+Level5Nothing:
         rts                                     ; 0F2C8
-sub_0F2CA:
+
+;-------------------------------------------------------------------------------
+; Level1Nothing - an rts: what the level 1 handler calls (nothing to do)
+;-------------------------------------------------------------------------------
+Level1Nothing:
         rts                                     ; 0F2CA
 
 ;-------------------------------------------------------------------------------
@@ -770,13 +778,13 @@ l_1B81E:
 ; PrintOnBothScreens - prints message d1 (of MessageTexts) and message $D0 on the shown screen
 ;-------------------------------------------------------------------------------
 PrintOnBothScreens:
-        move.b  (dat_1BBD3).l,d0                ; 1B82A
+        move.b  (TextNoBackground).l,d0                ; 1B82A
         move.w  d0,-(a7)                        ; 1B830
         move.w  (TextCursorX).l,-(a7)           ; 1B832
         move.l  (ScreenDraw).l,-(a7)            ; 1B838
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 1B83E
         move.w  d1,-(a7)                        ; 1B848
-        move.b  #$0,(dat_1BBD3).l               ; 1B84A
+        move.b  #$0,(TextNoBackground).l               ; 1B84A
         move.b  #$1,d0                          ; 1B852
         jsr     (SetTextColour).l               ; 1B856
         move.b  #$3,d0                          ; 1B85C
@@ -788,7 +796,7 @@ PrintOnBothScreens:
         move.l  (a7)+,(ScreenDraw).l            ; 1B878
         move.w  (a7)+,(TextCursorX).l           ; 1B87E
         move.w  (a7)+,d0                        ; 1B884
-        move.b  d0,(dat_1BBD3).l                ; 1B886
+        move.b  d0,(TextNoBackground).l                ; 1B886
         rts                                     ; 1B88C
 JoystickBits:				; the joystick as ReadJoystick left it (a bit low for each direction and fire)
 	dc.b	$FF,$FF
@@ -917,9 +925,9 @@ dat_1BAFA:
 	dc.b	$00
 dat_1BAFB:
 	dc.b	$00
-dat_1BAFC:
+OpponentSteerIn:				; the opponent's steering, before OpponentControls (probably)
 	dc.b	$00
-dat_1BAFD:
+OpponentThrottleIn:				; the opponent's throttle, before OpponentControls (probably)
 	dc.b	$00
 dat_1BAFE:
 	dc.b	$00
@@ -945,49 +953,49 @@ PlayerPiecePos:				; how far along its piece the player's car is (the high byte:
 OpponentPiecePos:				; how far along its piece the opponent's car is
 	dc.b	$00
 	dc.b	$00
-dat_1BB0E:
+PlayerPosAhead:				; PlayerPiecePos + $40 ($80: past the piece's end) (SetPlayerPiecePos)
 	dc.b	$00
 dat_1BB0F:
 	dc.b	$00
-dat_1BB10:
+CarAlongPiece:				; how far along its piece the car is, from the piece's start (CarPiecePosition)
 	dc.b	$00
 	dc.b	$00
 dat_1BB12:
 	dc.b	$00
-dat_1BB13:
+CarAcrossPiece:				; where the car is across its piece (a fraction /256: CarPiecePoints) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BB16:
+WorkByte1:				; a work byte shared by many routines (a counter, a line, a flag)
 	dc.b	$00
-dat_1BB17:
+WorkByte2:				; a work byte shared by many routines
 	dc.b	$00
-dat_1BB18:
+WorkByte3:				; a work byte shared by many routines
 	dc.b	$00
-dat_1BB19:
+WorkByte4:				; a work byte shared by many routines
 	dc.b	$00
-dat_1BB1A:
+WorkByte5:				; a work byte shared by many routines (often MulFraction's multiplier)
 	dc.b	$00
-dat_1BB1B:
+WorkByte6:				; a work byte shared by many routines (often a result's low byte)
 	dc.b	$00
 PlayerPiece:				; the piece the player's car is on (followed while driving in scremu)
 	dc.b	$00
 OpponentPiece:				; the piece the opponent's car is on
 	dc.b	$00
-dat_1BB1E:
+LapFlags:				; each car's lap flag (the player's, the opponent's: CheckLapPiece)
 	dc.b	$00
 	dc.b	$00
 PlayerLaps:				; the laps the player has started (0 before the start line)
 	dc.b	$00
 OpponentLaps:				; the laps the opponent has started
 	dc.b	$00
-dat_1BB22:
+CarSquareX:				; the car's x in its grid square (CarInPieceAxes, PieceGridOffset) (probably)
 	dc.b	$00
 dat_1BB23:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BB26:
+CarSquareZ:				; the car's z in its grid square (probably)
 	dc.b	$00
 dat_1BB27:
 	dc.b	$00
@@ -995,11 +1003,11 @@ dat_1BB27:
 	dc.b	$00
 dat_1BB2A:
 	dc.b	$00
-dat_1BB2B:
+SpringCompression:				; the compression SpringStiffness looked up (at most $FF)
 	dc.b	$00
 dat_1BB2C:
 	dc.b	$00
-dat_1BB2D:
+SpringStiffnessValue:				; SpringStiffness's result (dat_1EECA's entry)
 	dc.b	$00
 dat_1BB2E:
 	dc.b	$00
@@ -1034,25 +1042,25 @@ dat_1BB41:
 	dc.b	$00
 dat_1BB43:
 	dc.b	$00
-dat_1BB44:
+OpponentRacing:				; non-zero: the opponent's car is racing (MoveOpponent and its routines) (probably)
 	dc.b	$00
-dat_1BB45:
+OpponentLineB:				; OpponentTargetLine's result (probably)
 	dc.b	$00
-dat_1BB46:
+KnockPending:				; a knock from the opponent to add to the player's forces (OpponentCollide, ApplyCollision)
 	dc.b	$00
-dat_1BB47:
+ControlBits:				; the controls read (ReadControls): bit 0 up, 1 down, 2 left, 3 right, 4 fire
 	dc.b	$00
 dat_1BB48:
 	dc.b	$00
 	dc.b	$00
-dat_1BB4A:
+OpponentLineA:				; OpponentTargetLine's result (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BB4D:
+PieceDirection:				; the current piece's direction: bits 7 and 6 (which way it runs in the grid)
 	dc.b	$00
 	dc.b	$00
-dat_1BB4F:
+KnockStrength1:				; the knocks' strengths (3 bytes; CarKnocks takes their mean)
 	dc.b	$00
 dat_1BB50:
 	dc.b	$00
@@ -1060,9 +1068,9 @@ dat_1BB51:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BB54:
+KnockHappened:				; non-zero: a knock this step (CarKnocks)
 	dc.b	$00
-dat_1BB55:
+CrackState:				; GrowCrack's state (probably)
 	dc.b	$00
 dat_1BB56:
 	dc.b	$00
@@ -1080,9 +1088,9 @@ dat_1BB5C:
 	dc.b	$00
 dat_1BB5D:
 	dc.b	$00
-dat_1BB5E:
+ListLineRow:				; the text row of the list's line (TextAtListLine)
 	dc.b	$00
-dat_1BB5F:
+DivisionShown:				; the division shown or worked on (PrintSeasonPanel, SetDivisionDrivers, SimulateOtherRaces)
 	dc.b	$00
 dat_1BB60:
 	dc.b	$00
@@ -1094,7 +1102,7 @@ dat_1BB63:
 	dc.b	$00
 dat_1BB64:
 	dc.b	$00
-dat_1BB65:
+WheelOffTrack:				; bit 7: a wheel past the track's side (TrackUnderWheels, WheelTrackHeight)
 	dc.b	$00
 dat_1BB66:
 	dc.b	$00
@@ -1104,25 +1112,25 @@ dat_1BB68:
 	dc.b	$00
 dat_1BB69:
 	dc.b	$00
-dat_1BB6A:
+PieceSections:				; the current piece's number of cross-sections (probably)
 	dc.b	$00
 dat_1BB6B:
 	dc.b	$00
-dat_1BB6C:
+MessageTimer:				; the message's timer (RaceMessageFlash, ShowMessage, CheckRaceFinished)
 	dc.b	$00
-dat_1BB6D:
+TextPixelX:				; the text cursor's extra pixels right (PrintCharNow)
 	dc.b	$00
-dat_1BB6E:
+TextLineOffset:				; the text cursor's extra lines down (PrintCharNow; TextOffsetNone, TextOffsetFour)
 	dc.b	$00
 dat_1BB6F:
 	dc.b	$00
-dat_1BB70:
+ThrottleOff:				; $10 when fire is not held: no throttle (RaceInput)
 	dc.b	$00
 dat_1BB71:
 	dc.b	$00
 dat_1BB72:
 	dc.b	$00
-dat_1BB73:
+HoleTimer:				; the steps until a crack becomes a hole (CarKnocks: 69) (probably)
 	dc.b	$00
 dat_1BB74:
 	dc.b	$00
@@ -1130,7 +1138,7 @@ dat_1BB75:
 	dc.b	$00
 dat_1BB76:
 	dc.b	$00
-dat_1BB77:
+ScanEdgeHorizon:				; set ($80) while DrawHorizon steps its edge: ScanEdge's buffer limit not tested, the header kept
 	dc.b	$00
 	dc.b	$00
 dat_1BB79:
@@ -1143,7 +1151,7 @@ dat_1BB7C:
 	dc.b	$00
 dat_1BB7D:
 	dc.b	$00
-dat_1BB7E:
+WheelsDown:				; non-zero: the wheels on the track (GroundForce, RaceInput, UpdateEngineRevs)
 	dc.b	$00
 dat_1BB7F:
 	dc.b	$00
@@ -1154,27 +1162,27 @@ dat_1BB7F:
 	dc.b	$00
 PieceIndex:				; the track piece being worked on
 	dc.b	$00
-dat_1BB86:
+PieceCurve:				; the current piece's curve, CurvedPieceHeight's index into dat_5C6B8 (probably)
 	dc.b	$00
 	dc.b	$00
-dat_1BB88:
+MessageFlash:				; the message's flashing bit (RaceMessageFlash)
 	dc.b	$00
-dat_1BB89:
+TimeHighlight:				; $80: PrintTimeAt highlights the time
 	dc.b	$00
 	dc.b	$00
 dat_1BB8B:
 	dc.b	$00
-dat_1BB8C:
+BestLapLampColour:				; the B lamp's colour (DrawBestLapLamp)
 	dc.b	$00
 dat_1BB8D:
 	dc.b	$00
-dat_1BB8E:
+MessagePending:				; $80: a message to show (QueueMessage, ShowMessage)
 	dc.b	$00
 dat_1BB8F:
 	dc.b	$00
 dat_1BB90:
 	dc.b	$00
-dat_1BB91:
+SectionDataStart:				; StoreSectionPoints: where the piece's sections start in its data (its first byte + 7)
 	dc.b	$00
 dat_1BB92:
 	dc.b	$00
@@ -1189,7 +1197,7 @@ dat_1BB97:
 	dc.b	$00
 dat_1BB98:
 	dc.b	$00
-dat_1BB99:
+RaceLaps:				; the race's laps (CheckRaceFinished)
 	dc.b	$00
 dat_1BB9A:
 	dc.b	$00
@@ -1204,7 +1212,7 @@ dat_1BB9E:
 dat_1BB9F:
 	dc.b	$00
 	dc.b	$00
-dat_1BBA1:
+OpponentNormalPace:				; the opponent's pace when not near the player (OpponentPaceNormal)
 	dc.b	$00
 	dc.b	$00
 dat_1BBA3:
@@ -1215,7 +1223,7 @@ dat_1BBA5:
 	dc.b	$00
 dat_1BBA6:
 	dc.b	$00
-dat_1BBA7:
+OpponentPace:				; the opponent's pace (OpponentDrive)
 	dc.b	$00
 dat_1BBA8:
 	dc.b	$00
@@ -1224,26 +1232,26 @@ dat_1BBAA:
 	dc.b	$00
 dat_1BBAB:
 	dc.b	$00
-dat_1BBAC:
+StepCountdown:				; counted down each step of the race (the readout every 4th: PrintOpponentDistance)
 	dc.b	$00
 dat_1BBAD:
 	dc.b	$00
 dat_1BBAE:
 	dc.b	$00
-dat_1BBAF:
+RaceWinner:				; the first car to finish (CheckRaceFinished)
 	dc.b	$00
 dat_1BBB0:
 	dc.b	$00
-dat_1BBB1:
+RaceResultFlags:				; the race's results (PrintRaceResults, CheckRecordTimes)
 	dc.b	$00
-dat_1BBB2:
+BestLapFlag:				; set when a lap is faster than the best (CheckLapPiece): the B lamp lit
 	dc.b	$00
 	dc.b	$00
 dat_1BBB4:
 	dc.b	$00
 dat_1BBB5:
 	dc.b	$00
-dat_1BBB6:
+KnockStrength:				; the knock's strength (CarKnocks, GrowCrack)
 	dc.b	$00
 	dc.b	$00
 dat_1BBB8:
@@ -1252,21 +1260,21 @@ dat_1BBB9:
 	dc.b	$00
 dat_1BBBA:
 	dc.b	$00
-dat_1BBBB:
+WorkSign:				; a work byte: a sign (SignedMulFraction, SuspensionForces, PlaceCarAhead)
 	dc.b	$00
-dat_1BBBC:
+TextOneScreen:				; negative: text printed to one screen only (PrintCharNow)
 	dc.b	$00
-dat_1BBBD:
+SwerveExtra:				; OpponentSwerve's third offset
 	dc.b	$00
-dat_1BBBE:
+SideOffsets:				; each side's offset across the piece (2 bytes: CarPiecePoints; OpponentSwerve)
 	dc.b	$00
 dat_1BBBF:
 	dc.b	$00
-dat_1BBC0:
+SwerveCountdown:				; the opponent's swerve, counted down (OpponentSwerve)
 	dc.b	$00
 dat_1BBC1:
 	dc.b	$00
-dat_1BBC2:
+SwervePhase:				; OpponentSwerve's place in its table dat_5BE34
 	dc.b	$00
 dat_1BBC3:
 	dc.b	$00
@@ -1274,24 +1282,24 @@ dat_1BBC4:
 	dc.b	$00
 dat_1BBC5:
 	dc.b	$00
-dat_1BBC6:
+SteeringInput:				; the steering from the controls (RaceInput)
 	dc.b	$00
 dat_1BBC7:
 	dc.b	$00
-dat_1BBC8:
+FrameParity:				; flips with each picture (FrameLimiter, FrameFlip)
 	dc.b	$00
-dat_1BBC9:
+StepCount:				; the race's steps counted (UpdateRaceTime)
 	dc.b	$00
 dat_1BBCA:
 	dc.b	$00
-dat_1BBCB:
+TableMarked:				; set while ShowTableMarked shows the table
 	dc.b	$00
-dat_1BBCC:
+LapTimeTimer:				; the steps the lap's time stays highlighted (UpdateRaceTime, PrintLapTimeNow)
 	dc.b	$00
-dat_1BBCD:
+ClockTick:				; $FF on the steps the race's clock does not tick (UpdateRaceTime: ClockFraction's carry) (probably)
 	dc.b	$00
 	dc.b	$00
-dat_1BBCF:
+ClockFraction:				; the race clock's fraction ($EE added each step: UpdateRaceTime)
 	dc.b	$00
 dat_1BBD0:
 	dc.b	$00
@@ -1299,13 +1307,13 @@ dat_1BBD1:
 	dc.b	$00
 dat_1BBD2:
 	dc.b	$00
-dat_1BBD3:
+TextNoBackground:				; negative: text printed without its background (PrintCharNow)
 	dc.b	$00
 dat_1BBD4:
 	dc.b	$00
-dat_1BBD5:
+GridOffsetX:				; x of a grid square's offset from the player's (GridSquarePiece; also EditText's)
 	dc.b	$00
-dat_1BBD6:
+GridOffsetY:				; y of a grid square's offset from the player's (GridSquarePiece; also a menu's choice)
 	dc.b	$00
 dat_1BBD7:
 	dc.b	$00
@@ -1314,32 +1322,32 @@ dat_1BBD9:
 	dc.b	$00
 dat_1BBDA:
 	dc.b	$00
-dat_1BBDB:
+WheelFrame:				; the wheels' animation frame (0-2: WheelSpinFrame)
 	dc.b	$00
 dat_1BBDC:
 	dc.b	$00
 dat_1BBDD:
 	dc.b	$00
-dat_1BBDE:
+LeadLampColour:				; the L lamp's colour (DrawLeadLamp)
 	dc.b	$00
 DropCountdown:				; counts the drop start down ($F0 at the start)
 	dc.b	$00
 dat_1BBE0:
 	dc.b	$00
-dat_1BBE1:
+DrivingBackwards:				; negative: the car goes the other way along its piece (SetDrivingDirection) (probably)
 	dc.b	$00
 dat_1BBE2:
 	dc.b	$00
-dat_1BBE3:
+WheelTurn:				; the wheels' turn, Speed added each vertical blank (UpdateWheelSprites)
 	dc.b	$00
 dat_1BBE4:
 	dc.b	$00
 dat_1BBE5:
 	dc.b	$00
-dat_1BBE6:
+PiecePointsBoth:				; negative: PiecePointPart does the next point too
 	dc.b	$00
 	dc.b	$00
-dat_1BBE8:
+TextColourChoice:				; a colour for the next text (PrintTimeAt, PrintLeagueLine) (probably)
 	dc.b	$00
 dat_1BBE9:
 	dc.b	$00
@@ -1359,10 +1367,10 @@ dat_1BBF0:
 	dc.b	$00
 dat_1BBF1:
 	dc.b	$00
-dat_1BBF2:
+PieceAxes:				; the piece's direction for CarInPieceAxes (bits 7 and 6)
 	dc.b	$00
 	dc.b	$00
-dat_1BBF4:
+EngineRevTarget:				; the revs UpdateEngineRevs aims for, added to EngineRevs each vertical blank (probably)
 	dc.b	$00
 dat_1BBF5:
 	dc.b	$00
@@ -1381,7 +1389,7 @@ dat_1BBFA:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BC00:
+DropAngle:				; DropTilt's angle, toward its stop (probably)
 	dc.b	$00
 dat_1BC01:
 	dc.b	$00
@@ -1432,7 +1440,7 @@ dat_1BC1E:
 dat_1BC20:
 	dc.b	$00
 	dc.b	$00
-dat_1BC22:
+WheelAcross:				; a wheel's place across the track (0-$180 on it: TrackUnderWheels, WheelPastEdge) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BC24:
@@ -1456,10 +1464,10 @@ dat_1BC2E:
 dat_1BC30:
 	dc.b	$00
 	dc.b	$00
-dat_1BC32:
+PieceReversed:				; negative: the current piece is driven the other way
 	dc.b	$00
 	dc.b	$00
-dat_1BC34:
+EngineRevs:				; the engine's revs for its sound (VBlankTick, UpdateEngineRevs)
 	dc.b	$00
 	dc.b	$00
 dat_1BC36:
@@ -1469,20 +1477,20 @@ OpponentDistance:				; the distance to the opponent (the instruments show it)
 	dc.b	$00
 dat_1BC39:
 	dc.b	$00
-dat_1BC3A:
+KnockForce:				; the knock's force (WheelsOnTrack; CarKnocks: a hard one from $1400)
 	dc.b	$00
 	dc.b	$00
 dat_1BC3C:
 	dc.b	$00
 	dc.b	$00
-dat_1BC3E:
+OpponentGap:				; the gap between the cars on the same piece (UpdateOpponentDistance, OpponentLead) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BC40:
 	dc.b	$00
 dat_1BC41:
 	dc.b	$00
-dat_1BC42:
+ViewPitch:				; the view's pitch: the horizon's height (MoveCar, DrawHorizon, DrawMountains)
 	dc.b	$00
 	dc.b	$00
 dat_1BC44:
@@ -1516,14 +1524,14 @@ dat_1BC58:
 	dc.b	$00
 dat_1BC59:
 	dc.b	$00
-dat_1BC5A:
+FillLines:				; the lines left to fill (FillPolygon, FillBetweenEdges)
 	dc.b	$00
-dat_1BC5B:
+DivisionOfDriver:				; the division worked on (SetDivisionDrivers, SeasonEnd, PickOpponent) (probably)
 	dc.b	$00
 dat_1BC5C:
 	dc.b	$00
 	dc.b	$00
-dat_1BC5E:
+CarAcrossTrack:				; the car's place across the track (0-$180 on it: TrackUnderWheels adds each wheel's offset) (probably)
 	dc.b	$00
 dat_1BC5F:
 	dc.b	$00
@@ -1593,27 +1601,27 @@ dat_1BC88:
 dat_1BC8A:
 	dc.b	$00
 	dc.b	$00
-dat_1BC8C:
+TrackDataPointer:				; the track data entry being read (TrackDataEntry), in the 6502's data
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BC90:
+TrackDataStart:				; the track data's start (TrackDataFirst)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BC94:
+FrontHeight:				; the car's front height (CornerHeights) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BC98:
+MiddleHeight:				; the car's middle height (CornerHeights) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BC9C:
+BackHeight:				; the car's back height (CornerHeights) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -1624,7 +1632,7 @@ dat_1BCA0:
 dat_1BCA2:
 	dc.b	$00
 	dc.b	$00
-dat_1BCA4:
+WheelTrackHeights:				; the track's height under each wheel (WheelTrackHeight)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -1654,12 +1662,12 @@ dat_1BCB8:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BCBC:
+PieceDataPointer:				; the current piece's 6502 data (a 6502 address: $B100 = Data6502)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BCC0:
+LeagueBlockPointer:				; the league block being scrambled (ScrambleLeague; also a pointer for BuildTrack)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -1673,7 +1681,7 @@ dat_1BCC8:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BCCC:
+CarInSquareX:				; the car's x within its grid square (CarGridSquare) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -1683,77 +1691,77 @@ dat_1BCD0:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BCD4:
+CarInSquareZ:				; the car's z within its grid square (CarGridSquare) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BCD8:
+CarX:				; the car's x (a long, its high word here) (MoveCar)
 	dc.b	$00
 	dc.b	$00
 dat_1BCDA:
 	dc.b	$00
 	dc.b	$00
-dat_1BCDC:
+CarY:				; the car's height (a long) (MoveCar)
 	dc.b	$00
 dat_1BCDD:
 	dc.b	$00
 dat_1BCDE:
 	dc.b	$00
 	dc.b	$00
-dat_1BCE0:
+CarZ:				; the car's z (a long, its high word here) (MoveCar)
 	dc.b	$00
 	dc.b	$00
 dat_1BCE2:
 	dc.b	$00
 	dc.b	$00
-dat_1BCE4:
+CarPitch:				; the car's pitch (BuildViewMatrix, MoveCar) (probably)
 	dc.b	$00
 	dc.b	$00
-dat_1BCE6:
+CarHeading:				; the car's heading (its high byte DrawMountains' angle)
 	dc.b	$00
-dat_1BCE7:
+CarHeadingLow:				; the heading's low byte
 	dc.b	$00
-dat_1BCE8:
-	dc.b	$00
-	dc.b	$00
-dat_1BCEA:
+CarRoll:				; the car's roll (BuildViewMatrix, MoveCar) (probably)
 	dc.b	$00
 	dc.b	$00
-dat_1BCEC:
+VelocityX:				; the car's velocity, x (AddForce, MoveCar)
 	dc.b	$00
 	dc.b	$00
-dat_1BCEE:
+VelocityY:				; the car's velocity, y
 	dc.b	$00
 	dc.b	$00
-dat_1BCF0:
+VelocityZ:				; the car's velocity, z
 	dc.b	$00
 	dc.b	$00
-dat_1BCF2:
+TurnSpeedPitch:				; the car's turning speeds (AddTorque, MoveCar) (probably pitch)
 	dc.b	$00
 	dc.b	$00
-dat_1BCF4:
+TurnSpeedHeading:				; the car's turning speed (probably heading)
 	dc.b	$00
 	dc.b	$00
-dat_1BCF6:
+TurnSpeedRoll:				; the car's turning speed (probably roll)
 	dc.b	$00
 	dc.b	$00
-dat_1BCF8:
+ForceX:				; the forces on the car, x (ForceToWorld, DriveForce, AddForce)
 	dc.b	$00
 	dc.b	$00
-dat_1BCFA:
+ForceY:				; the forces on the car, y
 	dc.b	$00
 	dc.b	$00
-dat_1BCFC:
+ForceZ:				; the forces on the car, z
 	dc.b	$00
 	dc.b	$00
-dat_1BCFE:
+TurnForcePitch:				; the turning forces (TorqueToWorld, TurnForces, AddTorque) (probably pitch)
 	dc.b	$00
 	dc.b	$00
-dat_1BD00:
+TurnForceHeading:				; the turning force (probably heading)
 	dc.b	$00
 	dc.b	$00
-dat_1BD02:
+TurnForceRoll:				; the turning force (probably roll)
+	dc.b	$00
+	dc.b	$00
+SuspensionOffset0:				; the wheels' offsets (6 words: SuspensionOffsets) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD04:
@@ -1771,16 +1779,16 @@ dat_1BD0A:
 dat_1BD0C:
 	dc.b	$00
 	dc.b	$00
-dat_1BD0E:
+GravitySide:				; gravity in the car's axes (GravityInCarAxes) (probably sideways)
 	dc.b	$00
 	dc.b	$00
-dat_1BD10:
+GravityUp:				; gravity in the car's axes (probably up)
 	dc.b	$00
 	dc.b	$00
-dat_1BD12:
+GravityForward:				; gravity in the car's axes (probably forward)
 	dc.b	$00
 	dc.b	$00
-dat_1BD14:
+WheelSuspension:				; the wheels' suspension heights (WheelsOnTrack, PlaceWheelCutouts) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD16:
@@ -1813,54 +1821,54 @@ dat_1BD26:
 dat_1BD28:
 	dc.b	$00
 	dc.b	$00
-dat_1BD2A:
+DriveSetting:				; the engine's force setting (RaceInput, WheelForces, UseBoost) (probably)
 	dc.b	$00
 dat_1BD2B:
 	dc.b	$00
-dat_1BD2C:
+SpeedSideways:				; the car's speed in its own axes: sideways (VelocityToCarAxes)
 	dc.b	$00
 	dc.b	$00
-dat_1BD2E:
+SpeedUp:				; the car's speed in its own axes: up
 	dc.b	$00
 	dc.b	$00
-dat_1BD30:
+SpeedForward:				; the car's speed in its own axes: forward (the speedometer, the engine)
 	dc.b	$00
 	dc.b	$00
-dat_1BD32:
+CarForceSide:				; the forces in the car's axes (WheelForces, SideForce; ForceToWorld): sideways
 	dc.b	$00
 	dc.b	$00
-dat_1BD34:
+CarForceUp:				; the forces in the car's axes: up
 	dc.b	$00
 	dc.b	$00
-dat_1BD36:
+CarForceForward:				; the forces in the car's axes: forward
 	dc.b	$00
 	dc.b	$00
 dat_1BD38:
 	dc.b	$00
 dat_1BD39:
 	dc.b	$00
-dat_1BD3A:
+CarTurnForcePitch:				; the turning forces in the car's axes (TorqueToWorld) (probably pitch)
 	dc.b	$00
 	dc.b	$00
-dat_1BD3C:
+CarTurnForceHeading:				; the turning forces in the car's axes (probably heading)
 	dc.b	$00
 	dc.b	$00
-dat_1BD3E:
+CarTurnForceRoll:				; the turning forces in the car's axes (probably roll)
 	dc.b	$00
 	dc.b	$00
-dat_1BD40:
+SpringForceSide:				; the springs' forces summed (SuspensionForces, ApplyCollision): sideways (probably)
 	dc.b	$00
 	dc.b	$00
-dat_1BD42:
+SpringForceUp:				; the springs' forces summed: up (DropLower, GroundForce)
 	dc.b	$00
 	dc.b	$00
-dat_1BD44:
+SpringForceForward:				; the springs' forces summed: forward (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD46:
 	dc.b	$00
 	dc.b	$00
-dat_1BD48:
+SpringStates:				; the wheels' springs (6 words: SuspensionForces) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD4A:
@@ -1878,19 +1886,19 @@ dat_1BD50:
 dat_1BD52:
 	dc.b	$00
 	dc.b	$00
-dat_1BD54:
+KnockForceX:				; the knock's forces (OpponentCollide, ApplyCollision): x
 	dc.b	$00
 	dc.b	$00
-dat_1BD56:
+KnockForceY:				; the knock's forces: y
 	dc.b	$00
 	dc.b	$00
-dat_1BD58:
+KnockForceZ:				; the knock's forces: z
 	dc.b	$00
 	dc.b	$00
 dat_1BD5A:
 	dc.b	$00
 	dc.b	$00
-dat_1BD5C:
+SpeedForSparks:				; the speed for the sparks and the sound (SetSpeed) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD5E:
@@ -1904,7 +1912,7 @@ dat_1BD62:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BD66:
+OpponentCorners:				; the opponent car's corners (4 words; OpponentPhysics, PlaceOpponentStart) (probably their places along the track)
 	dc.b	$00
 	dc.b	$00
 dat_1BD68:
@@ -1926,7 +1934,7 @@ dat_1BD72:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1BD76:
+OpponentCornerSpeeds:				; the opponent car's corners' speeds (OpponentPhysics) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BD78:
@@ -1964,7 +1972,7 @@ PiecePointsX:				; the current piece's points: x (and z $20 on)
 dat_1BDAE:
 	dcb.b	33,$00
 	dc.b	$24
-dat_1BDD0:
+SectionFlags:				; each cross-section's flags, a byte a point pair (ClearPointHeights, ReversePieceHeights) (probably)
 	dcb.b	156,$00
 dat_1BE6C:
 	dc.b	$00
@@ -1973,7 +1981,7 @@ dat_1BE6C:
 	dc.b	$00
 PointHeights:				; the points' heights, a word each
 	dcb.b	244,$00
-dat_1BF64:
+LinkCarCorners:				; the linked car's corners for drawing (LinkOpponentCorners, DrawCarModel) (probably)
 	dc.b	$00
 	dc.b	$00
 dat_1BF66:
@@ -2192,13 +2200,13 @@ dat_1C276:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C280:
+TrackGrid:				; the track's grid: 16 x 16 squares, the piece in each ($FF none: BuildTrackGrid)
 	dcb.b	256,$00
-dat_1C380:
+SparkMoves:				; the sparks' movement (SparksAndSound) (probably)
 	dcb.b	64,$00
-dat_1C3C0:
+SparkPlaces:				; the 32 sparks' places ($D4: out of the view; ClearSparks)
 	dcb.b	64,$00
-dat_1C400:
+SparkPaths:				; the sparks' paths (SparksAndSound) (probably)
 	dcb.b	192,$00
 TrackPieceKinds:				; each piece's kind (BuildTrack)
 	dcb.b	100,$00
@@ -2246,7 +2254,7 @@ dat_1C6B8:
 	dcb.b	96,$00
 dat_1C718:
 	dcb.b	200,$00
-dat_1C7E0:
+PieceDistances:				; each piece's distance from the start (BuildTrack, UpdateOpponentDistance) (probably)
 	dcb.b	200,$00
 dat_1C8A8:
 	dcb.b	32,$00
@@ -2340,7 +2348,7 @@ dat_1C947:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C952:
+PieceOpponentLines:				; each piece's line for the opponent (BuildTrack, OpponentTargetLine, OpponentSwerve) (probably)
 	dcb.b	48,$00
 dat_1C982:
 	dc.b	$00
@@ -2363,7 +2371,7 @@ dat_1C9B6:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C9C2:
+DriverPlaces:				; the 12 drivers' places (SeasonEnd, FindDriverPlace, PickOpponent)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2376,14 +2384,14 @@ dat_1C9C2:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C9CE:
+PlayerDivision:				; the player's division (PrintSeasonPanel, SimulateOtherRaces, SeasonEnd) (probably)
 	dc.b	$00
-dat_1C9CF:
+DamageMarks:				; the damage carried through the season: the marks left (RaceStartDamage, CarKnocks, DrawDamageMark) (probably)
 	dc.b	$00
-dat_1C9D0:
+SuperLeague:				; non-zero: the super league (PrintTrackNameAt, TrackRecordEntry, SeasonEnd)
 	dc.b	$00
 	dc.b	$00
-dat_1C9D2:
+OtherRaceScores:				; the other races' results, a byte a driver (SimulateOtherRaces)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2396,7 +2404,7 @@ dat_1C9D2:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C9DE:
+DriverWins:				; the 12 drivers' races won (AwardRacePoints, PrintLeagueLine) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2409,7 +2417,7 @@ dat_1C9DE:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C9EA:
+DriverPoints:				; the 12 drivers' points (AwardRacePoints, UpdateLeague, PrintLeagueLine) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2422,7 +2430,7 @@ dat_1C9EA:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1C9F6:
+DriverBestTimes:				; the 12 drivers' best times (PrintLeagueLine) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2435,7 +2443,7 @@ dat_1C9F6:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1CA02:
+DriverLapRecords:				; the 12 drivers' best laps (UpdateLeague, PrintLeagueLine) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2448,7 +2456,7 @@ dat_1CA02:
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
-dat_1CA0E:
+DriverOrder:				; the 12 drivers in the table's order (SeasonEnd, PrintLeagueLine) (probably)
 	dc.b	$00
 	dc.b	$00
 	dc.b	$00
@@ -2468,12 +2476,12 @@ dat_1CA1B:
 	dc.b	$00
 dat_1CA1C:
 	dc.b	$00
-dat_1CA1D:
+StartPiece:				; the start and finish piece (CheckLapPiece)
 	dc.b	$00
 dat_1CA1E:
 	dc.b	$00
 	dc.b	$00
-dat_1CA20:
+BoostLeft:				; the boost left (BCD: UseBoost, PrintBoost)
 	dc.b	$00
 dat_1CA21:
 	dc.b	$00
@@ -2481,17 +2489,17 @@ dat_1CA22:
 	dc.b	$00
 dat_1CA23:
 	dc.b	$00
-dat_1CA24:
+RaceWinnerDriver:				; the race's winner, a driver (AwardRacePoints, CheckRecordTimes)
 	dc.b	$00
 dat_1CA25:
 	dc.b	$00
 dat_1CA26:
 	dc.b	$00
-dat_1CA27:
+OpponentDriver:				; the opponent, a driver (PickOpponent, PrintOpponentName)
 	dc.b	$00
 dat_1CA28:
 	dc.b	$00
-dat_1CA29:
+OpponentSkill:				; the opponent's driver, for its skill (OpponentDrive: dat_1ED8A) (probably)
 	dc.b	$00
 dat_1CA2A:
 	dc.b	$00
@@ -2507,13 +2515,13 @@ dat_1CA2F:
 	dc.b	$00,$00
 dat_1CA31:
 	dc.b	$00
-dat_1CA32:
+LapStartPiece:				; the piece the laps count from (OpponentLead, CheckLapPiece)
 	dc.b	$00
 CurrentTrack:				; the track being raced or practised (0-7)
 	dc.b	$00
 dat_1CA34:
 	dc.b	$00
-dat_1CA35:
+RaceInSeason:				; the race of the season (ChooseTrack, SimulateOtherRaces, SetOpponentSkill) (probably)
 	dc.b	$00
 dat_1CA36:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -3722,7 +3730,7 @@ LinkSendCarState:
         jsr     (LinkSendByte).l                ; 571E2
         move.w  (PlayerPiecePos).l,d0           ; 571E8
         jsr     (LinkSendWord).l                ; 571EE
-        move.w  (dat_1BCEC).l,d0                ; 571F4
+        move.w  (VelocityY).l,d0                ; 571F4
         asr.w   #$1,d0                          ; 571FA
         add.w   (dat_1BD38).l,d0                ; 571FC
         asr.w   #$3,d0                          ; 57202
@@ -3730,19 +3738,19 @@ LinkSendCarState:
         clr.w   d0                              ; 57208
 l_5720A:
         move.w  d0,(dat_57C70).l                ; 5720A
-        move.l  (dat_1BC94).l,d0                ; 57210
+        move.l  (FrontHeight).l,d0                ; 57210
         asr.l   #$3,d0                          ; 57216
         add.w   (dat_57C70).l,d0                ; 57218
         bpl.w   l_57224                         ; 5721E
         clr.w   d0                              ; 57222
 l_57224:
-        move.l  (dat_1BC98).l,d3                ; 57224
+        move.l  (MiddleHeight).l,d3                ; 57224
         asr.l   #$3,d3                          ; 5722A
         add.w   (dat_57C70).l,d3                ; 5722C
         bpl.w   l_57238                         ; 57232
         clr.w   d3                              ; 57236
 l_57238:
-        move.l  (dat_1BC9C).l,d4                ; 57238
+        move.l  (BackHeight).l,d4                ; 57238
         asr.l   #$3,d4                          ; 5723E
         add.w   (dat_57C70).l,d4                ; 57240
         bpl.w   l_5724C                         ; 57246
@@ -3765,10 +3773,10 @@ l_5724C:
         jsr     (LinkSendWord).l                ; 57272
         move.w  d7,d0                           ; 57278
         jsr     (LinkSendWord).l                ; 5727A
-        move.w  (dat_1BD30).l,d0                ; 57280
+        move.w  (SpeedForward).l,d0                ; 57280
         jsr     (LinkSendWord).l                ; 57286
-        move.w  (dat_1BC5E).l,d0                ; 5728C
-        tst.b   (dat_1BC32).l                   ; 57292
+        move.w  (CarAcrossTrack).l,d0                ; 5728C
+        tst.b   (PieceReversed).l                   ; 57292
         bpl.w   l_572A2                         ; 57298
         neg.w   d0                              ; 5729C
         addi.w  #$180,d0                        ; 5729E
@@ -3803,18 +3811,18 @@ l_5731C:
 l_57322:
         move.b  (dat_1BB64).l,d0                ; 57322
         jsr     (LinkSendByte).l                ; 57328
-        move.b  (dat_1BB6C).l,d0                ; 5732E
+        move.b  (MessageTimer).l,d0                ; 5732E
         jsr     (LinkSendByte).l                ; 57334
         move.b  (dat_1BBE2).l,d0                ; 5733A
         jsr     (LinkSendByte).l                ; 57340
         move.b  (DropCountdown).l,d0            ; 57346
         jsr     (LinkSendByte).l                ; 5734C
-        move.b  (dat_1C9CF).l,d0                ; 57352
+        move.b  (DamageMarks).l,d0                ; 57352
         tst.b   (DropCountdown).l               ; 57358
         beq.w   l_57366                         ; 5735E
         bset    #$7,d0                          ; 57362
 l_57366:
-        tst.b   (dat_1BBE1).l                   ; 57366
+        tst.b   (DrivingBackwards).l                   ; 57366
         bpl.w   l_57374                         ; 5736C
         bset    #$6,d0                          ; 57370
 l_57374:
@@ -3826,9 +3834,9 @@ l_57374:
         jsr     (LinkSendByte).l                ; 5738E
         move.b  (dat_57C6D).l,d0                ; 57394
         jsr     (LinkSendByte).l                ; 5739A
-        move.b  (dat_1BBCC).l,d0                ; 573A0
+        move.b  (LapTimeTimer).l,d0                ; 573A0
         jsr     (LinkSendByte).l                ; 573A6
-        move.b  (dat_1BBC9).l,d0                ; 573AC
+        move.b  (StepCount).l,d0                ; 573AC
         jsr     (LinkSendByte).l                ; 573B2
         move.w  (LinkSendSum).l,d0              ; 573B8
         jsr     (LinkSendWord).l                ; 573BE
@@ -3867,7 +3875,7 @@ LinkReceiveCarState:
         move.b  (dat_1BBA5).l,(dat_57C50).l     ; 5744A
         move.b  (dat_1BB64).l,(dat_57C51).l     ; 57454
         move.b  (dat_1BBE2).l,(dat_57C52).l     ; 5745E
-        move.b  (dat_1BB6C).l,(dat_57C53).l     ; 57468
+        move.b  (MessageTimer).l,(dat_57C53).l     ; 57468
         move.b  (DropCountdown).l,(dat_57C54).l ; 57472
         jsr     (LinkGetWord).l                 ; 5747C
         move.w  d0,d0                           ; 57482
@@ -3948,14 +3956,14 @@ l_57596:
         cmp.w   (dat_57C42).l,d0                ; 575F0
         bne.w   l_576EE                         ; 575F6
         jsr     (LinkFlushInput).l              ; 575FA
-        move.l  (dat_57C46).l,(dat_1BD66).l     ; 57600
+        move.l  (dat_57C46).l,(OpponentCorners).l     ; 57600
         move.w  (dat_57C4A).l,(dat_1BD6A).l     ; 5760A
         move.w  (dat_57C4C).l,(dat_1BBEE).l     ; 57614
         move.w  (dat_57C4E).l,(dat_1BBEC).l     ; 5761E
         move.b  (dat_57C50).l,(dat_1BBA5).l     ; 57628
         move.b  (dat_57C51).l,(dat_1BB64).l     ; 57632
         move.b  (dat_57C52).l,(dat_1BBE2).l     ; 5763C
-        move.b  (dat_57C53).l,(dat_1BB6C).l     ; 57646
+        move.b  (dat_57C53).l,(MessageTimer).l     ; 57646
         move.b  (dat_57C54).l,(DropCountdown).l ; 57650
         move.b  (dat_57C55).l,d0                ; 5765A
         move.b  d0,(dat_1BBE0).l                ; 57660
@@ -3966,7 +3974,7 @@ l_57596:
         move.b  (dat_57C58).l,(dat_1C939).l     ; 57684
         move.b  (dat_57C59).l,(dat_1BB76).l     ; 5768E
         move.b  (dat_57C5A).l,d0                ; 57698
-        sub.b   (dat_1BBC9).l,d0                ; 5769E
+        sub.b   (StepCount).l,d0                ; 5769E
         bpl.w   l_576BE                         ; 576A4
         jsr     (LinkDelay5).l                  ; 576A8
         jsr     (LinkSendCarState).l            ; 576AE
@@ -3978,9 +3986,9 @@ l_576BE:
 l_576CA:
         tst.b   (dat_1CA22).l                   ; 576CA
         bpl.w   l_576EC                         ; 576D0
-        jsr     (sub_641B6).l                   ; 576D4
-        jsr     (sub_6076C).l                   ; 576DA
-        jsr     (sub_636C0).l                   ; 576E0
+        jsr     (LinkOpponentCorners).l                   ; 576D4
+        jsr     (UpdateOpponentDistance).l                   ; 576DA
+        jsr     (OpponentDrive).l                   ; 576E0
         jsr     (PlaceCarOnTrack).l             ; 576E6
 l_576EC:
         rts                                     ; 576EC
@@ -4027,7 +4035,7 @@ l_5776E:
         eori.b  #$c0,d0                         ; 57788
         move.b  d0,(dat_1BBB4).l                ; 5778C
         move.b  #$80,(dat_1BB6F).l              ; 57792
-        move.b  #$5,(dat_1BBAF).l               ; 5779A
+        move.b  #$5,(RaceWinner).l               ; 5779A
         move.b  #$0,(dat_1BBE2).l               ; 577A2
         move.b  #$0,(dat_1BB64).l               ; 577AA
         move.b  #$0,(dat_1BBA5).l               ; 577B2
@@ -4149,7 +4157,7 @@ LinkMakeRaceFlags:
         tst.b   (LinkMode).l                    ; 57964
         beq.w   l_579AE                         ; 5796A
         move.b  #$0,d0                          ; 5796E
-        tst.b   (dat_1BBAF).l                   ; 57972
+        tst.b   (RaceWinner).l                   ; 57972
         beq.w   l_57986                         ; 57978
         move.b  (dat_1BBB4).l,d0                ; 5797C
         ori.b   #$20,d0                         ; 57982
@@ -4239,7 +4247,7 @@ l_57ABA:
 ; LinkExchangeControls - the controls exchanged with the other machine (d0)
 ;-------------------------------------------------------------------------------
 LinkExchangeControls:
-        move.b  d0,(dat_1BB47).l                ; 57AC0
+        move.b  d0,(ControlBits).l                ; 57AC0
         move.b  #$80,(dat_57C6F).l              ; 57AC6
         tst.b   (dat_57C5B).l                   ; 57ACE
         bpl.w   l_57B4C                         ; 57AD4
@@ -4257,17 +4265,17 @@ l_57B00:
         bpl.w   l_57AE6                         ; 57B02
         move.b  (dat_57C6F).l,(LinkFrameValue).l ; 57B06
 l_57B10:
-        move.b  (dat_1BB47).l,(LinkFrameData).l ; 57B10
+        move.b  (ControlBits).l,(LinkFrameData).l ; 57B10
         move.b  #$e3,(LinkFrameCommand).l       ; 57B1A
         jsr     (LinkExchange).l                ; 57B22
         bcs.w   l_57B4C                         ; 57B28
         cmpi.b  #$40,(LinkMode).l               ; 57B2C
         bne.w   l_57B4C                         ; 57B34
-        move.b  (dat_57C60).l,(dat_1BB47).l     ; 57B38
+        move.b  (dat_57C60).l,(ControlBits).l     ; 57B38
         move.b  (dat_57C5F).l,(dat_57C6F).l     ; 57B42
 l_57B4C:
         move.b  #$0,(LinkFrameCommand).l        ; 57B4C
-        move.b  (dat_1BB47).l,d0                ; 57B54
+        move.b  (ControlBits).l,d0                ; 57B54
         rts                                     ; 57B5A
 
 ;-------------------------------------------------------------------------------
@@ -4280,7 +4288,7 @@ LinkCheckChoice:
         addq.b  #$1,d3                          ; 57B6C
         cmp.b   d3,d0                           ; 57B6E
         bgt.w   l_57B80                         ; 57B70
-        move.b  (dat_57C6F).l,(dat_1BBD6).l     ; 57B74
+        move.b  (dat_57C6F).l,(GridOffsetY).l     ; 57B74
         rts                                     ; 57B7E
 l_57B80:
         move.b  #$80,d0                         ; 57B80
@@ -4297,7 +4305,7 @@ LinkWaitBoth:
         jsr     (LinkExchange).l                ; 57BA0
         bcs.w   l_57C0A                         ; 57BA6
 l_57BAA:
-        jsr     (sub_5F98A).l                   ; 57BAA
+        jsr     (DefineKeys).l                   ; 57BAA
         move.b  #$18,d1                         ; 57BB0
         jsr     (KeyDown).l                     ; 57BB4
         beq.w   l_57BE4                         ; 57BBA
@@ -4313,7 +4321,7 @@ l_57BE4:
         jsr     (LinkExchange).l                ; 57BEC
         bra.w   l_57C0A                         ; 57BF2
 l_57BF6:
-        jsr     (sub_5F98A).l                   ; 57BF6
+        jsr     (DefineKeys).l                   ; 57BF6
         move.b  #$18,d1                         ; 57BFC
         jsr     (KeyDown).l                     ; 57C00
         bne.w   l_57BF6                         ; 57C06
@@ -4452,8 +4460,8 @@ LinkConnect:
         move.l  (ScreenDraw).l,-(a7)            ; 57C7E
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 57C84
         jsr     (ClearPanel).l                  ; 57C8E
-        move.b  #$1,(dat_1BB16).l               ; 57C94
-        jsr     (sub_64B0E).l                   ; 57C9C
+        move.b  #$1,(WorkByte1).l               ; 57C94
+        jsr     (TextAtListLineTwo).l                   ; 57C9C
         jsr     (LinkFlushInput).l              ; 57CA2
         jsr     (LinkDelay2).l                  ; 57CA8
         jsr     (LinkByteWaiting).l             ; 57CAE
@@ -4489,14 +4497,14 @@ l_57D00:
         cmpi.b  #$40,d0                         ; 57D34
         bne.w   l_57D00                         ; 57D38
 l_57D3C:
-        move.b  #$1,(dat_1BB16).l               ; 57D3C
-        jsr     (sub_64B0E).l                   ; 57D44
+        move.b  #$1,(WorkByte1).l               ; 57D3C
+        jsr     (TextAtListLineTwo).l                   ; 57D44
         move.w  #$12,d3                         ; 57D4A
         jsr     (LinkPrintStatus).l             ; 57D4E
         move.b  #$80,(dat_57C5B).l              ; 57D54
         jsr     (WaitFire).l                    ; 57D5C
         move.l  (a7)+,(ScreenDraw).l            ; 57D62
-        jsr     (sub_64834).l                   ; 57D68
+        jsr     (TextOffsetNone).l                   ; 57D68
         tst.b   (LinkMode).l                    ; 57D6E
         bmi.w   l_57D7E                         ; 57D74
         jsr     (LinkShowAbandoned).l           ; 57D78
@@ -4506,13 +4514,13 @@ l_57D7E:
         rts                                     ; 57D88
 l_57D8A:
         move.b  #$0,(LinkMode).l                ; 57D8A
-        move.b  #$1,(dat_1BB16).l               ; 57D92
-        jsr     (sub_64B0E).l                   ; 57D9A
+        move.b  #$1,(WorkByte1).l               ; 57D92
+        jsr     (TextAtListLineTwo).l                   ; 57D9A
         move.w  #$0,d3                          ; 57DA0
         jsr     (LinkPrintStatus).l             ; 57DA4
         jsr     (WaitFire).l                    ; 57DAA
         move.l  (a7)+,(ScreenDraw).l            ; 57DB0
-        jsr     (sub_64834).l                   ; 57DB6
+        jsr     (TextOffsetNone).l                   ; 57DB6
         ori.b   #$1,ccr                         ; 57DBC
         rts                                     ; 57DC0
 
@@ -4717,7 +4725,7 @@ LinkSwapOpponent:
         move.b  (PlayerLaps).l,(dat_580D6).l    ; 58092
         move.b  (dat_5EB79).l,(dat_580D7).l     ; 5809C
         move.b  (OpponentLaps).l,(PlayerLaps).l ; 580A6
-        move.b  (dat_1CA29).l,(dat_5EB79).l     ; 580B0
+        move.b  (OpponentSkill).l,(dat_5EB79).l     ; 580B0
         jsr     (CheckRecordTimes).l            ; 580BA
         move.b  (dat_580D6).l,(PlayerLaps).l    ; 580C0
         move.b  (dat_580D7).l,(dat_5EB79).l     ; 580CA
@@ -4754,7 +4762,7 @@ l_58114:
         bmi.w   l_58132                         ; 5812C
         exg.l   d0,d1                           ; 58130
 l_58132:
-        move.b  d0,(dat_1CA27).l                ; 58132
+        move.b  d0,(OpponentDriver).l                ; 58132
         move.b  d0,(dat_5EB79).l                ; 58138
         move.b  d1,(dat_1CA28).l                ; 5813E
         rts                                     ; 58144
@@ -4782,11 +4790,11 @@ LinkShowAbandoned:
         move.l  (ScreenDraw).l,-(a7)            ; 58200
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 58206
         jsr     (ClearPanel).l                  ; 58210
-        move.b  #$1,(dat_1BB16).l               ; 58216
-        jsr     (sub_64B0E).l                   ; 5821E
+        move.b  #$1,(WorkByte1).l               ; 58216
+        jsr     (TextAtListLineTwo).l                   ; 5821E
         move.w  #$2e,d3                         ; 58224
         jsr     (LinkPrintStatus).l             ; 58228
-        jsr     (sub_64834).l                   ; 5822E
+        jsr     (TextOffsetNone).l                   ; 5822E
         move.l  (a7)+,(ScreenDraw).l            ; 58234
         rts                                     ; 5823A
 
@@ -4819,13 +4827,13 @@ LinkSendPosition:
         beq.w   l_582F2                         ; 58298
         tst.b   (dat_1BB6B).l                   ; 5829C
         bne.w   l_582B4                         ; 582A2
-        movea.l #dat_1C9CE,a6                   ; 582A6
+        movea.l #PlayerDivision,a6                   ; 582A6
         move.w  #$2,d7                          ; 582AC
         bra.w   l_582E8                         ; 582B0
 l_582B4:
         move.b  #$1,(dat_1CA31).l               ; 582B4
         move.b  #$1,d0                          ; 582BC
-        jsr     (sub_5F374).l                   ; 582C0
+        jsr     (LeagueTransfer).l                   ; 582C0
         move.b  #$0,(dat_1CA31).l               ; 582C6
         movea.l #$7a41a,a6                      ; 582CE
         move.w  #$ff,d7                         ; 582D4
@@ -4888,7 +4896,7 @@ l_583B0:
         bmi.w   LinkReceivePosition             ; 583B6
         tst.b   (dat_1BB6B).l                   ; 583BA
         bne.w   l_583DC                         ; 583C0
-        movea.l #dat_1C9CE,a0                   ; 583C4
+        movea.l #PlayerDivision,a0                   ; 583C4
         movea.l #$7a41a,a6                      ; 583CA
         move.w  #$2,d7                          ; 583D0
 l_583D4:
@@ -4897,7 +4905,7 @@ l_583D4:
         rts                                     ; 583DA
 l_583DC:
         move.b  #$0,d0                          ; 583DC
-        jsr     (sub_5F374).l                   ; 583E0
+        jsr     (LeagueTransfer).l                   ; 583E0
 l_583E6:
         rts                                     ; 583E6
 l_583E8:
@@ -4914,7 +4922,7 @@ l_58402:
         jsr     (LinkReceiveBlock).l            ; 58416
         bmi.w   l_58402                         ; 5841C
         jsr     (CodesToControlKeys).l          ; 58420
-        move.b  (dat_1CA29).l,d0                ; 58426
+        move.b  (OpponentSkill).l,d0                ; 58426
         jsr     (KeyEntryPosition).l            ; 5842C
         movea.l #$7a41a,a1                      ; 58432
         jsr     (CopyBytesDown).l               ; 58438
@@ -4943,7 +4951,7 @@ KeyEntryPosition:
         addq.b  #$4,d0                          ; 5847A
         move.b  d0,d2                           ; 5847C
         move.b  #$4,d1                          ; 5847E
-        movea.l #sub_5FB3A,a2                   ; 58482
+        movea.l #KeyEntryNotCode,a2                   ; 58482
         rts                                     ; 58488
 
 ;-------------------------------------------------------------------------------
@@ -5100,9 +5108,9 @@ l_586B6:
         dbra    d7,l_586B6                      ; 586B8
         move.b  (a6)+,(dat_1BBB4).l             ; 586BC
         eori.b  #$c0,(dat_1BBB4).l              ; 586C2
-        move.b  (a6)+,(dat_1BBB1).l             ; 586CA
+        move.b  (a6)+,(RaceResultFlags).l             ; 586CA
         move.b  (a6)+,(dat_1CA23).l             ; 586D0
-        move.b  (a6)+,(dat_1CA24).l             ; 586D6
+        move.b  (a6)+,(RaceWinnerDriver).l             ; 586D6
         movea.l #dat_5EC48,a0                   ; 586DC
         move.w  #$b,d7                          ; 586E2
 l_586E6:
@@ -5118,9 +5126,9 @@ l_58704:
         move.b  (a0)+,(a6)+                     ; 58704
         dbra    d7,l_58704                      ; 58706
         move.b  (dat_1BBB4).l,(a6)+             ; 5870A
-        move.b  (dat_1BBB1).l,(a6)+             ; 58710
+        move.b  (RaceResultFlags).l,(a6)+             ; 58710
         move.b  (dat_1CA23).l,(a6)+             ; 58716
-        move.b  (dat_1CA24).l,(a6)+             ; 5871C
+        move.b  (RaceWinnerDriver).l,(a6)+             ; 5871C
         movea.l #dat_5EC48,a0                   ; 58722
         move.w  #$b,d7                          ; 58728
 l_5872C:
@@ -5151,10 +5159,10 @@ LinkCheckOvertake:
         move.b  (PlayerPiece).l,d3              ; 58778
         cmp.b   (OpponentPiece).l,d3            ; 5877E
         bne.w   l_5879C                         ; 58784
-        move.b  (dat_1BBE1).l,d3                ; 58788
+        move.b  (DrivingBackwards).l,d3                ; 58788
         eor.b   d3,d0                           ; 5878E
         bmi.w   l_5879C                         ; 58790
-        eori.b  #$80,(dat_1BBE1).l              ; 58794
+        eori.b  #$80,(DrivingBackwards).l              ; 58794
 l_5879C:
         rts                                     ; 5879C
 
@@ -5175,7 +5183,7 @@ LinkSwapDivisionPlaces:
         addi.b  #$c,d1                          ; 587CC
         move.b  #$0,d2                          ; 587D0
         jsr     (GetLeagueEntry).l              ; 587D4
-        move.b  (dat_1CA29).l,d1                ; 587DA
+        move.b  (OpponentSkill).l,d1                ; 587DA
         addi.b  #$c,d1                          ; 587E0
         move.b  #$1,d2                          ; 587E4
         jsr     (GetLeagueEntry).l              ; 587E8
@@ -5186,7 +5194,7 @@ l_587F0:
         addi.b  #$c,d2                          ; 587F6
         move.b  #$0,d1                          ; 587FA
         jsr     (SwapLeagueEntry).l             ; 587FE
-        move.b  (dat_1CA29).l,d2                ; 58804
+        move.b  (OpponentSkill).l,d2                ; 58804
         addi.b  #$c,d2                          ; 5880A
         move.b  #$1,d1                          ; 5880E
 
@@ -5254,7 +5262,7 @@ l_588B4:
         bne.w   l_588B4                         ; 588C4
         move.l  (ScreenDraw).l,-(a7)            ; 588C8
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 588CE
-        movea.l #dat_1C9C2,a6                   ; 588D8
+        movea.l #DriverPlaces,a6                   ; 588D8
         move.w  #$0,d6                          ; 588DE
 l_588E2:
         move.b  (a6,d6.w),d0                    ; 588E2
@@ -5274,7 +5282,7 @@ l_588E2:
 ;-------------------------------------------------------------------------------
 DrawRaceDrivers:
         jsr     (PickOpponent).l                ; 58914
-        move.b  (dat_1CA27).l,d0                ; 5891A
+        move.b  (OpponentDriver).l,d0                ; 5891A
         move.b  #$c,d3                          ; 58920
         jsr     (DrawDriverFace).l              ; 58924
         move.b  (dat_1CA28).l,d0                ; 5892A
@@ -5396,7 +5404,7 @@ dat_58B20:
 DrawFaceFrame:
         move.b  (dat_58BBA).l,d3                ; 58B2C
         andi.l  #$f,d3                          ; 58B32
-        move.b  #$36,(dat_1BB1B).l              ; 58B38
+        move.b  #$36,(WorkByte6).l              ; 58B38
         movea.l a0,a5                           ; 58B40
         movea.l a3,a0                           ; 58B42
 l_58B44:
@@ -5412,13 +5420,13 @@ l_58B4E:
         not.l   d0                              ; 58B68
         and.l   d0,$2(a1)                       ; 58B6A
         and.l   d0,$6(a1)                       ; 58B6E
-        jsr     (sub_69FE8).l                   ; 58B72
+        jsr     (CutoutShiftedRow).l                   ; 58B72
         addq.b  #$1,d1                          ; 58B78
         cmpi.b  #$5,d1                          ; 58B7A
         blt.w   l_58B4E                         ; 58B7E
         adda.l  #$78,a5                         ; 58B82
         adda.l  #$1e,a0                         ; 58B88
-        subq.b  #$1,(dat_1BB1B).l               ; 58B8E
+        subq.b  #$1,(WorkByte6).l               ; 58B8E
         bpl.w   l_58B44                         ; 58B94
         rts                                     ; 58B98
 dat_58B9A:
@@ -5522,7 +5530,7 @@ l_58E74:
 l_58E7A:
         tst.b   (dat_1BBAA).l                   ; 58E7A
         bmi.w   l_58ED4                         ; 58E80
-        jsr     (sub_64834).l                   ; 58E84
+        jsr     (TextOffsetNone).l                   ; 58E84
         move.b  #$b,d0                          ; 58E8A
         jsr     (ShowRaceScreen).l              ; 58E8E
         move.w  #$0,d3                          ; 58E94
@@ -5530,24 +5538,24 @@ l_58E7A:
         jsr     (DrawRaceDrivers).l             ; 58E9E
         move.b  #$f,d0                          ; 58EA4
         jsr     (SetTextColour).l               ; 58EA8
-        jsr     (sub_64834).l                   ; 58EAE
+        jsr     (TextOffsetNone).l                   ; 58EAE
         move.b  #$14,d2                         ; 58EB4
-        jsr     (sub_5EAE0).l                   ; 58EB8
+        jsr     (PrintTrackNameAt).l                   ; 58EB8
         move.b  #$80,d0                         ; 58EBE
-        jsr     (sub_5F25A).l                   ; 58EC2
-        jsr     (sub_5F074).l                   ; 58EC8
+        jsr     (TrackRecordEntry).l                   ; 58EC2
+        jsr     (PrintRaceResults).l                   ; 58EC8
         jmp     (l_64828).l                     ; 58ECE
 l_58ED4:
-        jsr     (sub_64C0E).l                   ; 58ED4
+        jsr     (TextOffsetFour).l                   ; 58ED4
         move.b  #$a,d0                          ; 58EDA
         jsr     (ShowRaceScreen).l              ; 58EDE
         jsr     (PickOpponent).l                ; 58EE4
         move.b  #$11,d0                         ; 58EEA
-        jsr     (sub_648D2).l                   ; 58EEE
-        jsr     (sub_64834).l                   ; 58EF4
+        jsr     (PrintOpponentName).l                   ; 58EEE
+        jsr     (TextOffsetNone).l                   ; 58EF4
         move.b  #$60,d1                         ; 58EFA
         jsr     (PrintMenuText).l               ; 58EFE
-        jsr     (sub_64C0E).l                   ; 58F04
+        jsr     (TextOffsetFour).l                   ; 58F04
         move.b  #$1,d0                          ; 58F0A
         jsr     (SetTextColour).l               ; 58F0E
         move.w  #$5,d3                          ; 58F14
@@ -5560,9 +5568,9 @@ l_58ED4:
         jsr     (DrawDriverFace).l              ; 58F38
         jmp     (l_64828).l                     ; 58F3E
 l_58F44:
-        movea.l #dat_1CA0E,a6                   ; 58F44
+        movea.l #DriverOrder,a6                   ; 58F44
         clr.w   d6                              ; 58F4A
-        move.b  (dat_1BBE8).l,d6                ; 58F4C
+        move.b  (TextColourChoice).l,d6                ; 58F4C
         move.b  #$e,(dat_58BBA).l               ; 58F52
         move.b  (a6,d6.w),d0                    ; 58F5A
         move.b  #$10,d3                         ; 58F5E
@@ -5576,83 +5584,83 @@ l_58F44:
         move.b  #$12,d3                         ; 58F8A
         jsr     (DrawDriverFace).l              ; 58F8E
         move.b  #$0,(dat_58BBA).l               ; 58F94
-        jsr     (sub_64C0E).l                   ; 58F9C
+        jsr     (TextOffsetFour).l                   ; 58F9C
         move.b  #$1,d0                          ; 58FA2
         jsr     (SetTextColour).l               ; 58FA6
         move.w  #$49,d3                         ; 58FAC
-        move.b  #$4,(dat_1BB6D).l               ; 58FB0
+        move.b  #$4,(TextPixelX).l               ; 58FB0
         jsr     (PrintLeagueText).l             ; 58FB8
-        clr.b   (dat_1BB6D).l                   ; 58FBE
+        clr.b   (TextPixelX).l                   ; 58FBE
         move.b  #$f,d0                          ; 58FC4
         jsr     (SetTextColour).l               ; 58FC8
         move.b  #$4,(dat_5913E).l               ; 58FCE
 l_58FD6:
-        move.b  (dat_1BBE8).l,d2                ; 58FD6
-        movea.l #dat_1CA0E,a2                   ; 58FDC
+        move.b  (TextColourChoice).l,d2                ; 58FD6
+        movea.l #DriverOrder,a2                   ; 58FDC
         move.b  (a2,d2.w),(dat_1BBE4).l         ; 58FE2
         move.b  #$f,d0                          ; 58FEA
         jsr     (SetTextColour).l               ; 58FEE
         move.b  (dat_5913E).l,d1                ; 58FF4
         move.b  #$13,d2                         ; 58FFA
         jsr     (SetTextPosition).l             ; 58FFE
-        jsr     (sub_64C0E).l                   ; 59004
+        jsr     (TextOffsetFour).l                   ; 59004
         move.w  #$25,d3                         ; 5900A
         jsr     (PrintLeagueText).l             ; 5900E
         move.b  #$1,d0                          ; 59014
         jsr     (SetTextColour).l               ; 59018
-        movea.l #dat_1C9F6,a1                   ; 5901E
+        movea.l #DriverBestTimes,a1                   ; 5901E
         clr.w   d0                              ; 59024
         move.b  (dat_1BBE4).l,d0                ; 59026
         move.b  (a1,d0.w),d0                    ; 5902C
-        jsr     (sub_5EDD2).l                   ; 59030
+        jsr     (PrintNumber2).l                   ; 59030
         move.b  #$f,d0                          ; 59036
         jsr     (SetTextColour).l               ; 5903A
         move.b  (dat_5913E).l,d1                ; 59040
         move.b  #$15,d2                         ; 59046
         jsr     (SetTextPosition).l             ; 5904A
-        jsr     (sub_64834).l                   ; 59050
+        jsr     (TextOffsetNone).l                   ; 59050
         move.w  #$2e,d3                         ; 59056
         jsr     (PrintLeagueText).l             ; 5905A
         move.b  #$1,d0                          ; 59060
         jsr     (SetTextColour).l               ; 59064
-        movea.l #dat_1C9DE,a1                   ; 5906A
+        movea.l #DriverWins,a1                   ; 5906A
         clr.w   d0                              ; 59070
         move.b  (dat_1BBE4).l,d0                ; 59072
         move.b  (a1,d0.w),d0                    ; 59078
-        jsr     (sub_5EDD2).l                   ; 5907C
+        jsr     (PrintNumber2).l                   ; 5907C
         move.b  #$f,d0                          ; 59082
         jsr     (SetTextColour).l               ; 59086
         move.b  (dat_5913E).l,d1                ; 5908C
         move.b  #$16,d2                         ; 59092
         jsr     (SetTextPosition).l             ; 59096
-        jsr     (sub_64C0E).l                   ; 5909C
+        jsr     (TextOffsetFour).l                   ; 5909C
         move.w  #$37,d3                         ; 590A2
         jsr     (PrintLeagueText).l             ; 590A6
         move.b  #$1,d0                          ; 590AC
         jsr     (SetTextColour).l               ; 590B0
-        movea.l #dat_1C9EA,a1                   ; 590B6
+        movea.l #DriverPoints,a1                   ; 590B6
         clr.w   d0                              ; 590BC
         move.b  (dat_1BBE4).l,d0                ; 590BE
         move.b  (a1,d0.w),d0                    ; 590C4
-        jsr     (sub_5EDD2).l                   ; 590C8
+        jsr     (PrintNumber2).l                   ; 590C8
         move.b  #$f,d0                          ; 590CE
         jsr     (SetTextColour).l               ; 590D2
         move.b  (dat_5913E).l,d1                ; 590D8
         move.b  #$18,d2                         ; 590DE
         jsr     (SetTextPosition).l             ; 590E2
-        jsr     (sub_64834).l                   ; 590E8
+        jsr     (TextOffsetNone).l                   ; 590E8
         move.w  #$40,d3                         ; 590EE
         jsr     (PrintLeagueText).l             ; 590F2
         move.b  #$1,d0                          ; 590F8
         jsr     (SetTextColour).l               ; 590FC
-        movea.l #dat_1CA02,a1                   ; 59102
+        movea.l #DriverLapRecords,a1                   ; 59102
         clr.w   d0                              ; 59108
         move.b  (dat_1BBE4).l,d0                ; 5910A
         move.b  (a1,d0.w),d0                    ; 59110
-        jsr     (sub_5EDD2).l                   ; 59114
+        jsr     (PrintNumber2).l                   ; 59114
         addi.b  #$b,(dat_5913E).l               ; 5911A
-        addq.b  #$1,(dat_1BBE8).l               ; 59122
-        move.b  (dat_1BBE8).l,d0                ; 59128
+        addq.b  #$1,(TextColourChoice).l               ; 59122
+        move.b  (TextColourChoice).l,d0                ; 59128
         cmp.b   (dat_1BC59).l,d0                ; 5912E
         bne.w   l_58FD6                         ; 59134
         jmp     (l_64828).l                     ; 59138
@@ -5751,14 +5759,14 @@ dat_5924C:
 ; PrintDriverLabel - a driver's name centred under his face
 ;-------------------------------------------------------------------------------
 PrintDriverLabel:
-        move.b  (dat_1BBD3).l,d0                ; 59250
+        move.b  (TextNoBackground).l,d0                ; 59250
         move.w  d0,-(a7)                        ; 59256
-        move.b  #$80,(dat_1BBD3).l              ; 59258
+        move.b  #$80,(TextNoBackground).l              ; 59258
         move.l  (dat_5924C).l,d0                ; 59260
         addi.l  #$6e0,d0                        ; 59266
         move.l  d0,(dat_5924C).l                ; 5926C
-        move.b  (dat_58BBA).l,(dat_1BB6D).l     ; 59272
-        addq.b  #$3,(dat_1BB6D).l               ; 5927C
+        move.b  (dat_58BBA).l,(TextPixelX).l     ; 59272
+        addq.b  #$3,(TextPixelX).l               ; 5927C
         move.b  #$80,(dat_5924A).l              ; 59282
         move.b  (dat_58BBB).l,d1                ; 5928A
         asl.b   #$4,d1                          ; 59290
@@ -5778,7 +5786,7 @@ l_592B4:
         jsr     (SetTextPosition).l             ; 592BC
         move.b  #$1,d0                          ; 592C2
         jsr     (SetTextColour).l               ; 592C6
-        jsr     (sub_64834).l                   ; 592CC
+        jsr     (TextOffsetNone).l                   ; 592CC
         move.b  (dat_58BBB).l,d1                ; 592D2
         asl.b   #$4,d1                          ; 592D8
         move.w  #$c,d2                          ; 592DA
@@ -5789,10 +5797,10 @@ l_592DE:
         addq.b  #$1,d1                          ; 592EE
         subq.b  #$1,d2                          ; 592F0
         bne.w   l_592DE                         ; 592F2
-        clr.b   (dat_1BB6D).l                   ; 592F6
+        clr.b   (TextPixelX).l                   ; 592F6
         clr.b   (dat_5924A).l                   ; 592FC
         move.w  (a7)+,d0                        ; 59302
-        move.b  d0,(dat_1BBD3).l                ; 59304
+        move.b  d0,(TextNoBackground).l                ; 59304
         rts                                     ; 5930A
 
 ;-------------------------------------------------------------------------------
@@ -6007,11 +6015,11 @@ l_59524:
         bcs.w   l_59564                         ; 59528
         bne.w   l_59562                         ; 5952C
         subq.b  #$1,(TextCursorX).l             ; 59530
-        move.b  (dat_1BBD3).l,(dat_59842).l     ; 59536
-        move.b  #$0,(dat_1BBD3).l               ; 59540
+        move.b  (TextNoBackground).l,(dat_59842).l     ; 59536
+        move.b  #$0,(TextNoBackground).l               ; 59540
         move.b  #$20,d0                         ; 59548
         jsr     (PrintCharNow).l                ; 5954C
-        move.b  (dat_59842).l,(dat_1BBD3).l     ; 59552
+        move.b  (dat_59842).l,(TextNoBackground).l     ; 59552
         subq.b  #$1,(TextCursorX).l             ; 5955C
 l_59562:
         rts                                     ; 59562
@@ -6026,7 +6034,7 @@ l_59564:
         beq.w   l_59584                         ; 5957E
         sub.w   d4,d3                           ; 59582
 l_59584:
-        move.b  (dat_1BB6D).l,d4                ; 59584
+        move.b  (TextPixelX).l,d4                ; 59584
         andi.w  #$ff,d4                         ; 5958A
         add.w   d4,d3                           ; 5958E
         move.w  d3,d4                           ; 59590
@@ -6047,7 +6055,7 @@ l_595C0:
 l_595CA:
         move.b  (TextCursorY).l,d0              ; 595CA
         asl.b   #$3,d0                          ; 595D0
-        add.b   (dat_1BB6E).l,d0                ; 595D2
+        add.b   (TextLineOffset).l,d0                ; 595D2
         andi.l  #$ff,d0                         ; 595D8
         jsr     (ReadoutTextCheck).l            ; (enhanced) other text over the readout's cells (readout.i)
         move.l  d0,d4                           ; 595DE
@@ -6056,7 +6064,7 @@ l_595CA:
         asl.l   #$3,d0                          ; 595E4
         movea.l (ScreenFront).l,a1              ; 595E6
         adda.l  #$7d00,a1                       ; 595EC
-        tst.b   (dat_1BBBC).l                   ; 595F2
+        tst.b   (TextOneScreen).l                   ; 595F2
         bpl.w   l_59602                         ; 595F8
         movea.l (ScreenDraw).l,a1               ; 595FC
 l_59602:
@@ -6266,7 +6274,7 @@ ProjectCarPoint:
 ; parts' edges stepped (CarModelTop, CarModelSideA, CarModelSideB, CarModelEdges) (probably)
 ;-------------------------------------------------------------------------------
 DrawCarModel:
-        move.w  (dat_1BF64).l,d0                ; 599E2
+        move.w  (LinkCarCorners).l,d0                ; 599E2
         move.w  (PiecePoints).l,d3              ; 599E8
         addi.w  #$50,d3                         ; 599EE
         cmp.w   d3,d0                           ; 599F2
@@ -6723,14 +6731,14 @@ PlaceCarOnTrack:
         jsr     (PieceGridOffset).l             ; 5A1A4
         move.w  (dat_1BC30).l,d0                ; 5A1AA
         sub.w   (dat_1BC4A).l,d0                ; 5A1B0
-        move.w  d0,(dat_1BBF2).l                ; 5A1B6
-        move.w  (dat_1BC8C).l,d0                ; 5A1BC
+        move.w  d0,(PieceAxes).l                ; 5A1B6
+        move.w  (TrackDataPointer).l,d0                ; 5A1BC
         rol.w   #$8,d0                          ; 5A1C2
         subi.w  #$b100,d0                       ; 5A1C4
         andi.l  #$ffff,d0                       ; 5A1C8
         addi.l  #Data6502,d0                    ; 5A1CE
         movea.l d0,a4                           ; 5A1D4
-        move.w  (dat_1BC90).l,d0                ; 5A1D6
+        move.w  (TrackDataStart).l,d0                ; 5A1D6
         rol.w   #$8,d0                          ; 5A1DC
         subi.w  #$b100,d0                       ; 5A1DE
         andi.l  #$ffff,d0                       ; 5A1E2
@@ -6754,13 +6762,13 @@ PlaceCarOnTrack:
         bcs.w   l_5A2DE                         ; 5A236
         jsr     (NextPiece).l                   ; 5A23A
         jsr     (LoadPiece).l                   ; 5A240
-        move.w  (dat_1BC8C).l,d0                ; 5A246
+        move.w  (TrackDataPointer).l,d0                ; 5A246
         rol.w   #$8,d0                          ; 5A24C
         subi.w  #$b100,d0                       ; 5A24E
         andi.l  #$ffff,d0                       ; 5A252
         addi.l  #Data6502,d0                    ; 5A258
         movea.l d0,a4                           ; 5A25E
-        move.w  (dat_1BC90).l,d0                ; 5A260
+        move.w  (TrackDataStart).l,d0                ; 5A260
         rol.w   #$8,d0                          ; 5A266
         subi.w  #$b100,d0                       ; 5A268
         andi.l  #$ffff,d0                       ; 5A26C
@@ -6775,13 +6783,13 @@ PlaceCarOnTrack:
         addq.b  #$1,d1                          ; 5A298
         jsr     (PreviousPiece).l               ; 5A29A
         jsr     (LoadPiece).l                   ; 5A2A0
-        move.w  (dat_1BC8C).l,d0                ; 5A2A6
+        move.w  (TrackDataPointer).l,d0                ; 5A2A6
         rol.w   #$8,d0                          ; 5A2AC
         subi.w  #$b100,d0                       ; 5A2AE
         andi.l  #$ffff,d0                       ; 5A2B2
         addi.l  #Data6502,d0                    ; 5A2B8
         movea.l d0,a4                           ; 5A2BE
-        move.w  (dat_1BC90).l,d0                ; 5A2C0
+        move.w  (TrackDataStart).l,d0                ; 5A2C0
         rol.w   #$8,d0                          ; 5A2C6
         subi.w  #$b100,d0                       ; 5A2C8
         andi.l  #$ffff,d0                       ; 5A2CC
@@ -6797,15 +6805,15 @@ l_5A2DE:
         addq.b  #$1,d1                          ; 5A2F8
 l_5A2FA:
         move.b  (dat_1BB12).l,d0                ; 5A2FA
-        jsr     (sub_5A5B6).l                   ; 5A300
+        jsr     (StoreSectionPoints).l                   ; 5A300
         move.w  #$8,d2                          ; 5A306
         move.w  #$0,d1                          ; 5A30A
-        jsr     (sub_5A55A).l                   ; 5A30E
+        jsr     (CarPiecePoints).l                   ; 5A30E
         move.w  #$c,d2                          ; 5A314
         move.w  #$2,d1                          ; 5A318
-        jsr     (sub_5A55A).l                   ; 5A31C
-        bclr    #$7,(dat_1BBE6).l               ; 5A322
-        movea.l #dat_1BD66,a0                   ; 5A32A
+        jsr     (CarPiecePoints).l                   ; 5A31C
+        bclr    #$7,(PiecePointsBoth).l               ; 5A322
+        movea.l #OpponentCorners,a0                   ; 5A32A
         movea.l #dat_1EF4A,a3                   ; 5A330
         move.w  (a0),d0                         ; 5A336
         sub.w   $2(a0),d0                       ; 5A338
@@ -6814,7 +6822,7 @@ l_5A2FA:
 l_5A342:
         asr.w   #$4,d0                          ; 5A342
         move.b  (a3,d0.w),(dat_1BB43).l         ; 5A344
-        move.b  (dat_1BB13).l,(dat_1BC41).l     ; 5A34C
+        move.b  (CarAcrossPiece).l,(dat_1BC41).l     ; 5A34C
         move.w  (dat_1BBEC).l,d0                ; 5A356
         clr.w   d3                              ; 5A35C
         move.b  (dat_1BB43).l,d3                ; 5A35E
@@ -6825,7 +6833,7 @@ l_5A342:
         move.w  #$a,d2                          ; 5A376
         move.w  #$8,d1                          ; 5A37A
         move.w  (dat_1BC4C).l,d0                ; 5A37E
-        jsr     (sub_5A576).l                   ; 5A384
+        jsr     (PiecePointsBetween).l                   ; 5A384
         move.w  (dat_1BBEC).l,d0                ; 5A38A
         clr.w   d3                              ; 5A390
         move.b  (dat_1BB43).l,d3                ; 5A392
@@ -6836,7 +6844,7 @@ l_5A342:
         move.w  #$e,d2                          ; 5A3AA
         move.w  #$8,d1                          ; 5A3AE
         move.w  (dat_1BC4C).l,d0                ; 5A3B2
-        jsr     (sub_5A576).l                   ; 5A3B8
+        jsr     (PiecePointsBetween).l                   ; 5A3B8
         move.w  (dat_1BC02).l,d0                ; 5A3BE
         sub.w   (dat_1BC06).l,d0                ; 5A3C4
         bpl.w   l_5A3D0                         ; 5A3CA
@@ -6846,7 +6854,7 @@ l_5A3D0:
         blt.w   l_5A3E0                         ; 5A3D4
         move.b  #$80,(dat_1BBBA).l              ; 5A3D8
 l_5A3E0:
-        jsr     (sub_5A468).l                   ; 5A3E0
+        jsr     (ExtendPiecePoints).l                   ; 5A3E0
         move.w  (dat_1BC02).l,d0                ; 5A3E6
         sub.w   (dat_1BC06).l,d0                ; 5A3EC
         bpl.w   l_5A3F8                         ; 5A3F2
@@ -6873,7 +6881,7 @@ OpponentPieceDistance:
         jsr     (PreviousPiece).l               ; 5A428
         jsr     (LoadPiece).l                   ; 5A42E
         move.w  (a7)+,d3                        ; 5A434
-        move.b  (dat_1BB6A).l,d0                ; 5A436
+        move.b  (PieceSections).l,d0                ; 5A436
         asl.w   #$8,d0                          ; 5A43C
         add.w   d3,d0                           ; 5A43E
 l_5A440:
@@ -6886,12 +6894,19 @@ l_5A440:
 ;-------------------------------------------------------------------------------
 PiecePointBetween:
         jsr     (InterpolatePiece).l            ; 5A44E
-        move.l  (dat_1BB18).l,d0                ; 5A454
+        move.l  (WorkByte3).l,d0                ; 5A454
         asr.l   #$3,d0                          ; 5A45A
         movea.l #PiecePoints,a0                 ; 5A45C
         move.w  d0,(a0,d1.w)                    ; 5A462
         rts                                     ; 5A466
-sub_5A468:
+
+;-------------------------------------------------------------------------------
+; ExtendPiecePoints - PlaceCarOnTrack: PiecePointsX's points $10/$14 and $30/$34 set half a width
+; beyond the piece's sides (from $A/$E and $2A/$2E); dat_1BC02-dat_1BC0C moved down a place when
+; CarAcrossPiece passes $80; then PiecePointBetween for point 4 (probably the track's sides widened for
+; the car's wheels)
+;-------------------------------------------------------------------------------
+ExtendPiecePoints:
         movea.l #PiecePointsX,a0                ; 5A468
         move.w  $e(a0),d0                       ; 5A46E
         sub.w   $a(a0),d0                       ; 5A472
@@ -6915,7 +6930,7 @@ sub_5A468:
         move.w  $2e(a0),d0                      ; 5A4C4
         add.w   (dat_1BB2C).l,d0                ; 5A4C8
         move.w  d0,$34(a0)                      ; 5A4CE
-        move.b  (dat_1BB13).l,d0                ; 5A4D2
+        move.b  (CarAcrossPiece).l,d0                ; 5A4D2
         addi.b  #$80,d0                         ; 5A4D8
         bcc.w   l_5A508                         ; 5A4DC
         move.w  (dat_1BC06).l,(dat_1BC02).l     ; 5A4E0
@@ -6927,38 +6942,58 @@ l_5A508:
         move.b  (dat_1BBED).l,(dat_1BC4D).l     ; 5A50E
         move.w  #$4,d1                          ; 5A518
         bra.w   PiecePointBetween               ; 5A51C
-sub_5A520:
+
+;-------------------------------------------------------------------------------
+; PiecePointPart - d0 = (point d1 + 4 - point d1) x dat_5A54E / 256 (PiecePointsX): a fraction of
+; the way from one point to the next, then PiecePointPartStore as point d2; with PiecePointsBoth set,
+; the next point's too
+;-------------------------------------------------------------------------------
+PiecePointPart:
         movea.l #PiecePointsX,a0                ; 5A520
         move.w  $4(a0,d1.w),d0                  ; 5A526
         sub.w   (a0,d1.w),d0                    ; 5A52A
         move.w  (dat_5A54E).l,d3                ; 5A52E
         muls.w  d3,d0                           ; 5A534
         asr.l   #$8,d0                          ; 5A536
-        tst.b   (dat_1BBE6).l                   ; 5A538
-        bpl.w   sub_5A550                       ; 5A53E
+        tst.b   (PiecePointsBoth).l                   ; 5A538
+        bpl.w   PiecePointPartStore                       ; 5A53E
         addq.b  #$4,d1                          ; 5A542
-        jsr     (sub_5A550).l                   ; 5A544
+        jsr     (PiecePointPartStore).l                   ; 5A544
         subq.b  #$4,d1                          ; 5A54A
         rts                                     ; 5A54C
 dat_5A54E:
 	dc.b	$00,$00
-sub_5A550:
+
+;-------------------------------------------------------------------------------
+; PiecePointPartStore - d0 + point d1 stored as point d2 (PiecePointsX)
+;-------------------------------------------------------------------------------
+PiecePointPartStore:
         add.w   (a0,d1.w),d0                    ; 5A550
         move.w  d0,(a0,d2.w)                    ; 5A554
         rts                                     ; 5A558
-sub_5A55A:
-        move.b  (dat_1BB13).l,d0                ; 5A55A
-        movea.l #dat_1BBBE,a0                   ; 5A560
+
+;-------------------------------------------------------------------------------
+; CarPiecePoints - PlaceCarOnTrack: side d1's fraction across the piece (CarAcrossPiece +
+; SideOffsets[d1]), then PiecePointsBetween - where the car's wheels are across the track (probably)
+;-------------------------------------------------------------------------------
+CarPiecePoints:
+        move.b  (CarAcrossPiece).l,d0                ; 5A55A
+        movea.l #SideOffsets,a0                   ; 5A560
         add.b   (a0,d1.w),d0                    ; 5A566
         roxr.b  #$1,d3                          ; 5A56A
-        move.b  d3,(dat_1BBE6).l                ; 5A56C
+        move.b  d3,(PiecePointsBoth).l                ; 5A56C
         andi.w  #$ff,d0                         ; 5A572
-sub_5A576:
+
+;-------------------------------------------------------------------------------
+; PiecePointsBetween - d0 the fraction (/256): points d1 and d1 + $20 set a fraction of the way to
+; their next ones (PiecePointPart, twice)
+;-------------------------------------------------------------------------------
+PiecePointsBetween:
         move.w  d0,(dat_5A54E).l                ; 5A576
-        jsr     (sub_5A520).l                   ; 5A57C
+        jsr     (PiecePointPart).l                   ; 5A57C
         addi.b  #$20,d2                         ; 5A582
         addi.b  #$20,d1                         ; 5A586
-        bra.w   sub_5A520                       ; 5A58A
+        bra.w   PiecePointPart                       ; 5A58A
 
 ;-------------------------------------------------------------------------------
 ; ProjectStoredPoint - d2: a point of PiecePointsX projected
@@ -6970,9 +7005,15 @@ ProjectStoredPoint:
         jsr     (ProjectPointX).l               ; 5A5A4
         jsr     (ProjectPointY).l               ; 5A5AA
         jmp     (RollPoint).l                   ; 5A5B0
-sub_5A5B6:
+
+;-------------------------------------------------------------------------------
+; StoreSectionPoints - a cross-section's 4 points (StorePiecePoint) from the current piece's 6502
+; data (PieceDataPointer): section d0, counted from the piece's other end when PieceReversed is set (the
+; piece driven the other way)
+;-------------------------------------------------------------------------------
+StoreSectionPoints:
         move.b  d0,d2                           ; 5A5B6
-        move.w  (dat_1BCBC).l,d0                ; 5A5B8
+        move.w  (PieceDataPointer).l,d0                ; 5A5B8
         rol.w   #$8,d0                          ; 5A5BE
         subi.w  #$b100,d0                       ; 5A5C0
         andi.l  #$ffff,d0                       ; 5A5C4
@@ -6980,11 +7021,11 @@ sub_5A5B6:
         movea.l d0,a3                           ; 5A5D0
         move.b  (a3),d0                         ; 5A5D2
         addq.b  #$7,d0                          ; 5A5D4
-        move.b  d0,(dat_1BB91).l                ; 5A5D6
-        tst.b   (dat_1BC32).l                   ; 5A5DC
+        move.b  d0,(SectionDataStart).l                ; 5A5D6
+        tst.b   (PieceReversed).l                   ; 5A5DC
         bne.w   l_5A604                         ; 5A5E2
         asl.b   #$3,d2                          ; 5A5E6
-        add.b   (dat_1BB91).l,d2                ; 5A5E8
+        add.b   (SectionDataStart).l,d2                ; 5A5E8
         move.b  #$0,d1                          ; 5A5EE
 l_5A5F2:
         jsr     (StorePiecePoint).l             ; 5A5F2
@@ -6993,11 +7034,11 @@ l_5A5F2:
         bne.w   l_5A5F2                         ; 5A5FE
         rts                                     ; 5A602
 l_5A604:
-        move.b  (dat_1BB6A).l,d0                ; 5A604
+        move.b  (PieceSections).l,d0                ; 5A604
         sub.b   d2,d0                           ; 5A60A
         subq.b  #$1,d0                          ; 5A60C
         asl.b   #$3,d0                          ; 5A60E
-        add.b   (dat_1BB91).l,d0                ; 5A610
+        add.b   (SectionDataStart).l,d0                ; 5A610
         move.b  d0,d2                           ; 5A616
         move.b  #$6,d1                          ; 5A618
 l_5A61C:
@@ -7109,7 +7150,7 @@ l_5A7EA:
         add.b   (dat_1BBB0).l,d0                ; 5A7F4
         bra.w   l_5A966                         ; 5A7FA
 l_5A7FE:
-        tst.b   (dat_1BBCD).l                   ; 5A7FE
+        tst.b   (ClockTick).l                   ; 5A7FE
         bmi.w   l_5A80E                         ; 5A804
         addq.b  #$1,(dat_1BBB0).l               ; 5A808
 l_5A80E:
@@ -7131,8 +7172,8 @@ l_5A832:
         move.b  #$2,d2                          ; 5A854
         move.b  #$be,d1                         ; 5A858
         movea.l #PieceShapes,a1                 ; 5A85C
-        move.w  (a1,d1.w),(dat_1BCC0).l         ; 5A862
-        move.w  (dat_1BCC0).l,d0                ; 5A86A
+        move.w  (a1,d1.w),(LeagueBlockPointer).l         ; 5A862
+        move.w  (LeagueBlockPointer).l,d0                ; 5A86A
         rol.w   #$8,d0                          ; 5A870
         subi.w  #$b100,d0                       ; 5A872
         andi.l  #$ffff,d0                       ; 5A876
@@ -7154,13 +7195,13 @@ l_5A8AC:
         addq.b  #$1,d2                          ; 5A8B2
         move.b  (dat_1BC2B).l,(a0,d2.w)         ; 5A8B4
         addq.b  #$1,d2                          ; 5A8BC
-        move.b  d2,(dat_1BB1B).l                ; 5A8BE
+        move.b  d2,(WorkByte6).l                ; 5A8BE
         move.b  #$48,d2                         ; 5A8C4
-        sub.b   (dat_1BB1B).l,d2                ; 5A8C8
+        sub.b   (WorkByte6).l,d2                ; 5A8C8
         move.b  (a7)+,(a0,d2.w)                 ; 5A8CE
         addq.b  #$1,d2                          ; 5A8D2
         move.b  (dat_1BC2B).l,(a0,d2.w)         ; 5A8D4
-        move.b  (dat_1BB1B).l,d2                ; 5A8DC
+        move.b  (WorkByte6).l,d2                ; 5A8DC
         cmpi.b  #$12,d2                         ; 5A8E2
         beq.w   l_5A89A                         ; 5A8E6
         subq.b  #$1,d1                          ; 5A8EA
@@ -7229,13 +7270,13 @@ l_5A9BC:
         move.b  #$b,d1                          ; 5A9D8
 l_5A9DC:
         move.b  d1,d0                           ; 5A9DC
-        movea.l #dat_1C9C2,a1                   ; 5A9DE
+        movea.l #DriverPlaces,a1                   ; 5A9DE
         move.b  d0,(a1,d1.w)                    ; 5A9E4
         jsr     (Random).l                      ; 5A9E8
         subq.b  #$1,d1                          ; 5A9EE
         bpl.w   l_5A9DC                         ; 5A9F0
         jsr     (NewSeason).l                   ; 5A9F4
-        move.b  #$a,(dat_1C9CF).l               ; 5A9FA
+        move.b  #$a,(DamageMarks).l               ; 5A9FA
         move.b  #$0,(dat_1FEF7).l               ; 5AA02
         move.b  #$10,(dat_1FEF8).l              ; 5AA0A
         move.b  #$7e,(dat_1FEED).l              ; 5AA12
@@ -7249,16 +7290,16 @@ l_5A9DC:
 ;-------------------------------------------------------------------------------
 NewSeason:
         move.w  #$0,d0                          ; 5AA38
-        move.b  d0,(dat_1CA35).l                ; 5AA3C
+        move.b  d0,(RaceInSeason).l                ; 5AA3C
         move.b  d0,(dat_57C67).l                ; 5AA42
         move.w  d0,(dat_57C72).l                ; 5AA48
         move.b  #$3b,d1                         ; 5AA4E
 l_5AA52:
-        movea.l #dat_1C9DE,a1                   ; 5AA52
+        movea.l #DriverWins,a1                   ; 5AA52
         move.b  #$0,(a1,d1.w)                   ; 5AA58
         cmpi.b  #$c,d1                          ; 5AA5E
         bcc.w   l_5AA7C                         ; 5AA62
-        movea.l #dat_1CA0E,a0                   ; 5AA66
+        movea.l #DriverOrder,a0                   ; 5AA66
         move.b  d1,(a0,d1.w)                    ; 5AA6C
         movea.l #dat_1CA36,a0                   ; 5AA70
         move.b  #$a,(a0,d1.w)                   ; 5AA76
@@ -7273,7 +7314,7 @@ l_5AA7C:
 ;-------------------------------------------------------------------------------
 SimulateOtherRaces:
         movea.l #DriverSkill,a0                 ; 5AA84
-        movea.l #dat_1C9D2,a1                   ; 5AA8A
+        movea.l #OtherRaceScores,a1                   ; 5AA8A
         move.w  #$b,d1                          ; 5AA90
 l_5AA94:
         jsr     (Random).l                      ; 5AA94
@@ -7282,20 +7323,20 @@ l_5AA94:
         move.b  d0,(a1,d1.w)                    ; 5AAA2
         subq.b  #$1,d1                          ; 5AAA6
         bpl.w   l_5AA94                         ; 5AAA8
-        move.b  (dat_1CA35).l,d1                ; 5AAAC
+        move.b  (RaceInSeason).l,d1                ; 5AAAC
         move.b  #$0,d0                          ; 5AAB2
 l_5AAB6:
-        move.b  d0,(dat_1BB5F).l                ; 5AAB6
+        move.b  d0,(DivisionShown).l                ; 5AAB6
         tst.b   (dat_5EB76).l                   ; 5AABC
         beq.w   l_5AAD0                         ; 5AAC2
-        cmp.b   (dat_1C9CE).l,d0                ; 5AAC6
+        cmp.b   (PlayerDivision).l,d0                ; 5AAC6
         bne.w   l_5AAE2                         ; 5AACC
 l_5AAD0:
         jsr     (PickOpponent).l                ; 5AAD0
         jsr     (RandomRaceResult).l            ; 5AAD6
         jsr     (UpdateLeague).l                ; 5AADC
 l_5AAE2:
-        move.b  (dat_1BB5F).l,d0                ; 5AAE2
+        move.b  (DivisionShown).l,d0                ; 5AAE2
         addq.b  #$1,d0                          ; 5AAE8
         cmpi.b  #$4,d0                          ; 5AAEA
         blt.w   l_5AAB6                         ; 5AAEE
@@ -7312,14 +7353,14 @@ SetDivisionDrivers:
         beq.w   l_5AB22                         ; 5AB06
         eori.b  #$ff,d0                         ; 5AB0A
         addi.b  #$c,d0                          ; 5AB0E
-        move.b  d0,(dat_1BC5B).l                ; 5AB12
+        move.b  d0,(DivisionOfDriver).l                ; 5AB12
         move.b  #$c,(dat_1BC59).l               ; 5AB18
         rts                                     ; 5AB20
 l_5AB22:
-        move.b  (dat_1BB5F).l,d1                ; 5AB22
+        move.b  (DivisionShown).l,d1                ; 5AB22
         movea.l #dat_5AB42,a1                   ; 5AB28
         move.b  (a1,d1.w),d0                    ; 5AB2E
-        move.b  d0,(dat_1BC5B).l                ; 5AB32
+        move.b  d0,(DivisionOfDriver).l                ; 5AB32
         addq.b  #$3,d0                          ; 5AB38
         move.b  d0,(dat_1BC59).l                ; 5AB3A
         rts                                     ; 5AB40
@@ -7336,22 +7377,22 @@ PickOpponent:
         tst.b   (LinkMode).l                    ; 5AB56
         bne.w   l_580D8                         ; 5AB5C
         move.b  #$b,d0                          ; 5AB60
-        sub.b   (dat_1CA35).l,d0                ; 5AB64
-        move.b  d0,(dat_1CA27).l                ; 5AB6A
+        sub.b   (RaceInSeason).l,d0                ; 5AB64
+        move.b  d0,(OpponentDriver).l                ; 5AB6A
         move.b  d0,d2                           ; 5AB70
         move.b  (dat_5EB77).l,d0                ; 5AB72
         bra.w   l_5ABBA                         ; 5AB78
 l_5AB7C:
         movea.l #dat_5ABC8,a0                   ; 5AB7C
         movea.l #dat_5ABCE,a1                   ; 5AB82
-        move.b  (dat_1CA35).l,d1                ; 5AB88
+        move.b  (RaceInSeason).l,d1                ; 5AB88
         move.b  (a0,d1.w),d2                    ; 5AB8E
-        add.b   (dat_1BC5B).l,d2                ; 5AB92
-        movea.l #dat_1C9C2,a2                   ; 5AB98
+        add.b   (DivisionOfDriver).l,d2                ; 5AB92
+        movea.l #DriverPlaces,a2                   ; 5AB98
         move.b  (a2,d2.w),d0                    ; 5AB9E
-        move.b  d0,(dat_1CA27).l                ; 5ABA2
+        move.b  d0,(OpponentDriver).l                ; 5ABA2
         move.b  (a1,d1.w),d2                    ; 5ABA8
-        add.b   (dat_1BC5B).l,d2                ; 5ABAC
+        add.b   (DivisionOfDriver).l,d2                ; 5ABAC
         move.b  (a2,d2.w),d0                    ; 5ABB2
         move.b  #$b,d2                          ; 5ABB6
 l_5ABBA:
@@ -7374,9 +7415,9 @@ RandomRaceResult:
         move.b  #$40,d1                         ; 5ABE6
 l_5ABEA:
         move.b  d1,(dat_1BBF7).l                ; 5ABEA
-        move.b  (dat_1CA27).l,d2                ; 5ABF0
+        move.b  (OpponentDriver).l,d2                ; 5ABF0
         move.b  (dat_1CA28).l,d1                ; 5ABF6
-        movea.l #dat_1C9F6,a1                   ; 5ABFC
+        movea.l #DriverBestTimes,a1                   ; 5ABFC
         addq.b  #$1,(a1,d1.w)                   ; 5AC02
         addq.b  #$1,(a1,d2.w)                   ; 5AC06
         move.b  (dat_1BBB4).l,d0                ; 5AC0A
@@ -7389,7 +7430,7 @@ l_5AC28:
         move.b  d0,(dat_1BBF7).l                ; 5AC28
         jmp     (l_5AC66).l                     ; 5AC2E
 l_5AC34:
-        movea.l #dat_1C9D2,a2                   ; 5AC34
+        movea.l #OtherRaceScores,a2                   ; 5AC34
         move.b  (a2,d2.w),d0                    ; 5AC3A
         cmp.b   (a2,d1.w),d0                    ; 5AC3E
         bcs.w   l_5AC66                         ; 5AC42
@@ -7404,35 +7445,35 @@ l_5AC56:
 l_5AC66:
         tst.b   (dat_1BBF7).l                   ; 5AC66
         bmi.w   l_5AC8E                         ; 5AC6C
-        move.b  d1,(dat_1BB19).l                ; 5AC70
+        move.b  d1,(WorkByte4).l                ; 5AC70
         btst    #$6,(dat_1BBF7).l               ; 5AC76
         bne.w   l_5ACA0                         ; 5AC7E
 l_5AC82:
-        move.b  d1,(dat_1BB18).l                ; 5AC82
+        move.b  d1,(WorkByte3).l                ; 5AC82
         jmp     (l_5ACA6).l                     ; 5AC88
 l_5AC8E:
-        move.b  d2,(dat_1BB19).l                ; 5AC8E
+        move.b  d2,(WorkByte4).l                ; 5AC8E
         btst    #$6,(dat_1BBF7).l               ; 5AC94
         beq.w   l_5AC82                         ; 5AC9C
 l_5ACA0:
-        move.b  d2,(dat_1BB18).l                ; 5ACA0
+        move.b  d2,(WorkByte3).l                ; 5ACA0
 l_5ACA6:
         tst.b   (LinkMode).l                    ; 5ACA6
         beq.w   l_5ACBA                         ; 5ACAC
         tst.b   (dat_1BB5B).l                   ; 5ACB0
         bmi.w   l_5ACFC                         ; 5ACB6
 l_5ACBA:
-        move.b  (dat_1BB19).l,d1                ; 5ACBA
-        movea.l #dat_1C9DE,a1                   ; 5ACC0
+        move.b  (WorkByte4).l,d1                ; 5ACBA
+        movea.l #DriverWins,a1                   ; 5ACC0
         addq.b  #$1,(a1,d1.w)                   ; 5ACC6
-        move.b  (dat_1BB18).l,d1                ; 5ACCA
-        movea.l #dat_1C9EA,a1                   ; 5ACD0
+        move.b  (WorkByte3).l,d1                ; 5ACCA
+        movea.l #DriverPoints,a1                   ; 5ACD0
         addq.b  #$1,(a1,d1.w)                   ; 5ACD6
-        move.b  (dat_1BB5F).l,d0                ; 5ACDA
-        cmp.b   (dat_1C9CE).l,d0                ; 5ACE0
+        move.b  (DivisionShown).l,d0                ; 5ACDA
+        cmp.b   (PlayerDivision).l,d0                ; 5ACE0
         bne.w   l_5ACFC                         ; 5ACE6
         move.b  d1,(dat_1CA26).l                ; 5ACEA
-        move.b  (dat_1BB19).l,d0                ; 5ACF0
+        move.b  (WorkByte4).l,d0                ; 5ACF0
         move.b  d0,(dat_1CA25).l                ; 5ACF6
 l_5ACFC:
         rts                                     ; 5ACFC
@@ -7442,38 +7483,38 @@ l_5ACFC:
 ;-------------------------------------------------------------------------------
 UpdateLeague:
         jsr     (SetDivisionDrivers).l          ; 5ACFE
-        movea.l #dat_1CA0E,a3                   ; 5AD04
-        move.b  (dat_1BC5B).l,d2                ; 5AD0A
+        movea.l #DriverOrder,a3                   ; 5AD04
+        move.b  (DivisionOfDriver).l,d2                ; 5AD0A
 l_5AD10:
-        movea.l #dat_1C9C2,a2                   ; 5AD10
+        movea.l #DriverPlaces,a2                   ; 5AD10
         move.b  (a2,d2.w),d1                    ; 5AD16
         move.b  d1,d0                           ; 5AD1A
         move.b  d0,(a3,d2.w)                    ; 5AD1C
-        movea.l #dat_1C9DE,a0                   ; 5AD20
+        movea.l #DriverWins,a0                   ; 5AD20
         move.b  (a0,d1.w),d0                    ; 5AD26
         asl.b   #$1,d0                          ; 5AD2A
-        movea.l #dat_1C9EA,a0                   ; 5AD2C
+        movea.l #DriverPoints,a0                   ; 5AD2C
         add.b   (a0,d1.w),d0                    ; 5AD32
-        movea.l #dat_1CA02,a1                   ; 5AD36
+        movea.l #DriverLapRecords,a1                   ; 5AD36
         move.b  d0,(a1,d1.w)                    ; 5AD3C
         addq.b  #$1,d2                          ; 5AD40
         cmp.b   (dat_1BC59).l,d2                ; 5AD42
         blt.w   l_5AD10                         ; 5AD48
 l_5AD4C:
         move.b  #$0,d0                          ; 5AD4C
-        move.b  d0,(dat_1BB19).l                ; 5AD50
-        move.b  (dat_1BC5B).l,d2                ; 5AD56
+        move.b  d0,(WorkByte4).l                ; 5AD50
+        move.b  (DivisionOfDriver).l,d2                ; 5AD56
 l_5AD5C:
-        move.b  d2,(dat_1BB18).l                ; 5AD5C
+        move.b  d2,(WorkByte3).l                ; 5AD5C
         move.b  (a3,d2.w),d1                    ; 5AD62
         move.b  $1(a3,d2.w),d0                  ; 5AD66
         move.b  d0,d2                           ; 5AD6A
-        movea.l #dat_1CA02,a1                   ; 5AD6C
+        movea.l #DriverLapRecords,a1                   ; 5AD6C
         move.b  (a1,d1.w),d0                    ; 5AD72
         cmp.b   (a1,d2.w),d0                    ; 5AD76
         blt.w   l_5ADB8                         ; 5AD7A
         bne.w   l_5ADDA                         ; 5AD7E
-        movea.l #dat_1C9DE,a1                   ; 5AD82
+        movea.l #DriverWins,a1                   ; 5AD82
         move.b  (a1,d1.w),d0                    ; 5AD88
         cmp.b   (a1,d2.w),d0                    ; 5AD8C
         blt.w   l_5ADB8                         ; 5AD90
@@ -7488,15 +7529,15 @@ l_5ADAC:
         lsr.b   #$1,d0                          ; 5ADB2
         bcc.w   l_5ADDA                         ; 5ADB4
 l_5ADB8:
-        move.b  d2,(dat_1BB1A).l                ; 5ADB8
-        move.b  (dat_1BB18).l,d2                ; 5ADBE
+        move.b  d2,(WorkByte5).l                ; 5ADB8
+        move.b  (WorkByte3).l,d2                ; 5ADBE
         move.b  d1,d0                           ; 5ADC4
         move.b  d0,$1(a3,d2.w)                  ; 5ADC6
-        move.b  (dat_1BB1A).l,d0                ; 5ADCA
+        move.b  (WorkByte5).l,d0                ; 5ADCA
         move.b  d0,(a3,d2.w)                    ; 5ADD0
-        addq.b  #$1,(dat_1BB19).l               ; 5ADD4
+        addq.b  #$1,(WorkByte4).l               ; 5ADD4
 l_5ADDA:
-        move.b  (dat_1BB18).l,d2                ; 5ADDA
+        move.b  (WorkByte3).l,d2                ; 5ADDA
         addq.b  #$1,d2                          ; 5ADE0
         addq.b  #$1,d2                          ; 5ADE2
         cmp.b   (dat_1BC59).l,d2                ; 5ADE4
@@ -7504,7 +7545,7 @@ l_5ADDA:
         subq.b  #$1,d2                          ; 5ADEE
         bra.w   l_5AD5C                         ; 5ADF0
 l_5ADF4:
-        move.b  (dat_1BB19).l,d0                ; 5ADF4
+        move.b  (WorkByte4).l,d0                ; 5ADF4
         bne.w   l_5AD4C                         ; 5ADFA
         rts                                     ; 5ADFE
 
@@ -7521,9 +7562,9 @@ TrackReadByte:
 ; StepGrid - d0: a grid square - the next one in the direction of TrackDirection
 ;-------------------------------------------------------------------------------
 StepGrid:
-        tst.b   (dat_1BB1A).l                   ; 5AE0C
+        tst.b   (WorkByte5).l                   ; 5AE0C
         bmi.w   l_5AE2E                         ; 5AE12
-        btst    #$6,(dat_1BB1A).l               ; 5AE16
+        btst    #$6,(WorkByte5).l               ; 5AE16
         bne.w   l_5AE28                         ; 5AE1E
         addi.b  #$10,d0                         ; 5AE22
         rts                                     ; 5AE26
@@ -7531,7 +7572,7 @@ l_5AE28:
         addi.b  #$1,d0                          ; 5AE28
         rts                                     ; 5AE2C
 l_5AE2E:
-        btst    #$6,(dat_1BB1A).l               ; 5AE2E
+        btst    #$6,(WorkByte5).l               ; 5AE2E
         bne.w   l_5AE40                         ; 5AE36
         subi.b  #$10,d0                         ; 5AE3A
         rts                                     ; 5AE3E
@@ -7548,8 +7589,8 @@ BuildTrack:
         asl.b   #$1,d0                          ; 5AE48
         move.b  d0,d2                           ; 5AE4A
         movea.l #TrackOffsets,a2                ; 5AE4C
-        move.w  (a2,d2.w),(dat_1BCC0).l         ; 5AE52
-        move.w  (dat_1BCC0).l,d0                ; 5AE5A
+        move.w  (a2,d2.w),(LeagueBlockPointer).l         ; 5AE52
+        move.w  (LeagueBlockPointer).l,d0                ; 5AE5A
         rol.w   #$8,d0                          ; 5AE60
         subi.w  #$b100,d0                       ; 5AE62
         andi.l  #$ffff,d0                       ; 5AE66
@@ -7578,27 +7619,27 @@ l_5AED0:
         beq.w   l_5AF20                         ; 5AED6
         subq.b  #$1,(dat_1BB48).l               ; 5AEDA
         move.b  (dat_1BC55).l,d0                ; 5AEE0
-        move.b  d0,(dat_1BB1A).l                ; 5AEE6
+        move.b  d0,(WorkByte5).l                ; 5AEE6
         movea.l #TrackPieceFlags,a1             ; 5AEEC
         move.b  d0,(a1,d1.w)                    ; 5AEF2
         andi.b  #$10,d0                         ; 5AEF6
         beq.w   l_5AF0E                         ; 5AEFA
-        move.b  (dat_1BB1A).l,d0                ; 5AEFE
+        move.b  (WorkByte5).l,d0                ; 5AEFE
         eori.b  #$c0,d0                         ; 5AF04
-        move.b  d0,(dat_1BB1A).l                ; 5AF08
+        move.b  d0,(WorkByte5).l                ; 5AF08
 l_5AF0E:
         move.b  (dat_1BB8B).l,d0                ; 5AF0E
         jsr     (StepGrid).l                    ; 5AF14
         jmp     (l_5AF6C).l                     ; 5AF1A
 l_5AF20:
         jsr     (TrackReadByte).l               ; 5AF20
-        move.b  d0,(dat_1BB1A).l                ; 5AF26
+        move.b  d0,(WorkByte5).l                ; 5AF26
         movea.l #TrackPieceFlags,a1             ; 5AF2C
         move.b  d0,(a1,d1.w)                    ; 5AF32
         andi.b  #$f,d0                          ; 5AF36
         cmpi.b  #$f,d0                          ; 5AF3A
         bne.w   l_5AF56                         ; 5AF3E
-        move.b  (dat_1BB1A).l,d0                ; 5AF42
+        move.b  (WorkByte5).l,d0                ; 5AF42
         lsr.b   #$4,d0                          ; 5AF48
         move.b  d0,(dat_1BB48).l                ; 5AF4A
         jmp     (l_5AED0).l                     ; 5AF50
@@ -7614,8 +7655,8 @@ l_5AF6C:
         move.b  (dat_1BBDC).l,d0                ; 5AF7C
         lsr.b   #$2,d0                          ; 5AF82
         roxr.b  #$1,d0                          ; 5AF84
-        move.b  d0,(dat_1BB1B).l                ; 5AF86
-        move.b  (dat_1BB1A).l,d0                ; 5AF8C
+        move.b  d0,(WorkByte6).l                ; 5AF86
+        move.b  (WorkByte5).l,d0                ; 5AF8C
         andi.b  #$f,d0                          ; 5AF92
         cmpi.b  #$c,d0                          ; 5AF96
         blt.w   l_5AFDC                         ; 5AF9A
@@ -7636,7 +7677,7 @@ l_5AFDC:
         jsr     (TrackReadByte).l               ; 5AFDC
         movea.l #TrackPieceKinds,a1             ; 5AFE2
         move.b  d0,(a1,d1.w)                    ; 5AFE8
-        move.b  (dat_1BB1A).l,d0                ; 5AFEC
+        move.b  (WorkByte5).l,d0                ; 5AFEC
         andi.b  #$20,d0                         ; 5AFF2
         beq.w   l_5B00A                         ; 5AFF6
         movea.l #TrackPieceKinds,a1             ; 5AFFA
@@ -7646,13 +7687,13 @@ l_5B00A:
         jsr     (TrackReadByte).l               ; 5B00A
 l_5B010:
         andi.b  #$7f,d0                         ; 5B010
-        or.b    (dat_1BB1B).l,d0                ; 5B014
+        or.b    (WorkByte6).l,d0                ; 5B014
         movea.l #TrackPieceHeights,a1           ; 5B01A
         move.b  d0,(a1,d1.w)                    ; 5B020
         move.b  d2,d0                           ; 5B024
         move.b  d0,-(a7)                        ; 5B026
         asl.b   #$1,d1                          ; 5B028
-        movea.l #dat_1C7E0,a1                   ; 5B02A
+        movea.l #PieceDistances,a1                   ; 5B02A
         move.w  (dat_1BC2A).l,d0                ; 5B030
         asl.w   #$5,d0                          ; 5B036
         move.w  d0,(a1,d1.w)                    ; 5B038
@@ -7663,32 +7704,32 @@ l_5B010:
         add.b   (dat_1BB98).l,d0                ; 5B04C
         andi.b  #$2,d0                          ; 5B052
         move.b  d0,(dat_1BBDC).l                ; 5B056
-        move.b  (dat_1BB6A).l,d0                ; 5B05C
+        move.b  (PieceSections).l,d0                ; 5B05C
         andi.w  #$ff,d0                         ; 5B062
         add.w   d0,(dat_1BC2A).l                ; 5B066
         move.b  #$0,d2                          ; 5B06C
-        jsr     (sub_5B2D2).l                   ; 5B070
-        move.b  d0,(dat_1BB1A).l                ; 5B076
+        jsr     (TrackDataEntry).l                   ; 5B070
+        move.b  d0,(WorkByte5).l                ; 5B076
         movea.l #dat_1C650,a3                   ; 5B07C
         movea.l #dat_1C718,a4                   ; 5B082
         move.w  (dat_1BBF6).l,d4                ; 5B088
-        sub.w   (dat_1BB1A).l,d4                ; 5B08E
+        sub.w   (WorkByte5).l,d4                ; 5B08E
         move.w  d4,(a3,d1.w)                    ; 5B094
-        move.b  (dat_1BB6A).l,d2                ; 5B098
-        jsr     (sub_5B2D2).l                   ; 5B09E
-        move.b  d0,(dat_1BB1A).l                ; 5B0A4
-        add.w   (dat_1BB1A).l,d4                ; 5B0AA
+        move.b  (PieceSections).l,d2                ; 5B098
+        jsr     (TrackDataEntry).l                   ; 5B09E
+        move.b  d0,(WorkByte5).l                ; 5B0A4
+        add.w   (WorkByte5).l,d4                ; 5B0AA
         move.w  d4,(dat_1BBF6).l                ; 5B0B0
         move.b  #$0,d2                          ; 5B0B6
-        jsr     (sub_5B2C8).l                   ; 5B0BA
-        move.b  d0,(dat_1BB1A).l                ; 5B0C0
+        jsr     (TrackDataFirst).l                   ; 5B0BA
+        move.b  d0,(WorkByte5).l                ; 5B0C0
         move.w  (dat_1BBF8).l,d4                ; 5B0C6
-        sub.w   (dat_1BB1A).l,d4                ; 5B0CC
+        sub.w   (WorkByte5).l,d4                ; 5B0CC
         move.w  d4,(a4,d1.w)                    ; 5B0D2
-        move.b  (dat_1BB6A).l,d2                ; 5B0D6
-        jsr     (sub_5B2C8).l                   ; 5B0DC
-        move.b  d0,(dat_1BB1A).l                ; 5B0E2
-        add.w   (dat_1BB1A).l,d4                ; 5B0E8
+        move.b  (PieceSections).l,d2                ; 5B0D6
+        jsr     (TrackDataFirst).l                   ; 5B0DC
+        move.b  d0,(WorkByte5).l                ; 5B0E2
+        add.w   (WorkByte5).l,d4                ; 5B0E8
         move.w  d4,(dat_1BBF8).l                ; 5B0EE
         lsr.b   #$1,d1                          ; 5B0F4
         move.b  (a7)+,d0                        ; 5B0F6
@@ -7704,7 +7745,7 @@ l_5B10C:
         blt.w   l_5B122                         ; 5B11A
         move.b  #$0,d1                          ; 5B11E
 l_5B122:
-        move.b  d1,(dat_1CA32).l                ; 5B122
+        move.b  d1,(LapStartPiece).l                ; 5B122
         move.w  (dat_1BC2A).l,d0                ; 5B128
         asl.w   #$5,d0                          ; 5B12E
         move.w  d0,(dat_1CA1E).l                ; 5B130
@@ -7741,11 +7782,11 @@ l_5B19C:
         cmp.b   (dat_1CA2F).l,d1                ; 5B1AE
         bne.w   l_5B19C                         ; 5B1B4
 l_5B1B8:
-        jsr     (sub_63A8E).l                   ; 5B1B8
+        jsr     (SetOpponentSkill).l                   ; 5B1B8
         move.b  #$0,d0                          ; 5B1BE
         move.b  d0,(dat_1BB48).l                ; 5B1C2
         move.b  #$7c,d0                         ; 5B1C8
-        move.b  d0,(dat_1BB1B).l                ; 5B1CC
+        move.b  d0,(WorkByte6).l                ; 5B1CC
         move.b  #$2,d0                          ; 5B1D2
         move.b  d0,(dat_1BB90).l                ; 5B1D6
         bne.w   l_5B2B0                         ; 5B1DC
@@ -7764,14 +7805,14 @@ l_5B1FC:
 l_5B208:
         movea.l #dat_1C8C8,a2                   ; 5B208
         move.b  (a2,d2.w),d0                    ; 5B20E
-        movea.l #dat_1C952,a1                   ; 5B212
+        movea.l #PieceOpponentLines,a1                   ; 5B212
         move.b  d0,(a1,d1.w)                    ; 5B218
         bpl.w   l_5B22A                         ; 5B21C
         move.b  #$3,d2                          ; 5B220
         move.b  d2,(dat_1BB48).l                ; 5B224
 l_5B22A:
         andi.b  #$7f,d0                         ; 5B22A
-        move.b  d0,(dat_1BB1B).l                ; 5B22E
+        move.b  d0,(WorkByte6).l                ; 5B22E
         bpl.w   l_5B2AA                         ; 5B234
 l_5B238:
         movea.l #TrackPieceFlags,a1             ; 5B238
@@ -7783,23 +7824,23 @@ l_5B238:
         bpl.w   l_5B272                         ; 5B252
         move.b  (dat_63CE1).l,d0                ; 5B256
         subi.b  #$a,d0                          ; 5B25C
-        move.b  d0,(dat_1BB1B).l                ; 5B260
+        move.b  d0,(WorkByte6).l                ; 5B260
         move.b  (dat_63CE1).l,d0                ; 5B266
         jmp     (l_5B28C).l                     ; 5B26C
 l_5B272:
-        move.b  (dat_1BB1B).l,d0                ; 5B272
+        move.b  (WorkByte6).l,d0                ; 5B272
         addi.b  #$a,d0                          ; 5B278
         bmi.w   l_5B286                         ; 5B27C
-        move.b  d0,(dat_1BB1B).l                ; 5B280
+        move.b  d0,(WorkByte6).l                ; 5B280
 l_5B286:
-        move.b  (dat_1BB1B).l,d0                ; 5B286
+        move.b  (WorkByte6).l,d0                ; 5B286
 l_5B28C:
         move.b  (dat_1BB48).l,d2                ; 5B28C
         beq.w   l_5B2A0                         ; 5B292
         subq.b  #$1,(dat_1BB48).l               ; 5B296
         ori.b   #$80,d0                         ; 5B29C
 l_5B2A0:
-        movea.l #dat_1C952,a1                   ; 5B2A0
+        movea.l #PieceOpponentLines,a1                   ; 5B2A0
         move.b  d0,(a1,d1.w)                    ; 5B2A6
 l_5B2AA:
         subq.b  #$1,d1                          ; 5B2AA
@@ -7812,10 +7853,20 @@ l_5B2B8:
         bne.w   l_5B1E0                         ; 5B2BE
         rts                                     ; 5B2C2
 	dc.b	$03,$04,$04,$03
-sub_5B2C8:
-        move.w  (dat_1BC90).l,(dat_1BC8C).l     ; 5B2C8
-sub_5B2D2:
-        move.w  (dat_1BC8C).l,d0                ; 5B2D2
+
+;-------------------------------------------------------------------------------
+; TrackDataFirst - BuildTrack: the track data's pointer (TrackDataPointer) back to its start (TrackDataStart),
+; then TrackDataEntry
+;-------------------------------------------------------------------------------
+TrackDataFirst:
+        move.w  (TrackDataStart).l,(TrackDataPointer).l     ; 5B2C8
+
+;-------------------------------------------------------------------------------
+; TrackDataEntry - d2: an entry of the track data at TrackDataPointer (in the 6502's data) - d0 its low
+; part, WorkByte6 its high bits; one byte or two an entry by dat_1BB79's format (BuildTrack)
+;-------------------------------------------------------------------------------
+TrackDataEntry:
+        move.w  (TrackDataPointer).l,d0                ; 5B2D2
         rol.w   #$8,d0                          ; 5B2D8
         subi.w  #$b100,d0                       ; 5B2DA
         andi.l  #$ffff,d0                       ; 5B2DE
@@ -7828,7 +7879,7 @@ sub_5B2D2:
         move.b  d0,d2                           ; 5B2FA
         addq.b  #$1,d2                          ; 5B2FC
         move.b  (a0,d2.w),d0                    ; 5B2FE
-        move.b  d0,(dat_1BB1B).l                ; 5B302
+        move.b  d0,(WorkByte6).l                ; 5B302
         subq.b  #$1,d2                          ; 5B308
         move.b  (a0,d2.w),d0                    ; 5B30A
         andi.b  #$7f,d0                         ; 5B30E
@@ -7837,22 +7888,28 @@ l_5B314:
         move.b  (a0,d2.w),d0                    ; 5B314
         asl.b   #$1,d0                          ; 5B318
         andi.b  #$e0,d0                         ; 5B31A
-        move.b  d0,(dat_1BB1B).l                ; 5B31E
+        move.b  d0,(WorkByte6).l                ; 5B31E
         move.b  (a0,d2.w),d0                    ; 5B324
         andi.b  #$f,d0                          ; 5B328
         rts                                     ; 5B32C
-sub_5B32E:
+
+;-------------------------------------------------------------------------------
+; UpdateDrop - each step while DropCountdown runs (WheelsOnTrack): the car let down onto the track
+; at the race's start, the countdown's stages ($E6, $E5, $E4) - LinkCheckOvertake at its start,
+; DropTilt and DropLower in it (probably)
+;-------------------------------------------------------------------------------
+UpdateDrop:
         move.b  (DropCountdown).l,d1            ; 5B32E
         beq.w   l_5B38E                         ; 5B334
         cmpi.b  #$e6,d1                         ; 5B338
         bcs.w   l_5B36E                         ; 5B33C
         jsr     (LinkCheckOvertake).l           ; 5B340
         move.b  #$2c,d0                         ; 5B346
-        tst.b   (dat_1BBE1).l                   ; 5B34A
+        tst.b   (DrivingBackwards).l                   ; 5B34A
         bpl.w   l_5B358                         ; 5B350
         move.b  #$d4,d0                         ; 5B354
 l_5B358:
-        move.b  d0,(dat_1BC00).l                ; 5B358
+        move.b  d0,(DropAngle).l                ; 5B358
         move.b  #$0,(dat_1BC01).l               ; 5B35E
 l_5B366:
         subq.b  #$1,(DropCountdown).l           ; 5B366
@@ -7861,9 +7918,9 @@ l_5B36E:
         cmpi.b  #$e5,d1                         ; 5B36E
         bne.w   l_5B390                         ; 5B372
         move.b  #$0,d0                          ; 5B376
-        jsr     (sub_5B4A8).l                   ; 5B37A
+        jsr     (DropTilt).l                   ; 5B37A
         move.b  #$3,d0                          ; 5B380
-        jsr     (sub_5B472).l                   ; 5B384
+        jsr     (DropLower).l                   ; 5B384
         bpl.w   l_5B366                         ; 5B38A
 l_5B38E:
         rts                                     ; 5B38E
@@ -7871,9 +7928,9 @@ l_5B390:
         cmpi.b  #$e4,d1                         ; 5B390
         bne.w   l_5B402                         ; 5B394
         move.b  #$4,d0                          ; 5B398
-        jsr     (sub_5B472).l                   ; 5B39C
+        jsr     (DropLower).l                   ; 5B39C
         move.b  #$ff,d0                         ; 5B3A2
-        jsr     (sub_5B4A8).l                   ; 5B3A6
+        jsr     (DropTilt).l                   ; 5B3A6
         bne.w   l_5B400                         ; 5B3AC
         jsr     (Random).l                      ; 5B3B0
         andi.b  #$1f,d0                         ; 5B3B6
@@ -7893,15 +7950,15 @@ l_5B3DE:
         move.b  #$32,(dat_1BB74).l              ; 5B3EE
 l_5B3F6:
         move.b  #$4,d0                          ; 5B3F6
-        jmp     (sub_5E4EC).l                   ; 5B3FA
+        jmp     (QueueMessage).l                   ; 5B3FA
 l_5B400:
         rts                                     ; 5B400
 l_5B402:
         move.b  #$0,d0                          ; 5B402
-        jsr     (sub_5B4A8).l                   ; 5B406
+        jsr     (DropTilt).l                   ; 5B406
         move.b  #$2,d0                          ; 5B40C
-        jsr     (sub_5B472).l                   ; 5B410
-        tst.b   (dat_1BBCD).l                   ; 5B416
+        jsr     (DropLower).l                   ; 5B410
+        tst.b   (ClockTick).l                   ; 5B416
         bmi.w   l_5B430                         ; 5B41C
         subq.b  #$1,(DropCountdown).l           ; 5B420
         bne.w   l_5B430                         ; 5B426
@@ -7913,18 +7970,24 @@ l_5B430:
         bpl.w   l_5B450                         ; 5B440
         rts                                     ; 5B444
 l_5B446:
-        move.b  (dat_1BB70).l,d0                ; 5B446
+        move.b  (ThrottleOff).l,d0                ; 5B446
         bne.w   l_5B470                         ; 5B44C
 l_5B450:
         move.b  #$0,d0                          ; 5B450
         move.b  d0,(DropCountdown).l            ; 5B454
         move.b  d0,(dat_1BB9C).l                ; 5B45A
-        move.b  d0,(dat_1BB8E).l                ; 5B460
+        move.b  d0,(MessagePending).l                ; 5B460
         move.b  #$80,d0                         ; 5B466
         move.b  d0,(dat_1BBC4).l                ; 5B46A
 l_5B470:
         rts                                     ; 5B470
-sub_5B472:
+
+;-------------------------------------------------------------------------------
+; DropLower - the drop: the car's height above its place (dat_1BCD0 - dat_1BC60 - d0 x 256) slows
+; the vertical speed SpringForceUp (by at most $200 a step); d0 = the height's high byte + 2
+; (probably)
+;-------------------------------------------------------------------------------
+DropLower:
         asl.w   #$8,d0                          ; 5B472
         move.w  (dat_1BCD0).l,d3                ; 5B474
         sub.w   (dat_1BC60).l,d3                ; 5B47A
@@ -7937,14 +8000,20 @@ sub_5B472:
         bcc.w   l_5B49A                         ; 5B492
         move.w  #$fe00,d0                       ; 5B496
 l_5B49A:
-        sub.w   d0,(dat_1BD42).l                ; 5B49A
+        sub.w   d0,(SpringForceUp).l                ; 5B49A
         lsr.w   #$8,d3                          ; 5B4A0
         move.b  d3,d0                           ; 5B4A2
         addq.b  #$2,d0                          ; 5B4A4
         rts                                     ; 5B4A6
-sub_5B4A8:
+
+;-------------------------------------------------------------------------------
+; DropTilt - the drop: DropAngle moved by d0 x $EE / 256 toward its stop ($10, or $F0 driving the
+; other way: DrivingBackwards), CarRoll = it - dat_1BC5C x 32; Z set when it is there (probably the
+; car's tilt as it is let down)
+;-------------------------------------------------------------------------------
+DropTilt:
         move.b  #$10,d4                         ; 5B4A8
-        tst.b   (dat_1BBE1).l                   ; 5B4AC
+        tst.b   (DrivingBackwards).l                   ; 5B4AC
         bpl.w   l_5B4BC                         ; 5B4B2
         neg.b   d0                              ; 5B4B6
         move.b  #$f0,d4                         ; 5B4B8
@@ -7957,23 +8026,28 @@ l_5B4BC:
 l_5B4CA:
         move.w  (dat_1BC5C).l,d3                ; 5B4CA
         asl.w   #$5,d3                          ; 5B4D0
-        move.b  (dat_1BC00).l,d7                ; 5B4D2
+        move.b  (DropAngle).l,d7                ; 5B4D2
         cmp.b   d4,d7                           ; 5B4D8
         beq.w   l_5B4E4                         ; 5B4DA
-        add.w   d0,(dat_1BC00).l                ; 5B4DE
+        add.w   d0,(DropAngle).l                ; 5B4DE
 l_5B4E4:
-        move.w  (dat_1BC00).l,d0                ; 5B4E4
+        move.w  (DropAngle).l,d0                ; 5B4E4
         sub.w   d3,d0                           ; 5B4EA
-        move.w  d0,(dat_1BCE8).l                ; 5B4EC
+        move.w  d0,(CarRoll).l                ; 5B4EC
         move.w  #$0,d0                          ; 5B4F2
         move.w  d0,(dat_1BD26).l                ; 5B4F6
-        move.b  (dat_1BC00).l,d0                ; 5B4FC
+        move.b  (DropAngle).l,d0                ; 5B4FC
         cmp.b   d4,d0                           ; 5B502
         rts                                     ; 5B504
-sub_5B506:
+
+;-------------------------------------------------------------------------------
+; PlaceCarAhead - the car's position (CarX: 3 longs) moved $A0 along its heading
+; (ViewMatrix's row), backwards when driving the other way (DrivingBackwards): PlaceCarOnPiece
+;-------------------------------------------------------------------------------
+PlaceCarAhead:
         move.w  #$8,d1                          ; 5B506
         move.w  #$4,d2                          ; 5B50A
-        movea.l #dat_1BCD8,a3                   ; 5B50E
+        movea.l #CarX,a3                   ; 5B50E
 l_5B514:
         movea.l #ViewMatrix,a2                  ; 5B514
         move.w  (a2,d2.w),d0                    ; 5B51A
@@ -7981,11 +8055,11 @@ l_5B514:
         bne.w   l_5B528                         ; 5B522
         neg.w   d0                              ; 5B526
 l_5B528:
-        move.b  (dat_1BBE1).l,(dat_1BBBB).l     ; 5B528
-        move.b  #$a0,(dat_1BB1A).l              ; 5B532
-        move.b  (dat_1BB1A).l,d3                ; 5B53A
+        move.b  (DrivingBackwards).l,(WorkSign).l     ; 5B528
+        move.b  #$a0,(WorkByte5).l              ; 5B532
+        move.b  (WorkByte5).l,d3                ; 5B53A
         andi.w  #$ff,d3                         ; 5B540
-        tst.b   (dat_1BBBB).l                   ; 5B544
+        tst.b   (WorkSign).l                   ; 5B544
         bpl.w   l_5B550                         ; 5B54A
         neg.w   d3                              ; 5B54E
 l_5B550:
@@ -8006,23 +8080,23 @@ l_5B550:
 ; (EngineSoundRevs)
 ;-------------------------------------------------------------------------------
 UpdateEngineRevs:
-        move.b  (dat_1BB7E).l,d0                ; 5B56C
+        move.b  (WheelsDown).l,d0                ; 5B56C
         bne.w   l_5B590                         ; 5B572
         move.w  #$0,d0                          ; 5B576
-        move.b  (dat_1BB47).l,d0                ; 5B57A
+        move.b  (ControlBits).l,d0                ; 5B57A
         andi.b  #$3,d0                          ; 5B580
         beq.w   l_5B5A0                         ; 5B584
         move.w  #$9000,d0                       ; 5B588
         bne.w   l_5B5A0                         ; 5B58C
 l_5B590:
-        move.w  (dat_1BD30).l,d0                ; 5B590
+        move.w  (SpeedForward).l,d0                ; 5B590
         andi.w  #$fff0,d0                       ; 5B596
         bpl.w   l_5B5A0                         ; 5B59A
         neg.w   d0                              ; 5B59E
 l_5B5A0:
         addi.w  #$580,d0                        ; 5B5A0
         lsr.w   #$3,d0                          ; 5B5A4
-        move.w  (dat_1BC34).l,d3                ; 5B5A6
+        move.w  (EngineRevs).l,d3                ; 5B5A6
         cmpi.w  #$c0,d3                         ; 5B5AC
         bge.w   l_5B5BC                         ; 5B5B0
         move.w  #$2,d0                          ; 5B5B4
@@ -8031,15 +8105,15 @@ l_5B5BC:
         sub.w   d3,d0                           ; 5B5BC
         asr.w   #$3,d0                          ; 5B5BE
 l_5B5C0:
-        move.w  d0,(dat_1BBF4).l                ; 5B5C0
-        move.b  (dat_1BBF4).l,d0                ; 5B5C6
+        move.w  d0,(EngineRevTarget).l                ; 5B5C0
+        move.b  (EngineRevTarget).l,d0                ; 5B5C6
         bmi.w   l_5B5E6                         ; 5B5CC
         beq.w   l_5B632                         ; 5B5D0
         move.b  #$0,(dat_1BBF5).l               ; 5B5D4
         move.b  #$1,d0                          ; 5B5DC
         jmp     (l_5B62C).l                     ; 5B5E0
 l_5B5E6:
-        move.b  (dat_1BB7E).l,d2                ; 5B5E6
+        move.b  (WheelsDown).l,d2                ; 5B5E6
         beq.w   l_5B60A                         ; 5B5EC
         cmpi.b  #$ff,d0                         ; 5B5F0
         beq.w   l_5B632                         ; 5B5F4
@@ -8056,7 +8130,7 @@ l_5B620:
         move.b  #$e0,(dat_1BBF5).l              ; 5B620
         move.b  #$ff,d0                         ; 5B628
 l_5B62C:
-        move.b  d0,(dat_1BBF4).l                ; 5B62C
+        move.b  d0,(EngineRevTarget).l                ; 5B62C
 l_5B632:
         jsr     (Random).l                      ; 5B632
         andi.b  #$f,d0                          ; 5B638
@@ -8073,8 +8147,8 @@ AskDriverName:
         move.b  #$e0,d1                         ; 5B64E
         jsr     (PrintMenuText).l               ; 5B652
         move.b  #$1,d0                          ; 5B658
-        move.b  d0,(dat_1BB16).l                ; 5B65C
-        jsr     (sub_64B0E).l                   ; 5B662
+        move.b  d0,(WorkByte1).l                ; 5B65C
+        jsr     (TextAtListLineTwo).l                   ; 5B662
         move.b  #$a,d0                          ; 5B668
         move.w  #$6a,d4                         ; 5B66C
         move.w  #$be,d6                         ; 5B670
@@ -8087,14 +8161,14 @@ l_5B694:
         move.b  #$2,d0                          ; 5B694
         jsr     (SetTextBackground).l           ; 5B698
         jsr     (NamePrompt).l                  ; 5B69E
-        jsr     (sub_64C0E).l                   ; 5B6A4
+        jsr     (TextOffsetFour).l                   ; 5B6A4
         move.w  #$b,d0                          ; 5B6AA
         sub.b   (dat_5EB76).l,d0                ; 5B6AE
         asl.w   #$4,d0                          ; 5B6B4
         movea.l #DriverNames,a0                 ; 5B6B6
         cmpi.b  #$20,$1(a0,d0.w)                ; 5B6BC
         beq.w   l_5B694                         ; 5B6C2
-        jsr     (sub_64834).l                   ; 5B6C6
+        jsr     (TextOffsetNone).l                   ; 5B6C6
         move.b  #$3,d0                          ; 5B6CC
         jsr     (SetTextBackground).l           ; 5B6D0
         move.l  (a7)+,(ScreenDraw).l            ; 5B6D6
@@ -8123,7 +8197,7 @@ l_5B6F6:
 ; EditText - a line of text typed at the cursor (Return ends it, Backspace deletes)
 ;-------------------------------------------------------------------------------
 EditText:
-        move.b  d0,(dat_1BBD5).l                ; 5B71C
+        move.b  d0,(GridOffsetX).l                ; 5B71C
         move.b  d3,(dat_5B83C).l                ; 5B722
         move.b  #$0,(MenuMove).l                ; 5B728
         move.b  (dat_5B83E).l,d1                ; 5B730
@@ -8133,7 +8207,7 @@ l_5B740:
         move.b  #$0,d1                          ; 5B740
 l_5B744:
         move.b  d1,d2                           ; 5B744
-        add.b   (dat_1BBD5).l,d2                ; 5B746
+        add.b   (GridOffsetX).l,d2                ; 5B746
         jsr     (WaitKeyPress).l                ; 5B74C
         tst.b   (dat_62BB5).l                   ; 5B752
         bpl.w   l_5B76C                         ; 5B758
@@ -8173,7 +8247,7 @@ l_5B7C4:
 l_5B7DA:
         cmpi.b  #$60,d0                         ; 5B7DA
         bcs.w   l_5B7F2                         ; 5B7DE
-        cmpi.b  #$c0,(dat_1BBD5).l              ; 5B7E2
+        cmpi.b  #$c0,(GridOffsetX).l              ; 5B7E2
         bne.w   l_5B7F2                         ; 5B7EA
         subi.b  #$20,d0                         ; 5B7EE
 l_5B7F2:
@@ -8186,7 +8260,7 @@ l_5B7F2:
         jmp     (l_5B744).l                     ; 5B80E
 l_5B814:
         move.b  d1,d2                           ; 5B814
-        add.b   (dat_1BBD5).l,d2                ; 5B816
+        add.b   (GridOffsetX).l,d2                ; 5B816
         move.b  #$20,d0                         ; 5B81C
         movea.l #dat_1ECAB,a2                   ; 5B820
         move.b  d0,(a2,d2.w)                    ; 5B826
@@ -8194,7 +8268,7 @@ l_5B814:
 l_5B82C:
         cmp.b   (dat_5B83C).l,d1                ; 5B82C
         blt.w   l_5B814                         ; 5B832
-        jmp     (sub_64834).l                   ; 5B836
+        jmp     (TextOffsetNone).l                   ; 5B836
 dat_5B83C:
 	dc.b	$00
 MenuMove:				; the last menu key (KeyToMenuMove): $80 Esc, $20 up, $40 down, $10 right, $08 left
@@ -8210,8 +8284,8 @@ RunMenu:
         subq.b  #$1,d2                          ; 5B840
         move.b  d2,(dat_1BB8D).l                ; 5B842
         move.b  d1,(dat_1BB8B).l                ; 5B848
-        move.b  d0,(dat_1BBD6).l                ; 5B84E
-        jsr     (sub_645C6).l                   ; 5B854
+        move.b  d0,(GridOffsetY).l                ; 5B84E
+        jsr     (PrintSeasonPanel).l                   ; 5B854
         move.b  #$1,d0                          ; 5B85A
         jsr     (SetTextColour).l               ; 5B85E
         move.b  #$0,d1                          ; 5B864
@@ -8221,11 +8295,11 @@ RunMenu:
         jsr     (SetTextColour).l               ; 5B878
 l_5B87E:
         move.b  #$0,d0                          ; 5B87E
-        move.b  d0,(dat_1BB16).l                ; 5B882
+        move.b  d0,(WorkByte1).l                ; 5B882
 l_5B888:
-        move.b  (dat_1BB16).l,d2                ; 5B888
-        move.b  d2,(dat_1BB18).l                ; 5B88E
-        cmp.b   (dat_1BBD6).l,d2                ; 5B894
+        move.b  (WorkByte1).l,d2                ; 5B888
+        move.b  d2,(WorkByte3).l                ; 5B88E
+        cmp.b   (GridOffsetY).l,d2                ; 5B894
         bne.w   l_5B8B6                         ; 5B89A
         move.b  #$0,d0                          ; 5B89E
         move.b  (dat_1BBCA).l,d2                ; 5B8A2
@@ -8234,27 +8308,27 @@ l_5B888:
 l_5B8B0:
         move.b  d0,(dat_64C18).l                ; 5B8B0
 l_5B8B6:
-        jsr     (sub_64B0E).l                   ; 5B8B6
-        move.b  (dat_1BB18).l,d0                ; 5B8BC
+        jsr     (TextAtListLineTwo).l                   ; 5B8B6
+        move.b  (WorkByte3).l,d0                ; 5B8BC
         addq.b  #$1,d0                          ; 5B8C2
         jsr     (PrintDigit).l                  ; 5B8C4
         move.b  #$2e,d0                         ; 5B8CA
         jsr     (PrintChar).l                   ; 5B8CE
         move.b  #$20,d0                         ; 5B8D4
         jsr     (PrintChar).l                   ; 5B8D8
-        move.b  (dat_1BB18).l,d2                ; 5B8DE
+        move.b  (WorkByte3).l,d2                ; 5B8DE
         add.b   (dat_1BB8B).l,d2                ; 5B8E4
         movea.l #dat_5BCD0,a2                   ; 5B8EA
         move.b  (a2,d2.w),d1                    ; 5B8F0
         jsr     (PrintOptionText).l             ; 5B8F4
         cmpi.b  #$18,(dat_1BB8B).l              ; 5B8FA
         bne.w   l_5B914                         ; 5B902
-        move.b  (dat_1BB18).l,d0                ; 5B906
+        move.b  (WorkByte3).l,d0                ; 5B906
         addq.b  #$1,d0                          ; 5B90C
         jsr     (PrintDigit).l                  ; 5B90E
 l_5B914:
         move.b  (dat_1BB8D).l,d0                ; 5B914
-        cmp.b   (dat_1BB18).l,d0                ; 5B91A
+        cmp.b   (WorkByte3).l,d0                ; 5B91A
         bcs.w   l_5B962                         ; 5B920
         move.b  (dat_1BB8B).l,d0                ; 5B924
         cmpi.b  #$1c,d0                         ; 5B92A
@@ -8263,7 +8337,7 @@ l_5B914:
         jsr     (PrintMenuText).l               ; 5B936
         move.b  (dat_5EB7C).l,d0                ; 5B93C
         asl.b   #$1,d0                          ; 5B942
-        add.b   (dat_1BB18).l,d0                ; 5B944
+        add.b   (WorkByte3).l,d0                ; 5B944
         move.b  d0,d2                           ; 5B94A
         movea.l #DivisionTracks,a2              ; 5B94C
         move.b  (a2,d2.w),d1                    ; 5B952
@@ -8275,8 +8349,8 @@ l_5B962:
         jsr     (Wait).l                        ; 5B96C
         move.b  (dat_1BBCA).l,d0                ; 5B972
         beq.w   l_5B98A                         ; 5B978
-        jsr     (sub_64834).l                   ; 5B97C
-        move.b  (dat_1BBD6).l,d0                ; 5B982
+        jsr     (TextOffsetNone).l                   ; 5B97C
+        move.b  (GridOffsetY).l,d0                ; 5B982
         rts                                     ; 5B988
 l_5B98A:
         jsr     (ReadControls).l                ; 5B98A
@@ -8301,14 +8375,14 @@ l_5B9D2:
         move.b  (a2,d2.w),d1                    ; 5B9D8
         jsr     (KeyDown).l                     ; 5B9DC
         bne.w   l_5B9F2                         ; 5B9E2
-        move.b  d2,(dat_1BBD6).l                ; 5B9E6
+        move.b  d2,(GridOffsetY).l                ; 5B9E6
         jmp     (l_5B87E).l                     ; 5B9EC
 l_5B9F2:
         subq.b  #$1,d2                          ; 5B9F2
         bpl.w   l_5B9D2                         ; 5B9F4
 l_5B9F8:
-        move.b  (dat_1BBD6).l,d1                ; 5B9F8
-        move.b  (dat_1BB47).l,d0                ; 5B9FE
+        move.b  (GridOffsetY).l,d1                ; 5B9F8
+        move.b  (ControlBits).l,d0                ; 5B9FE
         andi.b  #$3,d0                          ; 5BA04
         beq.w   l_5B99E                         ; 5BA08
         andi.b  #$1,d0                          ; 5BA0C
@@ -8324,9 +8398,13 @@ l_5BA22:
 l_5BA30:
         addq.b  #$1,d1                          ; 5BA30
 l_5BA32:
-        move.b  d1,(dat_1BBD6).l                ; 5BA32
+        move.b  d1,(GridOffsetY).l                ; 5BA32
         jmp     (l_5B87E).l                     ; 5BA38
-sub_5BA3E:
+
+;-------------------------------------------------------------------------------
+; WaitLong - Wait with d2 = $14
+;-------------------------------------------------------------------------------
+WaitLong:
         move.b  #$14,d2                         ; 5BA3E
 
 ;-------------------------------------------------------------------------------
@@ -8334,11 +8412,11 @@ sub_5BA3E:
 ;-------------------------------------------------------------------------------
 Wait:
         move.b  #$14,d0                         ; 5BA42
-        move.b  d0,(dat_1BB1A).l                ; 5BA46
+        move.b  d0,(WorkByte5).l                ; 5BA46
 l_5BA4C:
-        subq.b  #$1,(dat_1BB1B).l               ; 5BA4C
+        subq.b  #$1,(WorkByte6).l               ; 5BA4C
         bne.w   l_5BA4C                         ; 5BA52
-        subq.b  #$1,(dat_1BB1A).l               ; 5BA56
+        subq.b  #$1,(WorkByte5).l               ; 5BA56
         bne.w   l_5BA4C                         ; 5BA5C
         subq.b  #$1,d2                          ; 5BA60
         bne.w   Wait                            ; 5BA62
@@ -8358,10 +8436,10 @@ l_5BA78:
         asl.b   #$1,d0                          ; 5BA9A
         add.b   (dat_1CA22).l,d0                ; 5BA9C
         jsr     (SetTrackChoice).l              ; 5BAA2
-        jmp     (sub_5BA3E).l                   ; 5BAA8
+        jmp     (WaitLong).l                   ; 5BAA8
 l_5BAAE:
         move.b  #$0,d0                          ; 5BAAE
-        jsr     (sub_609AE).l                   ; 5BAB2
+        jsr     (SavedGameSettings).l                   ; 5BAB2
         move.b  #$80,d0                         ; 5BAB8
         move.b  d0,(dat_1CA22).l                ; 5BABC
         rts                                     ; 5BAC2
@@ -8372,7 +8450,7 @@ l_5BAC4:
         move.b  #$b2,(LinkFrameCommand).l       ; 5BAD6
         jsr     (LinkExchange).l                ; 5BADE
 l_5BAE4:
-        jsr     (sub_5BA3E).l                   ; 5BAE4
+        jsr     (WaitLong).l                   ; 5BAE4
 
 ;-------------------------------------------------------------------------------
 ; MainMenu - the menu of a division: 1. Hall of Fame, 2. Practise, 3. Start the Racing Season,
@@ -8393,7 +8471,7 @@ l_5BB0E:
         cmpi.b  #$2,d0                          ; 5BB1C
         beq.w   l_5BAAE                         ; 5BB20
         blt.w   l_5BA68                         ; 5BB24
-        jsr     (sub_5BA3E).l                   ; 5BB28
+        jsr     (WaitLong).l                   ; 5BB28
         cmpi.b  #$40,(LinkMode).l               ; 5BB2E
         beq.w   l_582F4                         ; 5BB36
         move.b  #$3,d2                          ; 5BB3A
@@ -8424,7 +8502,7 @@ l_5BBB2:
         tst.b   (dat_5EB76).l                   ; 5BBB2
         bne.w   l_5BBCA                         ; 5BBB8
         move.b  #$80,d0                         ; 5BBBC
-        jsr     (sub_609AE).l                   ; 5BBC0
+        jsr     (SavedGameSettings).l                   ; 5BBC0
         bcc.w   l_5BC9C                         ; 5BBC6
 l_5BBCA:
         jsr     (NewGame).l                     ; 5BBCA
@@ -8439,16 +8517,16 @@ l_5BBDA:
 l_5BBEC:
         movea.l #$7a01a,a2                      ; 5BBEC
         move.b  (a2,d2.w),d0                    ; 5BBF2
-        movea.l #dat_1C280,a2                   ; 5BBF6
+        movea.l #TrackGrid,a2                   ; 5BBF6
         move.b  d0,(a2,d2.w)                    ; 5BBFC
         subq.b  #$1,d2                          ; 5BC00
         bne.w   l_5BBEC                         ; 5BC02
         move.b  (dat_1CA34).l,d0                ; 5BC06
         move.b  d0,(dat_1BBD0).l                ; 5BC0C
-        jsr     (sub_5BA3E).l                   ; 5BC12
+        jsr     (WaitLong).l                   ; 5BC12
         move.b  #$0,d0                          ; 5BC18
-        jsr     (sub_609AE).l                   ; 5BC1C
-        jsr     (sub_62748).l                   ; 5BC22
+        jsr     (SavedGameSettings).l                   ; 5BC1C
+        jsr     (SaveMenu).l                   ; 5BC22
         tst.b   (dat_1BB6B).l                   ; 5BC28
         bne.w   l_5BC62                         ; 5BC2E
         tst.b   (dat_1BB92).l                   ; 5BC32
@@ -8456,11 +8534,11 @@ l_5BBEC:
         move.b  (dat_1CA31).l,d0                ; 5BC3C
         bne.w   l_5BC5C                         ; 5BC42
         move.b  #$80,d0                         ; 5BC46
-        jsr     (sub_609AE).l                   ; 5BC4A
+        jsr     (SavedGameSettings).l                   ; 5BC4A
         bcc.w   l_5BC62                         ; 5BC50
         move.b  #$81,(dat_1BB94).l              ; 5BC54
 l_5BC5C:
-        jsr     (sub_5BCA8).l                   ; 5BC5C
+        jsr     (CopyTrackGrid).l                   ; 5BC5C
 l_5BC62:
         cmpi.b  #$81,(dat_1BB94).l              ; 5BC62
         bne.w   l_5BC7E                         ; 5BC6A
@@ -8475,13 +8553,18 @@ l_5BC90:
         cmpi.b  #$40,(dat_1BB6B).l              ; 5BC90
         beq.w   l_5BCA2                         ; 5BC98
 l_5BC9C:
-        jsr     (sub_648B2).l                   ; 5BC9C
+        jsr     (ShowDivisionsOrTable).l                   ; 5BC9C
 l_5BCA2:
         jmp     (MainMenu).l                    ; 5BCA2
-sub_5BCA8:
+
+;-------------------------------------------------------------------------------
+; CopyTrackGrid - MainMenu: the track's grid (TrackGrid: 16 x 16 squares, a piece's number each)
+; copied to $7A01A (bytes 1-255), dat_1BBD0 kept in dat_1CA34
+;-------------------------------------------------------------------------------
+CopyTrackGrid:
         move.b  #$0,d2                          ; 5BCA8
         move.b  (dat_1BBD0).l,(dat_1CA34).l     ; 5BCAC
-        movea.l #dat_1C280,a2                   ; 5BCB6
+        movea.l #TrackGrid,a2                   ; 5BCB6
         movea.l #$7a01a,a0                      ; 5BCBC
 l_5BCC2:
         move.b  (a2,d2.w),(a0,d2.w)             ; 5BCC2
@@ -8499,29 +8582,35 @@ SetTrackChoice:
         move.b  d0,d1                           ; 5BCF0
         movea.l #DivisionTracks,a0              ; 5BCF2
         move.b  (a0,d1.w),(CurrentTrack).l      ; 5BCF8
-        tst.b   (dat_1C9D0).l                   ; 5BD00
+        tst.b   (SuperLeague).l                   ; 5BD00
         beq.w   l_5BD0E                         ; 5BD06
         bchg    #$0,d1                          ; 5BD0A
 l_5BD0E:
         movea.l #dat_648CA,a0                   ; 5BD0E
         move.b  (a0,d1.w),(dat_1CA21).l         ; 5BD14
         rts                                     ; 5BD1C
-sub_5BD1E:
-        move.b  (dat_1BB44).l,d0                ; 5BD1E
+
+;-------------------------------------------------------------------------------
+; OpponentSwerve - MoveOpponent: while SwerveCountdown counts down, the opponent's sideways offsets
+; (SideOffsets, dat_1BBBF, SwerveExtra) from the table dat_5BE34 - its car shaken from side to side
+; (probably after a knock); not with the link
+;-------------------------------------------------------------------------------
+OpponentSwerve:
+        move.b  (OpponentRacing).l,d0                ; 5BD1E
         beq.w   l_5BE32                         ; 5BD24
         tst.b   (LinkMode).l                    ; 5BD28
         bne.w   l_5BE32                         ; 5BD2E
         move.b  #$0,d1                          ; 5BD32
-        move.b  d1,(dat_1BBBE).l                ; 5BD36
+        move.b  d1,(SideOffsets).l                ; 5BD36
         move.b  d1,(dat_1BBBF).l                ; 5BD3C
-        move.b  d1,(dat_1BBBD).l                ; 5BD42
-        move.b  (dat_1BBC0).l,d0                ; 5BD48
+        move.b  d1,(SwerveExtra).l                ; 5BD42
+        move.b  (SwerveCountdown).l,d0                ; 5BD48
         beq.w   l_5BDA6                         ; 5BD4E
-        tst.b   (dat_1BBCD).l                   ; 5BD52
+        tst.b   (ClockTick).l                   ; 5BD52
         bmi.w   l_5BD62                         ; 5BD58
-        subq.b  #$1,(dat_1BBC0).l               ; 5BD5C
+        subq.b  #$1,(SwerveCountdown).l               ; 5BD5C
 l_5BD62:
-        add.b   (dat_1BBC2).l,d0                ; 5BD62
+        add.b   (SwervePhase).l,d0                ; 5BD62
         andi.b  #$f,d0                          ; 5BD68
         move.b  d0,d2                           ; 5BD6C
         movea.l #dat_5BE34,a2                   ; 5BD6E
@@ -8530,22 +8619,22 @@ l_5BD62:
         neg.b   d0                              ; 5BD7C
         addq.b  #$1,d1                          ; 5BD7E
 l_5BD80:
-        movea.l #dat_1BBBE,a1                   ; 5BD80
+        movea.l #SideOffsets,a1                   ; 5BD80
         move.b  d0,(a1,d1.w)                    ; 5BD86
         addq.b  #$5,d2                          ; 5BD8A
         andi.b  #$f,d2                          ; 5BD8C
         movea.l #dat_5BE34,a2                   ; 5BD90
         move.b  (a2,d2.w),d0                    ; 5BD96
-        move.b  d0,(dat_1BBBD).l                ; 5BD9A
+        move.b  d0,(SwerveExtra).l                ; 5BD9A
         jmp     (l_5BE1C).l                     ; 5BDA0
 l_5BDA6:
         move.b  (OpponentPiece).l,d2            ; 5BDA6
-        movea.l #dat_1C952,a0                   ; 5BDAC
+        movea.l #PieceOpponentLines,a0                   ; 5BDAC
         tst.b   (a0,d2.w)                       ; 5BDB2
         bmi.w   l_5BE1C                         ; 5BDB6
         tst.b   (dat_1BBB8).l                   ; 5BDBA
         bmi.w   l_5BE1C                         ; 5BDC0
-        tst.b   (dat_1BB4D).l                   ; 5BDC4
+        tst.b   (PieceDirection).l                   ; 5BDC4
         bmi.w   l_5BE1C                         ; 5BDCA
         move.b  #$8,d2                          ; 5BDCE
         tst.b   (dat_1BB9D).l                   ; 5BDD2
@@ -8554,19 +8643,19 @@ l_5BDA6:
         beq.w   l_5BDEC                         ; 5BDE4
         move.b  #$10,d2                         ; 5BDE8
 l_5BDEC:
-        move.b  d2,(dat_1BBC2).l                ; 5BDEC
+        move.b  d2,(SwervePhase).l                ; 5BDEC
         jsr     (Random).l                      ; 5BDF2
         andi.b  #$1f,d0                         ; 5BDF8
-        move.b  d0,(dat_1BB1B).l                ; 5BDFC
-        move.b  (dat_1CA29).l,d0                ; 5BE02
-        cmp.b   (dat_1BB1B).l,d0                ; 5BE08
+        move.b  d0,(WorkByte6).l                ; 5BDFC
+        move.b  (OpponentSkill).l,d0                ; 5BE02
+        cmp.b   (WorkByte6).l,d0                ; 5BE08
         blt.w   l_5BE1C                         ; 5BE0E
         move.b  #$10,d0                         ; 5BE12
-        move.b  d0,(dat_1BBC0).l                ; 5BE16
+        move.b  d0,(SwerveCountdown).l                ; 5BE16
 l_5BE1C:
-        move.b  (dat_1BC32).l,d0                ; 5BE1C
+        move.b  (PieceReversed).l,d0                ; 5BE1C
         lsr.b   #$1,d0                          ; 5BE22
-        move.b  (dat_1BB4D).l,d3                ; 5BE24
+        move.b  (PieceDirection).l,d3                ; 5BE24
         eor.b   d3,d0                           ; 5BE2A
         move.b  d0,(dat_1BB9D).l                ; 5BE2C
 l_5BE32:
@@ -8574,10 +8663,16 @@ l_5BE32:
 dat_5BE34:
 	dc.b	' P`pp`P '
 	dc.b	$E0,$B0,$A0,$90,$90,$A0,$B0,$E0
-sub_5BE44:
+
+;-------------------------------------------------------------------------------
+; CarPiecePosition - the car on its piece (PieceIndex, LoadPiece): its offset in the piece's grid
+; square, its x and z in the piece's own axes by the piece's direction (PieceDirection) - CarAcrossTrack,
+; CarAlongPiece (probably how far along), dat_1BD5A
+;-------------------------------------------------------------------------------
+CarPiecePosition:
         move.b  (PieceIndex).l,d1               ; 5BE44
         jsr     (LoadPiece).l                   ; 5BE4A
-        move.w  (dat_1BCBC).l,d0                ; 5BE50
+        move.w  (PieceDataPointer).l,d0                ; 5BE50
         rol.w   #$8,d0                          ; 5BE56
         subi.w  #$b100,d0                       ; 5BE58
         andi.l  #$ffff,d0                       ; 5BE5C
@@ -8587,27 +8682,27 @@ sub_5BE44:
         jsr     (PieceGridOffset).l             ; 5BE6C
         move.w  (dat_1BC30).l,d0                ; 5BE72
         sub.w   (dat_1BC4A).l,d0                ; 5BE78
-        move.w  d0,(dat_1BBF2).l                ; 5BE7E
-        tst.b   (dat_1BB4D).l                   ; 5BE84
+        move.w  d0,(PieceAxes).l                ; 5BE7E
+        tst.b   (PieceDirection).l                   ; 5BE84
         bmi.w   l_5BF50                         ; 5BE8A
-        btst    #$6,(dat_1BB4D).l               ; 5BE8E
+        btst    #$6,(PieceDirection).l               ; 5BE8E
         bne.w   l_5BECE                         ; 5BE96
-        jsr     (sub_5C3DA).l                   ; 5BE9A
+        jsr     (CarInPieceAxes).l                   ; 5BE9A
         move.b  $3(a5),d3                       ; 5BEA0
         asl.w   #$8,d3                          ; 5BEA4
         move.b  $2(a5),d3                       ; 5BEA6
         move.w  (dat_1BBF6).l,d0                ; 5BEAA
         sub.w   d3,d0                           ; 5BEB0
-        move.w  d0,(dat_1BC5E).l                ; 5BEB2
-        move.w  (dat_1BBF8).l,(dat_1BB10).l     ; 5BEB8
+        move.w  d0,(CarAcrossTrack).l                ; 5BEB2
+        move.w  (dat_1BBF8).l,(CarAlongPiece).l     ; 5BEB8
         move.w  (dat_1BC4A).l,(dat_1BD5A).l     ; 5BEC2
         rts                                     ; 5BECC
 l_5BECE:
-        jsr     (sub_5C3DA).l                   ; 5BECE
-        move.b  #$b5,(dat_1BB1A).l              ; 5BED4
+        jsr     (CarInPieceAxes).l                   ; 5BECE
+        move.b  #$b5,(WorkByte5).l              ; 5BED4
         move.w  (dat_1BBF6).l,d0                ; 5BEDC
         sub.w   (dat_1BBF8).l,d0                ; 5BEE2
-        move.b  (dat_1BB1A).l,d3                ; 5BEE8
+        move.b  (WorkByte5).l,d3                ; 5BEE8
         asl.w   #$7,d3                          ; 5BEEE
         bclr    #$f,d3                          ; 5BEF0
         muls.w  d3,d0                           ; 5BEF4
@@ -8617,17 +8712,17 @@ l_5BECE:
         asl.w   #$8,d3                          ; 5BEFE
         move.b  $2(a5),d3                       ; 5BF00
         sub.w   d3,d0                           ; 5BF04
-        move.w  d0,(dat_1BC5E).l                ; 5BF06
-        move.b  $7(a5),(dat_1BB1A).l            ; 5BF0C
+        move.w  d0,(CarAcrossTrack).l                ; 5BF06
+        move.b  $7(a5),(WorkByte5).l            ; 5BF0C
         move.w  (dat_1BBF6).l,d0                ; 5BF14
         add.w   (dat_1BBF8).l,d0                ; 5BF1A
-        move.b  (dat_1BB1A).l,d3                ; 5BF20
+        move.b  (WorkByte5).l,d3                ; 5BF20
         asl.w   #$7,d3                          ; 5BF26
         bclr    #$f,d3                          ; 5BF28
         muls.w  d3,d0                           ; 5BF2C
         asl.l   #$1,d0                          ; 5BF2E
         swap    d0                              ; 5BF30
-        move.w  d0,(dat_1BB10).l                ; 5BF32
+        move.w  d0,(CarAlongPiece).l                ; 5BF32
         move.b  $5(a5),d3                       ; 5BF38
         asl.w   #$8,d3                          ; 5BF3C
         move.b  $4(a5),d3                       ; 5BF3E
@@ -8655,7 +8750,7 @@ l_5BF92:
         addi.w  #$4000,d0                       ; 5BF98
         sub.w   (dat_1BC44).l,d0                ; 5BF9C
         move.w  d0,(dat_1BD5A).l                ; 5BFA2
-        move.b  (dat_1BB4D).l,d4                ; 5BFA8
+        move.b  (PieceDirection).l,d4                ; 5BFA8
         andi.b  #$3,d4                          ; 5BFAE
         neg.b   d4                              ; 5BFB2
         addq.b  #$1,d4                          ; 5BFB4
@@ -8669,8 +8764,8 @@ l_5BF92:
         bpl.w   l_5BFD6                         ; 5BFD0
         neg.w   d0                              ; 5BFD4
 l_5BFD6:
-        move.b  $8(a5),(dat_1BB1A).l            ; 5BFD6
-        move.b  (dat_1BB1A).l,d3                ; 5BFDE
+        move.b  $8(a5),(WorkByte5).l            ; 5BFD6
+        move.b  (WorkByte5).l,d3                ; 5BFDE
         asl.w   #$7,d3                          ; 5BFE4
         bclr    #$f,d3                          ; 5BFE6
         muls.w  d3,d0                           ; 5BFEA
@@ -8686,19 +8781,19 @@ l_5C004:
         andi.l  #$7,d4                          ; 5C004
         lsr.w   d4,d0                           ; 5C00A
 l_5C00C:
-        move.w  d0,(dat_1BB10).l                ; 5C00C
+        move.w  d0,(CarAlongPiece).l                ; 5C00C
         lsr.w   #$7,d0                          ; 5C012
         addq.b  #$2,d0                          ; 5C014
         cmp.b   (dat_1BB97).l,d0                ; 5C016
         blt.w   l_5C080                         ; 5C01C
-        move.b  (dat_1BB86).l,d0                ; 5C020
+        move.b  (PieceCurve).l,d0                ; 5C020
         cmpi.b  #$1,d0                          ; 5C026
         beq.w   l_5C036                         ; 5C02A
         cmpi.b  #$3,d0                          ; 5C02E
         bne.w   l_5C080                         ; 5C032
 l_5C036:
-        move.b  (PieceIndex).l,(dat_1BB19).l    ; 5C036
-        tst.b   (dat_1BC32).l                   ; 5C040
+        move.b  (PieceIndex).l,(WorkByte4).l    ; 5C036
+        tst.b   (PieceReversed).l                   ; 5C040
         beq.w   l_5C056                         ; 5C046
         jsr     (PreviousPiece).l               ; 5C04A
         jmp     (l_5C05C).l                     ; 5C050
@@ -8710,11 +8805,11 @@ l_5C05C:
         andi.b  #$f,d0                          ; 5C066
         cmpi.b  #$4,d0                          ; 5C06A
         bne.w   l_5C076                         ; 5C06E
-        bra.w   sub_5BE44                       ; 5C072
+        bra.w   CarPiecePosition                       ; 5C072
 l_5C076:
-        move.b  (dat_1BB19).l,(PieceIndex).l    ; 5C076
+        move.b  (WorkByte4).l,(PieceIndex).l    ; 5C076
 l_5C080:
-        jsr     (sub_5C65A).l                   ; 5C080
+        jsr     (CurvedPieceHeight).l                   ; 5C080
         move.b  $a(a5),d3                       ; 5C086
         asl.w   #$8,d3                          ; 5C08A
         move.b  $9(a5),d3                       ; 5C08C
@@ -8723,7 +8818,7 @@ l_5C080:
         bpl.w   l_5C0A2                         ; 5C09C
         neg.w   d3                              ; 5C0A0
 l_5C0A2:
-        move.w  d3,(dat_1BC5E).l                ; 5C0A2
+        move.w  d3,(CarAcrossTrack).l                ; 5C0A2
         rts                                     ; 5C0A8
 
 ;-------------------------------------------------------------------------------
@@ -8775,21 +8870,26 @@ l_5C11A:
 l_5C134:
         asr.w   #$5,d0                          ; 5C134
         rts                                     ; 5C136
-sub_5C138:
-        move.w  (dat_1BB10).l,d0                ; 5C138
-        move.b  (dat_1BB6A).l,d4                ; 5C13E
+
+;-------------------------------------------------------------------------------
+; SetPlayerPiecePos - PlayerPiecePos from CarAlongPiece (from the piece's other end when driven the
+; other way: PieceReversed), PlayerPosAhead, and the section numbers dat_1BBE5 and dat_1BB60
+;-------------------------------------------------------------------------------
+SetPlayerPiecePos:
+        move.w  (CarAlongPiece).l,d0                ; 5C138
+        move.b  (PieceSections).l,d4                ; 5C13E
         asl.w   #$8,d4                          ; 5C144
-        tst.b   (dat_1BC32).l                   ; 5C146
+        tst.b   (PieceReversed).l                   ; 5C146
         bpl.w   l_5C154                         ; 5C14C
         sub.w   d4,d0                           ; 5C150
         neg.w   d0                              ; 5C152
 l_5C154:
         move.w  d0,(PlayerPiecePos).l           ; 5C154
         addi.w  #$40,d0                         ; 5C15A
-        move.w  d0,(dat_1BB0E).l                ; 5C15E
+        move.w  d0,(PlayerPosAhead).l                ; 5C15E
         cmp.w   d4,d0                           ; 5C164
         blt.w   l_5C176                         ; 5C166
-        move.b  #$80,(dat_1BB0E).l              ; 5C16A
+        move.b  #$80,(PlayerPosAhead).l              ; 5C16A
         move.w  #$0,d0                          ; 5C172
 l_5C176:
         lsr.w   #$8,d0                          ; 5C176
@@ -8798,26 +8898,32 @@ l_5C176:
         move.b  d0,(dat_1BBE5).l                ; 5C17C
         asl.b   #$1,d0                          ; 5C182
         move.b  d0,(dat_1BB60).l                ; 5C184
-        move.b  (dat_1BC32).l,d0                ; 5C18A
+        move.b  (PieceReversed).l,d0                ; 5C18A
         bpl.w   l_5C1A2                         ; 5C190
         move.w  d4,d0                           ; 5C194
-        sub.w   (dat_1BB10).l,d0                ; 5C196
+        sub.w   (CarAlongPiece).l,d0                ; 5C196
         lsr.w   #$8,d0                          ; 5C19C
         bra.w   l_5C1A8                         ; 5C19E
 l_5C1A2:
-        move.b  (dat_1BB10).l,d0                ; 5C1A2
+        move.b  (CarAlongPiece).l,d0                ; 5C1A2
 l_5C1A8:
         move.b  #$20,d3                         ; 5C1A8
         sub.b   d0,d3                           ; 5C1AC
-        tst.b   (dat_1BB0E).l                   ; 5C1AE
+        tst.b   (PlayerPosAhead).l                   ; 5C1AE
         bpl.w   l_5C1BE                         ; 5C1B4
-        add.b   (dat_1BB6A).l,d3                ; 5C1B8
+        add.b   (PieceSections).l,d3                ; 5C1B8
 l_5C1BE:
         move.b  d3,(dat_1BB58).l                ; 5C1BE
         andi.w  #$ff,d3                         ; 5C1C4
         move.w  d3,(dat_1BC26).l                ; 5C1C8
         rts                                     ; 5C1CE
-sub_5C1D0:
+
+;-------------------------------------------------------------------------------
+; TrackUnderWheels - CarPhysics: for each wheel (dat_1BBF9: 4 down), the piece it is over loaded
+; and the track's height under it (WheelTrackHeight); off the track's sides (WheelAcross outside
+; 0-$180) marked in WheelOffTrack
+;-------------------------------------------------------------------------------
+TrackUnderWheels:
         move.b  (PlayerPiece).l,d1              ; 5C1D0
         move.b  d1,(PieceIndex).l               ; 5C1D6
         jsr     (LoadPiece).l                   ; 5C1DC
@@ -8833,15 +8939,15 @@ l_5C1EE:
         jsr     (LoadPiece).l                   ; 5C20C
         move.b  (dat_1BBF9).l,d1                ; 5C212
 l_5C218:
-        move.b  (dat_1BB7B).l,(dat_1BB1A).l     ; 5C218
-        movea.l #dat_1BD02,a1                   ; 5C222
+        move.b  (dat_1BB7B).l,(WorkByte5).l     ; 5C218
+        movea.l #SuspensionOffset0,a1                   ; 5C222
         move.w  (a1,d1.w),d0                    ; 5C228
         asr.w   #$4,d0                          ; 5C22C
-        add.w   (dat_1BC5E).l,d0                ; 5C22E
+        add.w   (CarAcrossTrack).l,d0                ; 5C22E
         cmpi.w  #$180,d0                        ; 5C234
         bcs.w   l_5C25E                         ; 5C238
-        bset    #$7,(dat_1BB65).l               ; 5C23C
-        move.w  d0,(dat_1BC22).l                ; 5C244
+        bset    #$7,(WheelOffTrack).l               ; 5C23C
+        move.w  d0,(WheelAcross).l                ; 5C244
         bmi.w   l_5C256                         ; 5C24A
         move.b  #$ff,d0                         ; 5C24E
         bra.w   l_5C286                         ; 5C252
@@ -8853,7 +8959,7 @@ l_5C25E:
         bpl.w   l_5C266                         ; 5C260
         neg.w   d0                              ; 5C264
 l_5C266:
-        move.b  (dat_1BB1A).l,d3                ; 5C266
+        move.b  (WorkByte5).l,d3                ; 5C266
         asl.w   #$7,d3                          ; 5C26C
         bclr    #$f,d3                          ; 5C26E
         muls.w  d3,d0                           ; 5C272
@@ -8864,25 +8970,25 @@ l_5C266:
         move.b  $ff.l,d0                        ; 5C280
 l_5C286:
         move.b  d0,(dat_1BC4D).l                ; 5C286
-        tst.b   (dat_1BC32).l                   ; 5C28C
+        tst.b   (PieceReversed).l                   ; 5C28C
         bpl.w   l_5C29A                         ; 5C292
         eori.b  #$ff,d0                         ; 5C296
 l_5C29A:
         cmpi.b  #$4,d1                          ; 5C29A
         bne.w   l_5C2A8                         ; 5C29E
-        move.b  d0,(dat_1BBA1).l                ; 5C2A2
+        move.b  d0,(OpponentNormalPace).l                ; 5C2A2
 l_5C2A8:
-        move.b  (dat_1BBD9).l,(dat_1BB1A).l     ; 5C2A8
+        move.b  (dat_1BBD9).l,(WorkByte5).l     ; 5C2A8
         movea.l #dat_1BD08,a1                   ; 5C2B2
         move.w  (a1,d1.w),d0                    ; 5C2B8
         asr.w   #$3,d0                          ; 5C2BC
-        move.b  (dat_1BB1A).l,d3                ; 5C2BE
+        move.b  (WorkByte5).l,d3                ; 5C2BE
         asl.w   #$7,d3                          ; 5C2C4
         bclr    #$f,d3                          ; 5C2C6
         muls.w  d3,d0                           ; 5C2CA
         asl.l   #$1,d0                          ; 5C2CC
         swap    d0                              ; 5C2CE
-        add.w   (dat_1BB10).l,d0                ; 5C2D0
+        add.w   (CarAlongPiece).l,d0                ; 5C2D0
         move.w  d0,(dat_1BC40).l                ; 5C2D6
         move.b  (dat_1BC40).l,d0                ; 5C2DC
         asl.b   #$1,d0                          ; 5C2E2
@@ -8891,21 +8997,21 @@ l_5C2A8:
         cmp.b   (dat_1BB98).l,d0                ; 5C2EE
         blt.w   l_5C2FE                         ; 5C2F4
 l_5C2F8:
-        jsr     (sub_5C484).l                   ; 5C2F8
+        jsr     (WheelNextPiece).l                   ; 5C2F8
 l_5C2FE:
-        move.w  (dat_1BC8C).l,d0                ; 5C2FE
+        move.w  (TrackDataPointer).l,d0                ; 5C2FE
         rol.w   #$8,d0                          ; 5C304
         subi.w  #$b100,d0                       ; 5C306
         andi.l  #$ffff,d0                       ; 5C30A
         addi.l  #Data6502,d0                    ; 5C310
         movea.l d0,a4                           ; 5C316
-        move.w  (dat_1BC90).l,d0                ; 5C318
+        move.w  (TrackDataStart).l,d0                ; 5C318
         rol.w   #$8,d0                          ; 5C31E
         subi.w  #$b100,d0                       ; 5C320
         andi.l  #$ffff,d0                       ; 5C324
         addi.l  #Data6502,d0                    ; 5C32A
         movea.l d0,a5                           ; 5C330
-        tst.b   (dat_1BC32).l                   ; 5C332
+        tst.b   (PieceReversed).l                   ; 5C332
         bmi.w   l_5C37E                         ; 5C338
         move.b  (dat_1BBA3).l,d1                ; 5C33C
         jsr     (PiecePointHeight).l            ; 5C342
@@ -8939,62 +9045,73 @@ l_5C37E:
         addq.b  #$1,d1                          ; 5C3C4
 l_5C3C6:
         move.b  (dat_1BBF9).l,d1                ; 5C3C6
-        jsr     (sub_5C5F2).l                   ; 5C3CC
+        jsr     (WheelTrackHeight).l                   ; 5C3CC
         subq.b  #$2,d1                          ; 5C3D2
         bpl.w   l_5C1EE                         ; 5C3D4
         rts                                     ; 5C3D8
-sub_5C3DA:
-        tst.b   (dat_1BBF2).l                   ; 5C3DA
+
+;-------------------------------------------------------------------------------
+; CarInPieceAxes - dat_1BBF6, dat_1BBF8 = minus CarSquareX, CarSquareZ - swapped and negated by the
+; piece's direction (PieceAxes): the car's x and z in the piece's own axes (probably)
+;-------------------------------------------------------------------------------
+CarInPieceAxes:
+        tst.b   (PieceAxes).l                   ; 5C3DA
         bmi.w   l_5C434                         ; 5C3E0
-        btst    #$6,(dat_1BBF2).l               ; 5C3E4
+        btst    #$6,(PieceAxes).l               ; 5C3E4
         bne.w   l_5C412                         ; 5C3EC
         move.w  #$0,d0                          ; 5C3F0
-        sub.w   (dat_1BB22).l,d0                ; 5C3F4
+        sub.w   (CarSquareX).l,d0                ; 5C3F4
         move.w  d0,(dat_1BBF6).l                ; 5C3FA
         move.w  #$0,d0                          ; 5C400
-        sub.w   (dat_1BB26).l,d0                ; 5C404
+        sub.w   (CarSquareZ).l,d0                ; 5C404
         move.w  d0,(dat_1BBF8).l                ; 5C40A
         rts                                     ; 5C410
 l_5C412:
         move.w  #$0,d0                          ; 5C412
-        sub.w   (dat_1BB26).l,d0                ; 5C416
+        sub.w   (CarSquareZ).l,d0                ; 5C416
         move.w  d0,(dat_1BBF6).l                ; 5C41C
         move.w  #$800,d0                        ; 5C422
-        add.w   (dat_1BB22).l,d0                ; 5C426
+        add.w   (CarSquareX).l,d0                ; 5C426
         move.w  d0,(dat_1BBF8).l                ; 5C42C
         rts                                     ; 5C432
 l_5C434:
-        btst    #$6,(dat_1BBF2).l               ; 5C434
+        btst    #$6,(PieceAxes).l               ; 5C434
         bne.w   l_5C462                         ; 5C43C
         move.w  #$800,d0                        ; 5C440
-        add.w   (dat_1BB22).l,d0                ; 5C444
+        add.w   (CarSquareX).l,d0                ; 5C444
         move.w  d0,(dat_1BBF6).l                ; 5C44A
         move.w  #$800,d0                        ; 5C450
-        add.w   (dat_1BB26).l,d0                ; 5C454
+        add.w   (CarSquareZ).l,d0                ; 5C454
         move.w  d0,(dat_1BBF8).l                ; 5C45A
         rts                                     ; 5C460
 l_5C462:
         move.w  #$800,d0                        ; 5C462
-        add.w   (dat_1BB26).l,d0                ; 5C466
+        add.w   (CarSquareZ).l,d0                ; 5C466
         move.w  d0,(dat_1BBF6).l                ; 5C46C
         move.w  #$0,d0                          ; 5C472
-        sub.w   (dat_1BB22).l,d0                ; 5C476
+        sub.w   (CarSquareX).l,d0                ; 5C476
         move.w  d0,(dat_1BBF8).l                ; 5C47C
         rts                                     ; 5C482
-sub_5C484:
+
+;-------------------------------------------------------------------------------
+; WheelNextPiece - the piece behind or ahead made current (PreviousPiece or NextPiece, LoadPiece)
+; by dat_1BC40 against the driving direction (PieceReversed): a wheel past its piece's end
+; (TrackUnderWheels)
+;-------------------------------------------------------------------------------
+WheelNextPiece:
         move.b  (dat_1BC40).l,d0                ; 5C484
-        move.b  (dat_1BC32).l,d3                ; 5C48A
+        move.b  (PieceReversed).l,d3                ; 5C48A
         eor.b   d3,d0                           ; 5C490
         bpl.w   l_5C4B0                         ; 5C492
         jsr     (PreviousPiece).l               ; 5C496
         jsr     (LoadPiece).l                   ; 5C49C
-        move.b  (dat_1BC32).l,d0                ; 5C4A2
+        move.b  (PieceReversed).l,d0                ; 5C4A2
         bpl.w   l_5C4DC                         ; 5C4A8
         bmi.w   l_5C4C6                         ; 5C4AC
 l_5C4B0:
         jsr     (NextPiece).l                   ; 5C4B0
         jsr     (LoadPiece).l                   ; 5C4B6
-        tst.b   (dat_1BC32).l                   ; 5C4BC
+        tst.b   (PieceReversed).l                   ; 5C4BC
         bmi.w   l_5C4DC                         ; 5C4C2
 l_5C4C6:
         move.b  #$0,(dat_1BBA3).l               ; 5C4C6
@@ -9100,38 +9217,48 @@ l_5C5E4:
 l_5C5E6:
         asr.l   #$8,d0                          ; 5C5E6
         add.l   d5,d0                           ; 5C5E8
-        move.l  d0,(dat_1BB18).l                ; 5C5EA
+        move.l  d0,(WorkByte3).l                ; 5C5EA
         rts                                     ; 5C5F0
-sub_5C5F2:
+
+;-------------------------------------------------------------------------------
+; WheelTrackHeight - InterpolatePiece for wheel d1: its height (WheelTrackHeights + 2 x d1) from
+; WorkByte3; past the track's side (WheelOffTrack bit 7) lowered by WheelPastEdge
+;-------------------------------------------------------------------------------
+WheelTrackHeight:
         jsr     (InterpolatePiece).l            ; 5C5F2
         asl.b   #$1,d1                          ; 5C5F8
-        movea.l #dat_1BCA4,a3                   ; 5C5FA
-        bclr    #$7,(dat_1BB65).l               ; 5C600
+        movea.l #WheelTrackHeights,a3                   ; 5C5FA
+        bclr    #$7,(WheelOffTrack).l               ; 5C600
         beq.w   l_5C612                         ; 5C608
-        jsr     (sub_5C808).l                   ; 5C60C
+        jsr     (WheelPastEdge).l                   ; 5C60C
 l_5C612:
-        move.b  (dat_1BD5C).l,d0                ; 5C612
+        move.b  (SpeedForSparks).l,d0                ; 5C612
         cmpi.b  #$a,d0                          ; 5C618
         blt.w   l_5C632                         ; 5C61C
 l_5C620:
-        movea.l #dat_1BCA4,a0                   ; 5C620
-        move.l  (dat_1BB18).l,(a3,d1.w)         ; 5C626
+        movea.l #WheelTrackHeights,a0                   ; 5C620
+        move.l  (WorkByte3).l,(a3,d1.w)         ; 5C626
         lsr.b   #$1,d1                          ; 5C62E
         rts                                     ; 5C630
 l_5C632:
-        move.b  (dat_1BCE4).l,d0                ; 5C632
+        move.b  (CarPitch).l,d0                ; 5C632
         bpl.w   l_5C63E                         ; 5C638
         neg.b   d0                              ; 5C63C
 l_5C63E:
         cmpi.b  #$5,d0                          ; 5C63E
         bgt.w   l_5C620                         ; 5C642
         move.l  (a3,d1.w),d0                    ; 5C646
-        add.l   (dat_1BB18).l,d0                ; 5C64A
+        add.l   (WorkByte3).l,d0                ; 5C64A
         roxr.l  #$1,d0                          ; 5C650
         move.l  d0,(a3,d1.w)                    ; 5C652
         lsr.b   #$1,d1                          ; 5C656
         rts                                     ; 5C658
-sub_5C65A:
+
+;-------------------------------------------------------------------------------
+; CurvedPieceHeight - the height of a curved piece at the car's place (probably): dat_1BBF6^2 +
+; dat_1BBF8^2 - dat_1BC36^2, scaled by dat_5C6B8[PieceCurve]
+;-------------------------------------------------------------------------------
+CurvedPieceHeight:
         move.w  (dat_1BBF6).l,d0                ; 5C65A
         jsr     (Square).l                      ; 5C660
         move.l  d0,d4                           ; 5C666
@@ -9140,13 +9267,13 @@ sub_5C65A:
         add.l   d0,d4                           ; 5C674
         move.w  (dat_1BC36).l,d0                ; 5C676
         jsr     (Square).l                      ; 5C67C
-        move.b  (dat_1BB86).l,d2                ; 5C682
+        move.b  (PieceCurve).l,d2                ; 5C682
         movea.l #dat_5C6B8,a0                   ; 5C688
-        move.b  (a0,d2.w),(dat_1BB1A).l         ; 5C68E
+        move.b  (a0,d2.w),(WorkByte5).l         ; 5C68E
         sub.l   d0,d4                           ; 5C696
         lsr.l   #$8,d4                          ; 5C698
         move.w  d4,d0                           ; 5C69A
-        move.b  (dat_1BB1A).l,d3                ; 5C69C
+        move.b  (WorkByte5).l,d3                ; 5C69C
         asl.w   #$7,d3                          ; 5C6A2
         bclr    #$f,d3                          ; 5C6A4
         muls.w  d3,d0                           ; 5C6A8
@@ -9163,27 +9290,27 @@ dat_5C6B8:
 ; into PointX, PointZ ...
 ;-------------------------------------------------------------------------------
 ReadPiecePoints:
-        move.w  (dat_1BCBC).l,d0                ; 5C6C4
+        move.w  (PieceDataPointer).l,d0                ; 5C6C4
         rol.w   #$8,d0                          ; 5C6CA
         subi.w  #$b100,d0                       ; 5C6CC
         andi.l  #$ffff,d0                       ; 5C6D0
         addi.l  #Data6502,d0                    ; 5C6D6
         movea.l d0,a5                           ; 5C6DC
-        tst.b   (dat_1BBF2).l                   ; 5C6DE
+        tst.b   (PieceAxes).l                   ; 5C6DE
         bmi.w   l_5C770                         ; 5C6E4
-        btst    #$6,(dat_1BBF2).l               ; 5C6E8
+        btst    #$6,(PieceAxes).l               ; 5C6E8
         bne.w   l_5C72E                         ; 5C6F0
         move.b  $1(a5,d2.w),d3                  ; 5C6F4
         asl.w   #$8,d3                          ; 5C6F8
         move.b  (a5,d2.w),d3                    ; 5C6FA
         addq.b  #$2,d2                          ; 5C6FE
-        move.w  (dat_1BB22).l,(dat_1BBF6).l     ; 5C700
+        move.w  (CarSquareX).l,(dat_1BBF6).l     ; 5C700
         add.w   d3,(dat_1BBF6).l                ; 5C70A
         move.b  $1(a5,d2.w),d3                  ; 5C710
         asl.w   #$8,d3                          ; 5C714
         move.b  (a5,d2.w),d3                    ; 5C716
         addq.b  #$2,d2                          ; 5C71A
-        move.w  (dat_1BB26).l,(dat_1BBF8).l     ; 5C71C
+        move.w  (CarSquareZ).l,(dat_1BBF8).l     ; 5C71C
         add.w   d3,(dat_1BBF8).l                ; 5C726
         rts                                     ; 5C72C
 l_5C72E:
@@ -9191,31 +9318,31 @@ l_5C72E:
         asl.w   #$8,d3                          ; 5C732
         move.b  (a5,d2.w),d3                    ; 5C734
         addq.b  #$2,d2                          ; 5C738
-        move.w  (dat_1BB26).l,(dat_1BBF8).l     ; 5C73A
+        move.w  (CarSquareZ).l,(dat_1BBF8).l     ; 5C73A
         add.w   d3,(dat_1BBF8).l                ; 5C744
         move.b  $1(a5,d2.w),d3                  ; 5C74A
         asl.w   #$8,d3                          ; 5C74E
         move.b  (a5,d2.w),d3                    ; 5C750
         addq.b  #$2,d2                          ; 5C754
-        move.w  (dat_1BB22).l,(dat_1BBF6).l     ; 5C756
+        move.w  (CarSquareX).l,(dat_1BBF6).l     ; 5C756
         sub.w   d3,(dat_1BBF6).l                ; 5C760
         addi.w  #$800,(dat_1BBF6).l             ; 5C766
         rts                                     ; 5C76E
 l_5C770:
-        btst    #$6,(dat_1BBF2).l               ; 5C770
+        btst    #$6,(PieceAxes).l               ; 5C770
         bne.w   l_5C7C6                         ; 5C778
         move.b  $1(a5,d2.w),d3                  ; 5C77C
         asl.w   #$8,d3                          ; 5C780
         move.b  (a5,d2.w),d3                    ; 5C782
         addq.b  #$2,d2                          ; 5C786
-        move.w  (dat_1BB22).l,(dat_1BBF6).l     ; 5C788
+        move.w  (CarSquareX).l,(dat_1BBF6).l     ; 5C788
         sub.w   d3,(dat_1BBF6).l                ; 5C792
         addi.w  #$800,(dat_1BBF6).l             ; 5C798
         move.b  $1(a5,d2.w),d3                  ; 5C7A0
         asl.w   #$8,d3                          ; 5C7A4
         move.b  (a5,d2.w),d3                    ; 5C7A6
         addq.b  #$2,d2                          ; 5C7AA
-        move.w  (dat_1BB26).l,(dat_1BBF8).l     ; 5C7AC
+        move.w  (CarSquareZ).l,(dat_1BBF8).l     ; 5C7AC
         sub.w   d3,(dat_1BBF8).l                ; 5C7B6
         addi.w  #$800,(dat_1BBF8).l             ; 5C7BC
         rts                                     ; 5C7C4
@@ -9224,21 +9351,27 @@ l_5C7C6:
         asl.w   #$8,d3                          ; 5C7CA
         move.b  (a5,d2.w),d3                    ; 5C7CC
         addq.b  #$2,d2                          ; 5C7D0
-        move.w  (dat_1BB26).l,(dat_1BBF8).l     ; 5C7D2
+        move.w  (CarSquareZ).l,(dat_1BBF8).l     ; 5C7D2
         sub.w   d3,(dat_1BBF8).l                ; 5C7DC
         addi.w  #$800,(dat_1BBF8).l             ; 5C7E2
         move.b  $1(a5,d2.w),d3                  ; 5C7EA
         asl.w   #$8,d3                          ; 5C7EE
         move.b  (a5,d2.w),d3                    ; 5C7F0
         addq.b  #$2,d2                          ; 5C7F4
-        move.w  (dat_1BB22).l,(dat_1BBF6).l     ; 5C7F6
+        move.w  (CarSquareX).l,(dat_1BBF6).l     ; 5C7F6
         add.w   d3,(dat_1BBF6).l                ; 5C800
         rts                                     ; 5C806
-sub_5C808:
-        move.w  (dat_1BC22).l,d0                ; 5C808
+
+;-------------------------------------------------------------------------------
+; WheelPastEdge - a wheel beyond the track's side (WheelAcross within $30 of 0 or of $180): its
+; height (WorkByte3) lowered by 16 x the distance + $100 - the ground falling away from the
+; track's edge (probably)
+;-------------------------------------------------------------------------------
+WheelPastEdge:
+        move.w  (WheelAcross).l,d0                ; 5C808
         bmi.w   l_5C820                         ; 5C80E
         move.w  #$180,d0                        ; 5C812
-        sub.w   (dat_1BC22).l,d0                ; 5C816
+        sub.w   (WheelAcross).l,d0                ; 5C816
         bpl.w   l_5C822                         ; 5C81C
 l_5C820:
         neg.w   d0                              ; 5C820
@@ -9247,14 +9380,14 @@ l_5C822:
         bgt.w   l_5C872                         ; 5C826
         andi.l  #$ff,d0                         ; 5C82A
         asl.l   #$4,d0                          ; 5C830
-        move.l  (dat_1BB18).l,d3                ; 5C832
+        move.l  (WorkByte3).l,d3                ; 5C832
         sub.l   d0,d3                           ; 5C838
         subi.l  #$100,d3                        ; 5C83A
         cmpi.l  #$1000,d3                       ; 5C840
         blt.w   l_5C872                         ; 5C846
-        move.l  d3,(dat_1BB18).l                ; 5C84A
-        move.b  (dat_1BC22).l,d3                ; 5C850
-        move.b  (dat_1BC32).l,d0                ; 5C856
+        move.l  d3,(WorkByte3).l                ; 5C84A
+        move.b  (WheelAcross).l,d3                ; 5C850
+        move.b  (PieceReversed).l,d0                ; 5C856
         eor.b   d3,d0                           ; 5C85C
         andi.b  #$80,d0                         ; 5C85E
         bmi.w   l_5C86A                         ; 5C862
@@ -9263,7 +9396,7 @@ l_5C86A:
         move.b  d0,(dat_1BBDA).l                ; 5C86A
         rts                                     ; 5C870
 l_5C872:
-        move.l  #$1000,(dat_1BB18).l            ; 5C872
+        move.l  #$1000,(WorkByte3).l            ; 5C872
         move.b  (dat_1BB9A).l,d0                ; 5C87C
         lsr.b   #$1,d0                          ; 5C882
         bset    #$7,d0                          ; 5C884
@@ -9379,7 +9512,7 @@ l_5CF7E:
         jsr     (ShowTitleBackground).l         ; 5CF8C
         clr.b   (dat_64530).l                   ; 5CF92
         jsr     (TitleMenu).l                   ; 5CF98
-        jsr     (sub_648B2).l                   ; 5CF9E
+        jsr     (ShowDivisionsOrTable).l                   ; 5CF9E
         jsr     (SaveRandomSeed).l              ; 5CFA4
         move.b  #$f3,(LinkFrameCommand).l       ; 5CFAA
         jsr     (LinkExchange).l                ; 5CFB2
@@ -9401,7 +9534,7 @@ l_5D000:
         move.b  d0,(dat_1BBB4).l                ; 5D00A
         bra.w   l_5D068                         ; 5D010
 l_5D014:
-        jsr     (sub_5EE68).l                   ; 5D014
+        jsr     (SetSeasonDrivers).l                   ; 5D014
         cmpi.b  #$2,(dat_5EB78).l               ; 5D01A
         bne.w   l_5D038                         ; 5D022
         tst.b   (LinkMode).l                    ; 5D026
@@ -9419,14 +9552,14 @@ l_5D056:
         subq.b  #$1,d1                          ; 5D056
         bpl.w   l_5D03C                         ; 5D058
         clr.b   (dat_1CA23).l                   ; 5D05C
-        clr.b   (dat_1CA24).l                   ; 5D062
+        clr.b   (RaceWinnerDriver).l                   ; 5D062
 l_5D068:
-        move.b  (dat_1C9CE).l,(dat_1BB5F).l     ; 5D068
+        move.b  (PlayerDivision).l,(DivisionShown).l     ; 5D068
         jsr     (PickOpponent).l                ; 5D072
         tst.b   (dat_1BB5B).l                   ; 5D078
         bmi.w   l_5D0AA                         ; 5D07E
         move.b  (dat_1CA28).l,d2                ; 5D082
-        move.b  (dat_1CA27).l,d0                ; 5D088
+        move.b  (OpponentDriver).l,d0                ; 5D088
         cmp.b   (dat_5EB79).l,d0                ; 5D08E
         beq.w   l_5D0B6                         ; 5D094
         cmp.b   (dat_5EB79).l,d2                ; 5D098
@@ -9437,10 +9570,10 @@ l_5D0AA:
         jsr     (SimulateOtherRaces).l          ; 5D0AA
         jmp     (l_5D18C).l                     ; 5D0B0
 l_5D0B6:
-        move.b  d2,(dat_1CA29).l                ; 5D0B6
-        move.b  #$c0,(dat_1BBB1).l              ; 5D0BC
+        move.b  d2,(OpponentSkill).l                ; 5D0B6
+        move.b  #$c0,(RaceResultFlags).l              ; 5D0BC
         move.b  #$11,(LinkFrameType).l          ; 5D0C4
-        jsr     (sub_64664).l                   ; 5D0CC
+        jsr     (ChooseTrack).l                   ; 5D0CC
         jsr     (CheckF1Key).l                  ; 5D0D2
         beq.w   l_5D000                         ; 5D0D8
         move.b  #$0,d0                          ; 5D0DC
@@ -9457,41 +9590,41 @@ l_5D0B6:
         move.b  #$0,d0                          ; 5D11C
         jsr     (DefineControlKeys).l           ; 5D120
         move.b  #$0,d0                          ; 5D126
-        jsr     (sub_5F25A).l                   ; 5D12A
+        jsr     (TrackRecordEntry).l                   ; 5D12A
         jsr     (SimulateOtherRaces).l          ; 5D130
         jsr     (ShowRaceResultPicture).l       ; 5D136
         jsr     (ShowTitleBackground).l         ; 5D13C
-        tst.b   (dat_1BBB1).l                   ; 5D142
+        tst.b   (RaceResultFlags).l                   ; 5D142
         beq.w   l_5D160                         ; 5D148
         move.b  #$1,(LinkFrameType).l           ; 5D14C
-        jsr     (sub_64664).l                   ; 5D154
-        clr.b   (dat_1BBB1).l                   ; 5D15A
+        jsr     (ChooseTrack).l                   ; 5D154
+        clr.b   (RaceResultFlags).l                   ; 5D15A
 l_5D160:
         move.b  #$2,(LinkFrameType).l           ; 5D160
-        jsr     (sub_6465C).l                   ; 5D168
+        jsr     (ChooseTrackMarked).l                   ; 5D168
         move.b  #$3,(LinkFrameType).l           ; 5D16E
-        jsr     (sub_646E8).l                   ; 5D176
+        jsr     (ShowDivisionTable).l                   ; 5D176
         tst.b   (dat_5EB76).l                   ; 5D17C
         beq.w   l_5D18C                         ; 5D182
-        jsr     (sub_5EF76).l                   ; 5D186
+        jsr     (ShowTableMarked).l                   ; 5D186
 l_5D18C:
         addq.b  #$1,(dat_5EB7B).l               ; 5D18C
-        addq.b  #$1,(dat_1CA35).l               ; 5D192
+        addq.b  #$1,(RaceInSeason).l               ; 5D192
         addq.w  #$1,(dat_57C72).l               ; 5D198
-        move.b  (dat_1CA35).l,d0                ; 5D19E
+        move.b  (RaceInSeason).l,d0                ; 5D19E
         cmp.b   (dat_5EB78).l,d0                ; 5D1A4
         bcs.w   l_5D068                         ; 5D1AA
-        clr.b   (dat_1CA35).l                   ; 5D1AE
+        clr.b   (RaceInSeason).l                   ; 5D1AE
         tst.b   (dat_5EB76).l                   ; 5D1B4
         bne.w   l_5D1DC                         ; 5D1BA
-        jsr     (sub_646D6).l                   ; 5D1BE
+        jsr     (ShowSeasonEnd).l                   ; 5D1BE
         jsr     (ShowChampionPicture).l         ; 5D1C4
-        jsr     (sub_648B2).l                   ; 5D1CA
+        jsr     (ShowDivisionsOrTable).l                   ; 5D1CA
 l_5D1D0:
         jsr     (NewSeason).l                   ; 5D1D0
         jmp     (l_5CFB8).l                     ; 5D1D6
 l_5D1DC:
-        jsr     (sub_5EF42).l                   ; 5D1DC
+        jsr     (ShowTablesAfterRace).l                   ; 5D1DC
         clr.b   (dat_1BB5B).l                   ; 5D1E2
         subq.b  #$1,(dat_5EB77).l               ; 5D1E8
         bmi.w   l_5D1F6                         ; 5D1EE
@@ -9516,7 +9649,7 @@ TrackPreview:
         jsr     (SetPictureColours).l           ; 5D22E
         move.b  #$f,d0                          ; 5D234
         jsr     (SetTextColour).l               ; 5D238
-        move.b  #$80,(dat_1BBD3).l              ; 5D23E
+        move.b  #$80,(TextNoBackground).l              ; 5D23E
         movea.l #dat_2B994,a0                   ; 5D246
         movea.l (ScreenFront).l,a1              ; 5D24C
         jsr     (UnpackPicture).l               ; 5D252
@@ -9534,7 +9667,7 @@ l_5D284:
         bne.w   l_5D284                         ; 5D288
         move.b  #$9,d3                          ; 5D28C
         move.b  #$a,d0                          ; 5D290
-        tst.b   (dat_1C9D0).l                   ; 5D294
+        tst.b   (SuperLeague).l                   ; 5D294
         beq.w   l_5D2A6                         ; 5D29A
         move.b  #$8,d3                          ; 5D29E
         move.b  #$4,d0                          ; 5D2A2
@@ -9547,7 +9680,7 @@ l_5D2A6:
         jsr     (ClearPointHeights).l           ; 5D2C2
         move.b  (CurrentTrack).l,d1             ; 5D2C8
         jsr     (BuildTrack).l                  ; 5D2CE
-        jsr     (sub_64304).l                   ; 5D2D4
+        jsr     (BuildTrackGrid).l                   ; 5D2D4
         jsr     (UpdateDrawBridge).l            ; 5D2DA
         jsr     (LoadMountains).l               ; 5D2E0
         jsr     (BuildPieceModels).l            ; 5D2E6
@@ -9587,43 +9720,43 @@ l_5D348:
         jsr     (SetTextBackground).l           ; 5D374
         move.b  #$0,d0                          ; 5D37A
         jsr     (SetTextColour).l               ; 5D37E
-        jsr     (sub_5D87E).l                   ; 5D384
+        jsr     (RaceStartDamage).l                   ; 5D384
         move.b  #$9,d3                          ; 5D38A
         move.b  #$a,d0                          ; 5D38E
-        tst.b   (dat_1C9D0).l                   ; 5D392
+        tst.b   (SuperLeague).l                   ; 5D392
         beq.w   l_5D3A4                         ; 5D398
         move.b  #$0,d3                          ; 5D39C
         move.b  #$8,d0                          ; 5D3A0
 l_5D3A4:
         move.b  d3,(dat_691B3).l                ; 5D3A4
         move.b  d0,(dat_691B2).l                ; 5D3AA
-        jsr     (sub_5E474).l                   ; 5D3B0
+        jsr     (PrintLampLetters).l                   ; 5D3B0
         move.b  #$b,d2                          ; 5D3B6
-        jsr     (sub_5E0D6).l                   ; 5D3BA
-        jsr     (sub_5E0AA).l                   ; 5D3C0
+        jsr     (DrawLeadLamp).l                   ; 5D3BA
+        jsr     (DrawBestLapLamp).l                   ; 5D3C0
         move.b  (dat_1CA1B).l,d1                ; 5D3C6
         move.b  d1,(OpponentPiece).l            ; 5D3CC
         move.b  #$4,(OpponentPiecePos).l        ; 5D3D2
         move.b  #$4c,(dat_1BBED).l              ; 5D3DA
-        jsr     (sub_63A58).l                   ; 5D3E2
+        jsr     (PlaceOpponentStart).l                   ; 5D3E2
         move.b  (dat_1CA1B).l,d1                ; 5D3E8
         cmpi.b  #$40,(LinkMode).l               ; 5D3EE
         bne.w   l_5D402                         ; 5D3F6
-        move.b  #$80,(dat_1BBE1).l              ; 5D3FA
+        move.b  #$80,(DrivingBackwards).l              ; 5D3FA
 l_5D402:
         clr.b   (InterpActive).l                ; (enhanced) the start's views drawn as before (interp.i)
         jsr     (PlaceCarOnPiece).l             ; 5D402
-        jsr     (sub_5E778).l                   ; 5D408
-        jsr     (sub_60CDE).l                   ; 5D40E
+        jsr     (PlaceWheelCutouts).l                   ; 5D408
+        jsr     (ClearSparks).l                   ; 5D40E
         jsr     (RaceView).l                   ; 5D414
-        jsr     (sub_5DB34).l                   ; 5D41A
-        subq.b  #$1,(dat_1BBAC).l               ; 5D420
+        jsr     (UpdateRaceTime).l                   ; 5D41A
+        subq.b  #$1,(StepCountdown).l               ; 5D420
         jsr     (FrameLimiter).l                ; 5D426
         jsr     (CarPhysics).l                  ; 5D42C
         jsr     (RaceView).l                   ; 5D432
-        jsr     (sub_5DB34).l                   ; 5D438
-        subq.b  #$1,(dat_1BBAC).l               ; 5D43E
-        jsr     (sub_5E23E).l                   ; 5D444
+        jsr     (UpdateRaceTime).l                   ; 5D438
+        subq.b  #$1,(StepCountdown).l               ; 5D43E
+        jsr     (UpdateSpeedometer).l                   ; 5D444
         jsr     (FrameLimiter).l                ; 5D44A
         move.b  #$80,d0                         ; 5D450
         move.b  d0,(dat_1BB72).l                ; 5D454
@@ -9638,8 +9771,8 @@ l_5D402:
         jsr     (StartEngineSound).l            ; 5D478
 	endc
 l_5D47E:
-        subq.b  #$1,(dat_1BBAC).l               ; 5D47E
-        jsr     (sub_5D8A2).l                   ; 5D484
+        subq.b  #$1,(StepCountdown).l               ; 5D47E
+        jsr     (RaceInput).l                   ; 5D484
         jsr     (CarPhysics).l                  ; 5D48A
         jsr     (UpdateEngineRevs).l            ; 5D490
 	ifd	TELEMETRY
@@ -9648,14 +9781,14 @@ l_5D47E:
         jsr     (RaceView).l                   ; 5D496
 	endc
         jsr     (UpdateDrawBridge).l            ; 5D49C
-        jsr     (sub_5E23E).l                   ; 5D4A2
-        jsr     (sub_5DFB4).l                   ; 5D4A8
-        jsr     (sub_5DB34).l                   ; 5D4AE
-        jsr     (sub_5E12A).l                   ; 5D4B4
+        jsr     (UpdateSpeedometer).l                   ; 5D4A2
+        jsr     (CarKnocks).l                   ; 5D4A8
+        jsr     (UpdateRaceTime).l                   ; 5D4AE
+        jsr     (PrintOpponentDistance).l                   ; 5D4B4
         move.b  (dat_1BB6F).l,d0                ; 5D4BA
-        and.b   (StepParity).l,d0               ; 5D4C0  (enhanced) every other step: dat_1BBC8 changes with each picture (interp.i)
+        and.b   (StepParity).l,d0               ; 5D4C0  (enhanced) every other step: FrameParity changes with each picture (interp.i)
         bpl.w   l_5D5A0                         ; 5D4C6
-        tst.b   (dat_1BBCC).l                   ; 5D4CA
+        tst.b   (LapTimeTimer).l                   ; 5D4CA
         bne.w   l_5D5A0                         ; 5D4D0
         tst.b   (LinkMode).l                    ; 5D4D4
         beq.w   l_5D4E8                         ; 5D4DA
@@ -9664,10 +9797,10 @@ l_5D47E:
 l_5D4E8:
         tst.b   (DropCountdown).l               ; 5D4E8
         bne.w   l_5D4FC                         ; 5D4EE
-        move.b  (dat_1BB7E).l,d0                ; 5D4F2
+        move.b  (WheelsDown).l,d0                ; 5D4F2
         beq.w   l_5D5A0                         ; 5D4F8
 l_5D4FC:
-        tst.b   (dat_1BBAF).l                   ; 5D4FC
+        tst.b   (RaceWinner).l                   ; 5D4FC
         bne.w   l_5D534                         ; 5D502
         move.b  (LinkMode).l,d0                 ; 5D506
         beq.w   l_5D522                         ; 5D50C
@@ -9676,20 +9809,20 @@ l_5D4FC:
         bne.w   l_5D534                         ; 5D51E
 l_5D522:
         move.b  #$b,d2                          ; 5D522
-        jsr     (sub_5E0AA).l                   ; 5D526
+        jsr     (DrawBestLapLamp).l                   ; 5D526
         move.b  #$c0,(dat_1BBB4).l              ; 5D52C
 l_5D534:
-        jsr     (sub_5FAE8).l                   ; 5D534
+        jsr     (ClearMessagePanel).l                   ; 5D534
         move.b  #$3c,d2                         ; 5D53A
         move.b  #$4,d0                          ; 5D53E
-        jsr     (sub_5E502).l                   ; 5D542
-        move.w  #$fff8,(dat_1BBF4).l            ; 5D548
+        jsr     (ShowMessageNow).l                   ; 5D542
+        move.w  #$fff8,(EngineRevTarget).l            ; 5D548
         move.b  #$0,(Speed).l                   ; 5D550
-        cmpi.b  #$45,(dat_1BB73).l              ; 5D558
+        cmpi.b  #$45,(HoleTimer).l              ; 5D558
         bne.w   l_5D574                         ; 5D560
-        move.b  (dat_1C9CF).l,d2                ; 5D564
+        move.b  (DamageMarks).l,d2                ; 5D564
         beq.w   l_5D574                         ; 5D56A
-        jsr     (sub_6091A).l                   ; 5D56E
+        jsr     (DrawHoleMark).l                   ; 5D56E
 l_5D574:
         jsr     (FrameLimiter).l                ; 5D574
         move.b  #$80,(dat_1BB63).l              ; 5D57A
@@ -9713,7 +9846,7 @@ l_5D5A0:
         bne.w   l_5D60E                         ; 5D5B2
         move.b  (dat_1BB9C).l,d2                ; 5D5B6
         bpl.w   l_5D60E                         ; 5D5BC
-        move.b  (dat_1BB7E).l,d0                ; 5D5C0
+        move.b  (WheelsDown).l,d0                ; 5D5C0
         beq.w   l_5D60E                         ; 5D5C6
         move.b  (dat_1BCD0).l,d0                ; 5D5CA
         bmi.w   l_5D5DC                         ; 5D5D0
@@ -9725,7 +9858,7 @@ l_5D5E2:
         subq.b  #$1,(dat_1BB41).l               ; 5D5E2
         bpl.w   l_5D60E                         ; 5D5E8
         addq.b  #$1,(dat_1BB41).l               ; 5D5EC
-        move.b  (dat_1BB6C).l,d0                ; 5D5F2
+        move.b  (MessageTimer).l,d0                ; 5D5F2
         bne.w   l_5D60E                         ; 5D5F8
         jsr     (StopSound).l                   ; 5D5FC
         move.b  (dat_1BB9B).l,d1                ; 5D602
@@ -9735,14 +9868,14 @@ l_5D60E:
         bne.w   l_5D62C                         ; 5D614
         tst.b   (dat_1BB9C).l                   ; 5D618
         bmi.w   l_5D47E                         ; 5D61E
-        tst.b   (dat_1BB7E).l                   ; 5D622
+        tst.b   (WheelsDown).l                   ; 5D622
         beq.w   l_5D47E                         ; 5D628
 l_5D62C:
         move.b  #$45,d1                         ; 5D62C
         move.b  (dat_1BB64).l,d0                ; 5D630
         jsr     (LinkKeyDown).l                 ; 5D636
         bne.w   l_5D47E                         ; 5D63C
-        tst.b   (dat_1BBAF).l                   ; 5D640
+        tst.b   (RaceWinner).l                   ; 5D640
         bne.w   l_5D66E                         ; 5D646
         move.b  (LinkMode).l,d0                 ; 5D64A
         beq.w   l_5D666                         ; 5D650
@@ -9766,10 +9899,10 @@ l_5D674:
         beq.w   l_5D714                         ; 5D6A8
         move.b  (dat_5EB79).l,d1                ; 5D6AC
         movea.l #dat_1CA36,a0                   ; 5D6B2
-        move.b  (dat_1C9CF).l,(a0,d1.w)         ; 5D6B8
+        move.b  (DamageMarks).l,(a0,d1.w)         ; 5D6B8
         tst.b   (LinkMode).l                    ; 5D6C0
         beq.w   l_5D6EE                         ; 5D6C6
-        move.b  (dat_1CA29).l,d1                ; 5D6CA
+        move.b  (OpponentSkill).l,d1                ; 5D6CA
         move.b  (dat_57C61).l,(a0,d1.w)         ; 5D6D0
         cmpi.b  #$4,(OpponentLaps).l            ; 5D6D8
         beq.w   l_5D6EE                         ; 5D6E0
@@ -9782,7 +9915,7 @@ l_5D6EE:
         addi.b  #$c,d1                          ; 5D700
         jsr     (ClearTime).l                   ; 5D704
 l_5D70A:
-        move.b  (dat_1BBB5).l,(dat_1C9CF).l     ; 5D70A
+        move.b  (dat_1BBB5).l,(DamageMarks).l     ; 5D70A
 l_5D714:
         jsr     (SaveRandomSeed).l              ; 5D714
         move.b  #$80,(dat_57C5B).l              ; 5D71A
@@ -9798,11 +9931,11 @@ ClearRaceVariables:
         movea.l #dat_1BAF8,a0                   ; 5D726
 l_5D72C:
         move.b  #$0,(a0)+                       ; 5D72C
-        cmpa.l  #dat_1BDD0,a0                   ; 5D730
+        cmpa.l  #SectionFlags,a0                   ; 5D730
         bne.w   l_5D72C                         ; 5D736
         movea.l #dat_1FE6C,a0                   ; 5D73A
         movea.l #dat_1BAF8,a1                   ; 5D740
-        move.b  (dat_1C9D0).l,d1                ; 5D746
+        move.b  (SuperLeague).l,d1                ; 5D746
         move.b  #$0,d2                          ; 5D74C
 l_5D750:
         move.b  (a0,d1.w),(a1,d2.w)             ; 5D750
@@ -9824,19 +9957,19 @@ l_5D776:
         jsr     (ClearTime).l                   ; 5D794
         tst.b   (LinkMode).l                    ; 5D79A
         beq.w   l_5D7B4                         ; 5D7A0
-        move.b  (dat_1CA29).l,d1                ; 5D7A4
+        move.b  (OpponentSkill).l,d1                ; 5D7A4
         addi.b  #$c,d1                          ; 5D7AA
         jsr     (ClearTime).l                   ; 5D7AE
 l_5D7B4:
         jsr     (BuildViewMatrix).l             ; 5D7B4
-        move.w  #$400,(dat_1BC42).l             ; 5D7BA
+        move.w  #$400,(ViewPitch).l             ; 5D7BA
         move.w  #$ff00,(dat_1BC56).l            ; 5D7C2
         jsr     (StopSound).l                   ; 5D7CA
-        move.b  #$4,(dat_1BB99).l               ; 5D7D0
+        move.b  #$4,(RaceLaps).l               ; 5D7D0
         jsr     (RestoreRandomSeed).l           ; 5D7D8
         move.b  #$3b,(dat_625A5).l              ; 5D7DE
         move.b  (dat_1CA2C).l,d1                ; 5D7E6
-        tst.b   (dat_1C9D0).l                   ; 5D7EC
+        tst.b   (SuperLeague).l                   ; 5D7EC
         beq.w   l_5D7FC                         ; 5D7F2
         move.b  (dat_1CA2D).l,d1                ; 5D7F6
 l_5D7FC:
@@ -9847,9 +9980,9 @@ l_5D808:
         abcd.b  d3,d0                           ; 5D808
         subq.b  #$1,d1                          ; 5D80A
         bne.w   l_5D808                         ; 5D80C
-        move.b  d0,(dat_1CA20).l                ; 5D810
+        move.b  d0,(BoostLeft).l                ; 5D810
         move.b  d0,(dat_1BB95).l                ; 5D816
-        move.b  (dat_1C9CF).l,(dat_1BBB5).l     ; 5D81C
+        move.b  (DamageMarks).l,(dat_1BBB5).l     ; 5D81C
         movea.l #KeyTable,a0                    ; 5D826
         move.w  #$7f,d0                         ; 5D82C
 l_5D830:
@@ -9870,28 +10003,40 @@ l_5D848:
 ClearPointHeights:
         move.b  #$3e,d1                         ; 5D85A
         movea.l #PointHeights,a1                ; 5D85E
-        movea.l #dat_1BDD0,a2                   ; 5D864
+        movea.l #SectionFlags,a2                   ; 5D864
 l_5D86A:
         move.w  #$8000,$78(a1,d1.w)             ; 5D86A
         move.b  #$80,(a2,d1.w)                  ; 5D870
         subq.b  #$2,d1                          ; 5D876
         bpl.w   l_5D86A                         ; 5D878
         rts                                     ; 5D87C
-sub_5D87E:
+
+;-------------------------------------------------------------------------------
+; RaceStartDamage - Race: in the season (dat_5EB76) the damage carried from race to race
+; (DamageMarks, from dat_1CA36 by the driver dat_5EB79), then drawn (l_60988: the damage's marks)
+; (probably)
+;-------------------------------------------------------------------------------
+RaceStartDamage:
         tst.b   (dat_5EB76).l                   ; 5D87E
         beq.w   l_5D89C                         ; 5D884
         move.b  (dat_5EB79).l,d1                ; 5D888
         movea.l #dat_1CA36,a0                   ; 5D88E
-        move.b  (a0,d1.w),(dat_1C9CF).l         ; 5D894
+        move.b  (a0,d1.w),(DamageMarks).l         ; 5D894
 l_5D89C:
         jmp     (l_60988).l                     ; 5D89C
-sub_5D8A2:
+
+;-------------------------------------------------------------------------------
+; RaceInput - the race loop: the controls read (ReadControls) - the steering (SteeringInput: $F or $F1
+; from left or right, ControlBits, with the wheels on the track and after the drop), the throttle
+; (ThrottleOff: fire), the speed's limits and the boost (UseBoost) (probably)
+;-------------------------------------------------------------------------------
+RaceInput:
         jsr     (ReadControls).l                ; 5D8A2
-        move.b  (dat_1BB7E).l,d0                ; 5D8A8
+        move.b  (WheelsDown).l,d0                ; 5D8A8
         beq.w   l_5D8DE                         ; 5D8AE
         move.b  (DropCountdown).l,d0            ; 5D8B2
         bne.w   l_5D8DE                         ; 5D8B8
-        move.b  (dat_1BB47).l,d0                ; 5D8BC
+        move.b  (ControlBits).l,d0                ; 5D8BC
         andi.b  #$c,d0                          ; 5D8C2
         beq.w   l_5D8DE                         ; 5D8C6
         cmpi.b  #$4,d0                          ; 5D8CA
@@ -9901,14 +10046,14 @@ sub_5D8A2:
 l_5D8DA:
         move.b  #$f1,d0                         ; 5D8DA
 l_5D8DE:
-        move.b  d0,(dat_1BBC6).l                ; 5D8DE
-        move.b  (dat_1BB47).l,d0                ; 5D8E4
+        move.b  d0,(SteeringInput).l                ; 5D8DE
+        move.b  (ControlBits).l,d0                ; 5D8E4
         andi.b  #$10,d0                         ; 5D8EA
         eori.b  #$10,d0                         ; 5D8EE
-        move.b  d0,(dat_1BB70).l                ; 5D8F2
+        move.b  d0,(ThrottleOff).l                ; 5D8F2
         move.b  #$0,d2                          ; 5D8F8
         move.b  #$0,d1                          ; 5D8FC
-        move.b  (dat_1BD30).l,d0                ; 5D900
+        move.b  (SpeedForward).l,d0                ; 5D900
         bmi.w   l_5D912                         ; 5D906
         cmpi.b  #$78,d0                         ; 5D90A
         bcc.w   l_5D96C                         ; 5D90E
@@ -9917,7 +10062,7 @@ l_5D912:
         bne.w   l_5D96C                         ; 5D918
         move.b  (dat_1BCA2).l,d0                ; 5D91C
         bne.w   l_5D96C                         ; 5D922
-        move.b  (dat_1BB47).l,d0                ; 5D926
+        move.b  (ControlBits).l,d0                ; 5D926
         andi.b  #$3,d0                          ; 5D92C
         cmpi.b  #$1,d0                          ; 5D930
         beq.w   l_5D946                         ; 5D934
@@ -9937,8 +10082,8 @@ l_5D966:
         move.b  d0,(dat_1BBA8).l                ; 5D966
 l_5D96C:
         move.b  d1,(dat_1BD2B).l                ; 5D96C
-        move.b  d2,(dat_1BD2A).l                ; 5D972
-        jsr     (sub_608A4).l                   ; 5D978
+        move.b  d2,(DriveSetting).l                ; 5D972
+        jsr     (UseBoost).l                   ; 5D978
         rts                                     ; 5D97E
 
 ;-------------------------------------------------------------------------------
@@ -9950,7 +10095,7 @@ l_5D988:
         jsr     (ReadControls).l                ; 5D988
         and.b   d0,(dat_5D9DA).l                ; 5D98E
         bne.w   l_5D988                         ; 5D994
-        move.b  (dat_1BB47).l,d1                ; 5D998
+        move.b  (ControlBits).l,d1                ; 5D998
         move.b  d1,d0                           ; 5D99E
         andi.b  #$4,d0                          ; 5D9A0
         bne.w   l_5D9CE                         ; 5D9A4
@@ -9994,8 +10139,8 @@ l_5DA10:
         move.b  #$80,(dat_57C5B).l              ; 5DA18
         move.b  #$80,(dat_1BBB9).l              ; 5DA20
         jsr     (StopSound).l                   ; 5DA28
-        move.w  #$0,(dat_1BBF4).l               ; 5DA2E
-        move.b  (dat_1BB8E).l,d0                ; 5DA36
+        move.w  #$0,(EngineRevTarget).l               ; 5DA2E
+        move.b  (MessagePending).l,d0                ; 5DA36
         move.w  d0,-(a7)                        ; 5DA3C
         move.b  (dat_5E65B).l,d0                ; 5DA3E
         move.w  d0,-(a7)                        ; 5DA44
@@ -10003,11 +10148,11 @@ l_5DA10:
         move.w  d0,-(a7)                        ; 5DA4C
         move.l  (ScreenDraw).l,-(a7)            ; 5DA4E
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 5DA54
-        jsr     (sub_5FAE8).l                   ; 5DA5E
+        jsr     (ClearMessagePanel).l                   ; 5DA5E
         move.b  #$4c,d2                         ; 5DA64
         move.b  #$2,d0                          ; 5DA68
-        jsr     (sub_5E4EC).l                   ; 5DA6C
-        jsr     (sub_5E508).l                   ; 5DA72
+        jsr     (QueueMessage).l                   ; 5DA6C
+        jsr     (ShowMessage).l                   ; 5DA72
         move.l  (a7)+,(ScreenDraw).l            ; 5DA78
         jsr     (LinkWaitBoth).l                ; 5DA7E
         move.w  (a7)+,d0                        ; 5DA84
@@ -10015,7 +10160,7 @@ l_5DA10:
         move.w  (a7)+,d0                        ; 5DA8C
         move.b  d0,(dat_5E65B).l                ; 5DA8E
         move.w  (a7)+,d0                        ; 5DA94
-        move.b  d0,(dat_1BB8E).l                ; 5DA96
+        move.b  d0,(MessagePending).l                ; 5DA96
         move.b  #$0,(dat_57C5B).l               ; 5DA9C
         move.b  #$0,(dat_1BBB9).l               ; 5DAA4
 
@@ -10046,9 +10191,9 @@ FrameFlip:					; (enhanced: interp.i) the screens flipped without the wait
         move.b  #$6,(Countdown1).l              ; 5DADC
         move.l  (ScreenFront).l,d0              ; 5DAE4
         move.l  d0,d3                           ; 5DAEA
-        move.b  (dat_1BBC8).l,d4                ; 5DAEC
+        move.b  (FrameParity).l,d4                ; 5DAEC
         eori.b  #$80,d4                         ; 5DAF2
-        move.b  d4,(dat_1BBC8).l                ; 5DAF6
+        move.b  d4,(FrameParity).l                ; 5DAF6
         bpl.w   l_5DB14                         ; 5DAFC
         move.b  #$80,(dat_1BCC8).l              ; 5DB00
         addi.l  #$7d00,d0                       ; 5DB08
@@ -10060,21 +10205,27 @@ l_5DB22:
         move.l  d0,(ScreenBack).l               ; 5DB22
         move.l  d3,(ScreenDraw).l               ; 5DB28
         jmp     (FlipScreens).l                 ; 5DB2E
-sub_5DB34:
-        addq.b  #$1,(dat_1BBC9).l               ; 5DB34
+
+;-------------------------------------------------------------------------------
+; UpdateRaceTime - each step of the race: the step counter StepCount, the clock's fraction
+; (ClockFraction += $EE; ClockTick set when it carries), the message timer LapTimeTimer, the laps and the
+; finish (CheckLapPiece, CheckRaceFinished)
+;-------------------------------------------------------------------------------
+UpdateRaceTime:
+        addq.b  #$1,(StepCount).l               ; 5DB34
         move.b  #$0,d2                          ; 5DB3A
         move.b  #$ee,d0                         ; 5DB3E
         beq.w   l_5DB52                         ; 5DB42
-        add.b   d0,(dat_1BBCF).l                ; 5DB46
+        add.b   d0,(ClockFraction).l                ; 5DB46
         bcs.w   l_5DB52                         ; 5DB4C
         subq.b  #$1,d2                          ; 5DB50
 l_5DB52:
-        move.b  d2,(dat_1BBCD).l                ; 5DB52
-        move.b  (dat_1BBCC).l,d0                ; 5DB58
+        move.b  d2,(ClockTick).l                ; 5DB52
+        move.b  (LapTimeTimer).l,d0                ; 5DB58
         beq.w   l_5DB72                         ; 5DB5E
-        subq.b  #$1,(dat_1BBCC).l               ; 5DB62
+        subq.b  #$1,(LapTimeTimer).l               ; 5DB62
         bne.w   l_5DB72                         ; 5DB68
-        jsr     (sub_5DCA6).l                   ; 5DB6C
+        jsr     (UpdateBestLapAndTime).l                   ; 5DB6C
 l_5DB72:
         tst.b   (dat_1CA22).l                   ; 5DB72
         bpl.w   l_5DBAA                         ; 5DB78
@@ -10088,39 +10239,44 @@ l_5DB72:
 l_5DB9E:
         jsr     (AddFrameTime).l                ; 5DB9E
 l_5DBA4:
-        jsr     (sub_5DCC8).l                   ; 5DBA4
+        jsr     (CheckLapPiece).l                   ; 5DBA4
 l_5DBAA:
         move.b  #$0,d1                          ; 5DBAA
         jsr     (AddFrameTime).l                ; 5DBAE
         jsr     (SaveRaceOrder).l               ; 5DBB4
-        jsr     (sub_5DCC8).l                   ; 5DBBA
-        jsr     (sub_5DE1C).l                   ; 5DBC0
+        jsr     (CheckLapPiece).l                   ; 5DBBA
+        jsr     (CheckRaceFinished).l                   ; 5DBC0
         tst.b   (dat_1BB75).l                   ; 5DBC6
-        bpl.w   sub_5DBD6                       ; 5DBCC
-        jsr     (sub_5DBD6).l                   ; 5DBD0
-sub_5DBD6:
-        move.b  (dat_1BB6C).l,d0                ; 5DBD6
+        bpl.w   RaceMessageFlash                       ; 5DBCC
+        jsr     (RaceMessageFlash).l                   ; 5DBD0
+
+;-------------------------------------------------------------------------------
+; RaceMessageFlash - UpdateRaceTime: the message timer MessageTimer counted, MessageFlash its flashing
+; bit (bit 2), dat_1BB6F (probably the messages at the start and the finish)
+;-------------------------------------------------------------------------------
+RaceMessageFlash:
+        move.b  (MessageTimer).l,d0                ; 5DBD6
         beq.w   l_5DC36                         ; 5DBDC
         bmi.w   l_5DC26                         ; 5DBE0
         lsr.b   #$2,d0                          ; 5DBE4
         andi.b  #$1,d0                          ; 5DBE6
-        move.b  d0,(dat_1BB88).l                ; 5DBEA
+        move.b  d0,(MessageFlash).l                ; 5DBEA
         tst.b   (DropCountdown).l               ; 5DBF0
         bne.w   l_5DC12                         ; 5DBF6
-        move.b  (dat_1BB7E).l,d0                ; 5DBFA
+        move.b  (WheelsDown).l,d0                ; 5DBFA
         bne.w   l_5DC12                         ; 5DC00
-        move.b  (dat_1BB6C).l,d0                ; 5DC04
+        move.b  (MessageTimer).l,d0                ; 5DC04
         cmpi.b  #$6,d0                          ; 5DC0A
         bcs.w   l_5DC36                         ; 5DC0E
 l_5DC12:
-        tst.b   (dat_1BBCD).l                   ; 5DC12
+        tst.b   (ClockTick).l                   ; 5DC12
         bmi.w   l_5DC36                         ; 5DC18
-        subq.b  #$1,(dat_1BB6C).l               ; 5DC1C
+        subq.b  #$1,(MessageTimer).l               ; 5DC1C
         bne.w   l_5DC36                         ; 5DC22
 l_5DC26:
         move.b  #$80,d0                         ; 5DC26
         move.b  d0,(dat_1BB6F).l                ; 5DC2A
-        move.b  d0,(dat_1BB6C).l                ; 5DC30
+        move.b  d0,(MessageTimer).l                ; 5DC30
 l_5DC36:
         rts                                     ; 5DC36
 
@@ -10155,18 +10311,27 @@ l_5DC7C:
         move.b  (a1,d1.w),(a1,d2.w)             ; 5DC9A
         andi.b  #$1e,ccr                        ; 5DCA0
         rts                                     ; 5DCA4
-sub_5DCA6:
+
+;-------------------------------------------------------------------------------
+; UpdateBestLapAndTime - SetBestLapLamp, then time 3 printed (PrintTimeAt: d2 2, d1 3, d0 $80)
+;-------------------------------------------------------------------------------
+UpdateBestLapAndTime:
         move.b  d1,d0                           ; 5DCA6
         move.b  d0,-(a7)                        ; 5DCA8
-        jsr     (sub_5E098).l                   ; 5DCAA
+        jsr     (SetBestLapLamp).l                   ; 5DCAA
         move.b  #$2,d2                          ; 5DCB0
         move.b  #$3,d1                          ; 5DCB4
         move.b  #$80,d0                         ; 5DCB8
-        jsr     (sub_5E326).l                   ; 5DCBC
+        jsr     (PrintTimeAt).l                   ; 5DCBC
         move.b  (a7)+,d0                        ; 5DCC2
         move.b  d0,d1                           ; 5DCC4
         rts                                     ; 5DCC6
-sub_5DCC8:
+
+;-------------------------------------------------------------------------------
+; CheckLapPiece - car d1 (0 the player, 1 the opponent) at the start and finish piece (StartPiece):
+; its lap flag LapFlags (probably the laps' counting)
+;-------------------------------------------------------------------------------
+CheckLapPiece:
         tst.b   d1                              ; 5DCC8
         bne.w   l_5DCDA                         ; 5DCCA
         btst    #$6,(dat_1BB9C).l               ; 5DCCE
@@ -10174,16 +10339,16 @@ sub_5DCC8:
 l_5DCDA:
         movea.l #PlayerPiece,a1                 ; 5DCDA
         move.b  (a1,d1.w),d0                    ; 5DCE0
-        movea.l #dat_1BB1E,a1                   ; 5DCE4
+        movea.l #LapFlags,a1                   ; 5DCE4
         move.b  (a1,d1.w),d2                    ; 5DCEA
         bpl.w   l_5DD04                         ; 5DCEE
-        cmp.b   (dat_1CA1D).l,d0                ; 5DCF2
+        cmp.b   (StartPiece).l,d0                ; 5DCF2
         bne.w   l_5DD02                         ; 5DCF8
         move.b  #$0,(a1,d1.w)                   ; 5DCFC
 l_5DD02:
         rts                                     ; 5DD02
 l_5DD04:
-        cmp.b   (dat_1CA32).l,d0                ; 5DD04
+        cmp.b   (LapStartPiece).l,d0                ; 5DD04
         bne.w   l_5DD02                         ; 5DD0A
         move.b  #$80,(a1,d1.w)                  ; 5DD0E
         movea.l #PlayerLaps,a1                  ; 5DD14
@@ -10197,7 +10362,7 @@ l_5DD04:
         tst.b   (dat_1BB76).l                   ; 5DD3A
         bne.w   l_5DD4A                         ; 5DD40
 l_5DD44:
-        jsr     (sub_6181E).l                   ; 5DD44
+        jsr     (AddLapPartTime).l                   ; 5DD44
 l_5DD4A:
         jsr     (LinkSwapOpponent).l            ; 5DD4A
         tst.b   d1                              ; 5DD50
@@ -10207,8 +10372,8 @@ l_5DD4A:
         beq.w   l_5DD80                         ; 5DD60
         jsr     (CheckRecordTimes).l            ; 5DD64
         move.b  #$1b,d0                         ; 5DD6A
-        move.b  d0,(dat_1BBCC).l                ; 5DD6E
-        jsr     (sub_5DED0).l                   ; 5DD74
+        move.b  d0,(LapTimeTimer).l                ; 5DD6E
+        jsr     (PrintLapTimeNow).l                   ; 5DD74
         jsr     (SaveRaceOrder).l               ; 5DD7A
 l_5DD80:
         move.b  d1,(dat_1BBE4).l                ; 5DD80
@@ -10218,12 +10383,12 @@ l_5DD80:
         jsr     (PrintChar).l                   ; 5DD94
         move.b  #$16,d0                         ; 5DD9A
         jsr     (PrintChar).l                   ; 5DD9E
-        move.b  #$2,(dat_1BB6D).l               ; 5DDA4
-        move.b  #$2,(dat_1BB6E).l               ; 5DDAC
+        move.b  #$2,(TextPixelX).l               ; 5DDA4
+        move.b  #$2,(TextLineOffset).l               ; 5DDAC
         move.b  (PlayerLaps).l,d0               ; 5DDB4
         jsr     (PrintDigitNext).l              ; 5DDBA
-        move.b  #$0,(dat_1BB6D).l               ; 5DDC0
-        move.b  #$0,(dat_1BB6E).l               ; 5DDC8
+        move.b  #$0,(TextPixelX).l               ; 5DDC0
+        move.b  #$0,(TextLineOffset).l               ; 5DDC8
         move.b  (dat_1BBE4).l,d1                ; 5DDD0
 l_5DDD6:
         movea.l #PlayerLaps,a1                  ; 5DDD6
@@ -10236,30 +10401,35 @@ l_5DDD6:
         move.b  d1,d0                           ; 5DDF6
         lsr.b   #$1,d0                          ; 5DDF8
         roxr.b  #$2,d0                          ; 5DDFA
-        move.b  d0,(dat_1BBB2).l                ; 5DDFC
+        move.b  d0,(BestLapFlag).l                ; 5DDFC
         beq.w   l_5DE14                         ; 5DE02
-        move.b  #$0,(dat_1BBCC).l               ; 5DE06
-        jsr     (sub_5DCA6).l                   ; 5DE0E
+        move.b  #$0,(LapTimeTimer).l               ; 5DE06
+        jsr     (UpdateBestLapAndTime).l                   ; 5DE0E
 l_5DE14:
         jsr     (ClearTime).l                   ; 5DE14
         rts                                     ; 5DE1A
-sub_5DE1C:
+
+;-------------------------------------------------------------------------------
+; CheckRaceFinished - each car's laps (PlayerLaps, OpponentLaps) against the race's laps
+; (RaceLaps): the first to finish noted (RaceWinner), the message timer (MessageTimer) started
+;-------------------------------------------------------------------------------
+CheckRaceFinished:
         move.w  #$1,d1                          ; 5DE1C
 l_5DE20:
-        tst.b   (dat_1BBAF).l                   ; 5DE20
+        tst.b   (RaceWinner).l                   ; 5DE20
         bne.w   l_5DE98                         ; 5DE26
         movea.l #PlayerLaps,a1                  ; 5DE2A
         move.b  (a1,d1.w),d0                    ; 5DE30
-        cmp.b   (dat_1BB99).l,d0                ; 5DE34
+        cmp.b   (RaceLaps).l,d0                ; 5DE34
         bne.w   l_5DE98                         ; 5DE3A
-        move.b  d0,(dat_1BBAF).l                ; 5DE3E
-        move.b  (dat_1BB6C).l,d0                ; 5DE44
+        move.b  d0,(RaceWinner).l                ; 5DE3E
+        move.b  (MessageTimer).l,d0                ; 5DE44
         bne.w   l_5DE58                         ; 5DE4A
         move.b  #$2c,d0                         ; 5DE4E
-        move.b  d0,(dat_1BB6C).l                ; 5DE52
+        move.b  d0,(MessageTimer).l                ; 5DE52
 l_5DE58:
         move.w  d1,-(a7)                        ; 5DE58
-        jsr     (sub_5E0C4).l                   ; 5DE5A
+        jsr     (SetLeadLamp).l                   ; 5DE5A
         move.w  (a7)+,d1                        ; 5DE60
         cmpi.w  #$b,d2                          ; 5DE62
         beq.w   l_5DE80                         ; 5DE66
@@ -10274,11 +10444,11 @@ l_5DE80:
         move.b  #$1c,d2                         ; 5DE8A
 l_5DE8E:
         move.b  #$4,d0                          ; 5DE8E
-        jsr     (sub_5E4EC).l                   ; 5DE92
+        jsr     (QueueMessage).l                   ; 5DE92
 l_5DE98:
         move.b  (dat_1BBB4).l,d0                ; 5DE98
         andi.b  #$bf,d0                         ; 5DE9E
-        or.b    (dat_1BBB2).l,d0                ; 5DEA2
+        or.b    (BestLapFlag).l,d0                ; 5DEA2
         move.b  d0,(dat_1BBB4).l                ; 5DEA8
         subq.b  #$1,d1                          ; 5DEAE
         bpl.w   l_5DE20                         ; 5DEB0
@@ -10294,16 +10464,21 @@ SetTextPosition:
         jsr     (PrintChar).l                   ; 5DEC2
         move.b  d2,d0                           ; 5DEC8
         jmp     (PrintChar).l                   ; 5DECA
-sub_5DED0:
+
+;-------------------------------------------------------------------------------
+; PrintLapTimeNow - time 2 printed (PrintTimeAt), highlighted ($80) while the message timer
+; LapTimeTimer runs (AddTime, CheckLapPiece)
+;-------------------------------------------------------------------------------
+PrintLapTimeNow:
         move.b  d1,d0                           ; 5DED0
         move.b  d0,-(a7)                        ; 5DED2
         move.b  #$2,d1                          ; 5DED4
         move.b  #$0,d2                          ; 5DED8
-        move.b  (dat_1BBCC).l,d0                ; 5DEDC
+        move.b  (LapTimeTimer).l,d0                ; 5DEDC
         beq.w   l_5DEEA                         ; 5DEE2
         move.b  #$80,d0                         ; 5DEE6
 l_5DEEA:
-        jsr     (sub_5E326).l                   ; 5DEEA
+        jsr     (PrintTimeAt).l                   ; 5DEEA
         move.b  (a7)+,d0                        ; 5DEF0
         move.b  d0,d1                           ; 5DEF2
         rts                                     ; 5DEF4
@@ -10312,7 +10487,7 @@ l_5DEEA:
 ; PrintDigitNext
 ;-------------------------------------------------------------------------------
 PrintDigitNext:
-        addq.b  #$1,(dat_1BB6D).l               ; 5DEF6
+        addq.b  #$1,(TextPixelX).l               ; 5DEF6
         bra.w   PrintDigit                      ; 5DEFC
 
 ;-------------------------------------------------------------------------------
@@ -10370,57 +10545,64 @@ AddTime:
 l_5DF8C:
         tst.b   d1                              ; 5DF8C
         bne.w   l_5DFAC                         ; 5DF8E
-        tst.b   (dat_1BBCC).l                   ; 5DF92
+        tst.b   (LapTimeTimer).l                   ; 5DF92
         bne.w   l_5DFAC                         ; 5DF98
         tst.b   (PlayerLaps).l                  ; 5DF9C
         beq.w   l_5DFAC                         ; 5DFA2
-        jsr     (sub_5DED0).l                   ; 5DFA6
+        jsr     (PrintLapTimeNow).l                   ; 5DFA6
 l_5DFAC:
         rts                                     ; 5DFAC
 l_5DFAE:
         move.b  d0,(a0,d1.w)                    ; 5DFAE
         rts                                     ; 5DFB2
-sub_5DFB4:
-        move.b  (dat_1BB54).l,d0                ; 5DFB4
+
+;-------------------------------------------------------------------------------
+; CarKnocks - the race loop: after a knock (KnockHappened) its strength (the mean of
+; KnockStrength1-dat_1BB51: KnockStrength) for GrowCrack; a hard one (KnockForce from $1400) takes one of
+; the damage's marks (DamageMarks: DrawCrackMark, then DrawHoleMark 69 steps later: HoleTimer); the
+; knock's sound (sample 4, its volume from KnockForce; 5 for a hard one) (probably)
+;-------------------------------------------------------------------------------
+CarKnocks:
+        move.b  (KnockHappened).l,d0                ; 5DFB4
         beq.w   l_5DFE0                         ; 5DFBA
-        move.b  (dat_1BB4F).l,d0                ; 5DFBE
+        move.b  (KnockStrength1).l,d0                ; 5DFBE
         add.b   (dat_1BB50).l,d0                ; 5DFC4
         roxr.b  #$1,d0                          ; 5DFCA
         add.b   (dat_1BB51).l,d0                ; 5DFCC
         roxr.b  #$1,d0                          ; 5DFD2
-        move.b  d0,(dat_1BBB6).l                ; 5DFD4
-        jsr     (sub_66106).l                   ; 5DFDA
+        move.b  d0,(KnockStrength).l                ; 5DFD4
+        jsr     (GrowCrack).l                   ; 5DFDA
 l_5DFE0:
-        move.b  (dat_1BB73).l,d0                ; 5DFE0
+        move.b  (HoleTimer).l,d0                ; 5DFE0
         beq.w   l_5E016                         ; 5DFE6
-        subq.b  #$1,(dat_1BB73).l               ; 5DFEA
+        subq.b  #$1,(HoleTimer).l               ; 5DFEA
         cmpi.b  #$45,d0                         ; 5DFF0
         beq.w   l_5E004                         ; 5DFF4
-        move.b  (dat_1BB54).l,d0                ; 5DFF8
+        move.b  (KnockHappened).l,d0                ; 5DFF8
         bne.w   l_5E05C                         ; 5DFFE
         rts                                     ; 5E002
 l_5E004:
-        move.b  (dat_1C9CF).l,d2                ; 5E004
-        jsr     (sub_6091A).l                   ; 5E00A
+        move.b  (DamageMarks).l,d2                ; 5E004
+        jsr     (DrawHoleMark).l                   ; 5E00A
         jmp     (l_5E05C).l                     ; 5E010
 l_5E016:
-        move.b  (dat_1BB54).l,d0                ; 5E016
+        move.b  (KnockHappened).l,d0                ; 5E016
         beq.w   l_5E096                         ; 5E01C
-        move.w  (dat_1BC3A).l,d0                ; 5E020
+        move.w  (KnockForce).l,d0                ; 5E020
         cmpi.w  #$1400,d0                       ; 5E026
         bcs.w   l_5E05C                         ; 5E02A
-        move.b  (dat_1C9CF).l,d2                ; 5E02E
+        move.b  (DamageMarks).l,d2                ; 5E02E
         beq.w   l_5E05C                         ; 5E034
         subq.b  #$1,d2                          ; 5E038
-        move.b  d2,(dat_1C9CF).l                ; 5E03A
-        jsr     (sub_60922).l                   ; 5E040
+        move.b  d2,(DamageMarks).l                ; 5E03A
+        jsr     (DrawCrackMark).l                   ; 5E040
         move.b  #$45,d0                         ; 5E046
-        move.b  d0,(dat_1BB73).l                ; 5E04A
+        move.b  d0,(HoleTimer).l                ; 5E04A
         move.b  #$a,d0                          ; 5E050
         move.b  #$5,d0                          ; 5E054
         bne.w   l_5E086                         ; 5E058
 l_5E05C:
-        move.b  (dat_1BC3A).l,d0                ; 5E05C
+        move.b  (KnockForce).l,d0                ; 5E05C
         cmpi.b  #$7,d0                          ; 5E062
         bcc.w   l_5E06E                         ; 5E066
         move.b  #$7,d0                          ; 5E06A
@@ -10435,29 +10617,49 @@ l_5E07C:
 l_5E086:
         jsr     (PlaySample).l                  ; 5E086
         move.b  #$0,d0                          ; 5E08C
-        move.b  d0,(dat_1BB54).l                ; 5E090
+        move.b  d0,(KnockHappened).l                ; 5E090
 l_5E096:
         rts                                     ; 5E096
-sub_5E098:
+
+;-------------------------------------------------------------------------------
+; SetBestLapLamp - the B lamp's colour ($B when BestLapFlag is set: a lap faster than the best, set by
+; CheckLapPiece through CompareTimes), then DrawBestLapLamp - B probably for the best lap
+;-------------------------------------------------------------------------------
+SetBestLapLamp:
         move.b  #$b,d2                          ; 5E098
-        move.b  (dat_1BBB2).l,d0                ; 5E09C
-        bne.w   sub_5E0AA                       ; 5E0A2
+        move.b  (BestLapFlag).l,d0                ; 5E09C
+        bne.w   DrawBestLapLamp                       ; 5E0A2
         move.b  #$7,d2                          ; 5E0A6
-sub_5E0AA:
-        move.b  d2,(dat_1BB8C).l                ; 5E0AA
+
+;-------------------------------------------------------------------------------
+; DrawBestLapLamp - d2: the B lamp's colour (BestLapLampColour) - its cut-out ($11 or $12) drawn into both
+; screens
+;-------------------------------------------------------------------------------
+DrawBestLapLamp:
+        move.b  d2,(BestLapLampColour).l                ; 5E0AA
         move.b  #$11,d0                         ; 5E0B0
         cmpi.b  #$7,d2                          ; 5E0B4
         beq.w   l_5E0C0                         ; 5E0B8
         move.b  #$12,d0                         ; 5E0BC
 l_5E0C0:
         bra.w   l_5E0EC                         ; 5E0C0
-sub_5E0C4:
+
+;-------------------------------------------------------------------------------
+; SetLeadLamp - the L lamp's colour ($B when OpponentLead is positive, else 7), then DrawLeadLamp
+; (probably the lead)
+;-------------------------------------------------------------------------------
+SetLeadLamp:
         move.b  #$b,d2                          ; 5E0C4
-        jsr     (sub_607D0).l                   ; 5E0C8
-        bpl.w   sub_5E0D6                       ; 5E0CE
+        jsr     (OpponentLead).l                   ; 5E0C8
+        bpl.w   DrawLeadLamp                       ; 5E0CE
         move.b  #$7,d2                          ; 5E0D2
-sub_5E0D6:
-        move.b  d2,(dat_1BBDE).l                ; 5E0D6
+
+;-------------------------------------------------------------------------------
+; DrawLeadLamp - d2: the L lamp's colour (LeadLampColour) - its cut-out ($F or $10) drawn into both
+; screens
+;-------------------------------------------------------------------------------
+DrawLeadLamp:
+        move.b  d2,(LeadLampColour).l                ; 5E0D6
         move.b  #$f,d0                          ; 5E0DC
         cmpi.b  #$7,d2                          ; 5E0E0
         beq.w   l_5E0EC                         ; 5E0E4
@@ -10476,8 +10678,13 @@ l_5E0EC:
         move.l  (a7)+,(ScreenDraw).l            ; 5E120
         move.w  (a7)+,d2                        ; 5E126
         rts                                     ; 5E128
-sub_5E12A:
-        move.b  (dat_1BBAC).l,d0                ; 5E12A
+
+;-------------------------------------------------------------------------------
+; PrintOpponentDistance - every 4th step (StepCountdown): the opponent's distance (OpponentDistance x
+; 5 / 16) printed on the instruments, a sign and 4 digits (the enhanced game: readout.i)
+;-------------------------------------------------------------------------------
+PrintOpponentDistance:
+        move.b  (StepCountdown).l,d0                ; 5E12A
         andi.b  #$3,d0                          ; 5E130
         beq.w   l_5E13A                         ; 5E134
         rts                                     ; 5E138
@@ -10511,12 +10718,12 @@ l_5E180:
 l_5E186:
         cmpi.b  #$a,d0                          ; 5E186
         bge.w   l_5E180                         ; 5E18A
-        move.b  d0,(dat_1BB18).l                ; 5E18E
-        move.b  d1,(dat_1BB1A).l                ; 5E194
-        move.b  d2,(dat_1BB19).l                ; 5E19A
-        move.b  d5,(dat_1BB17).l                ; 5E1A0
-        move.b  #$1,(dat_1BB6D).l               ; 5E1A6
-        move.b  #$4,(dat_1BB6E).l               ; 5E1AE
+        move.b  d0,(WorkByte3).l                ; 5E18E
+        move.b  d1,(WorkByte5).l                ; 5E194
+        move.b  d2,(WorkByte4).l                ; 5E19A
+        move.b  d5,(WorkByte2).l                ; 5E1A0
+        move.b  #$1,(TextPixelX).l               ; 5E1A6
+        move.b  #$4,(TextLineOffset).l               ; 5E1AE
         jsr     (ReadoutStart).l                ; (enhanced) only the characters that changed printed (readout.i)
         move.b  #$1f,d0                         ; 5E1B6
         jsr     (PrintChar).l                   ; 5E1BA
@@ -10530,24 +10737,29 @@ l_5E186:
         move.b  #$fd,d0                         ; 5E1E2
 l_5E1E6:
         jsr     (ReadoutDigit).l                ; 5E1E6 (enhanced: PrintDigitNext, unless the cell shows it)
-        move.b  (dat_1BB17).l,d0                ; 5E1EC
+        move.b  (WorkByte2).l,d0                ; 5E1EC
         jsr     (ReadoutDigit).l                ; 5E1F2 (enhanced: PrintDigitNext, unless the cell shows it)
-        move.b  (dat_1BB19).l,d0                ; 5E1F8
+        move.b  (WorkByte4).l,d0                ; 5E1F8
         jsr     (ReadoutDigit).l                ; 5E1FE (enhanced: PrintDigitNext, unless the cell shows it)
-        move.b  (dat_1BB1A).l,d0                ; 5E204
+        move.b  (WorkByte5).l,d0                ; 5E204
         jsr     (ReadoutDigit).l                ; 5E20A (enhanced: PrintDigitNext, unless the cell shows it)
-        move.b  (dat_1BB18).l,d0                ; 5E210
+        move.b  (WorkByte3).l,d0                ; 5E210
         jsr     (ReadoutDigit).l                ; 5E216 (enhanced: PrintDigitNext, unless the cell shows it)
         jsr     (ReadoutEnd).l                  ; (enhanced)
-        move.b  #$0,(dat_1BB6D).l               ; 5E21C
-        move.b  #$0,(dat_1BB6E).l               ; 5E224
-        tst.b   (dat_1BBAF).l                   ; 5E22C
+        move.b  #$0,(TextPixelX).l               ; 5E21C
+        move.b  #$0,(TextLineOffset).l               ; 5E224
+        tst.b   (RaceWinner).l                   ; 5E22C
         bne.w   l_5E23C                         ; 5E232
-        jsr     (sub_5E0C4).l                   ; 5E236
+        jsr     (SetLeadLamp).l                   ; 5E236
 l_5E23C:
         rts                                     ; 5E23C
-sub_5E23E:
-        move.w  (dat_1BD30).l,d0                ; 5E23E
+
+;-------------------------------------------------------------------------------
+; UpdateSpeedometer - the speed (SpeedForward above $1100, scaled) as the speedometer's needle
+; (probably)
+;-------------------------------------------------------------------------------
+UpdateSpeedometer:
+        move.w  (SpeedForward).l,d0                ; 5E23E
         subi.w  #$1100,d0                       ; 5E244
         bpl.w   l_5E250                         ; 5E248
         move.w  #$0,d0                          ; 5E24C
@@ -10581,7 +10793,7 @@ l_5E2A6:
 l_5E2AC:
         jsr     (ColourToMasks).l               ; 5E2AC
         movea.l #dat_667E0,a5                   ; 5E2B2
-        jsr     (sub_66576).l                   ; 5E2B8
+        jsr     (FillSpan).l                   ; 5E2B8
         movea.l a6,a0                           ; 5E2BE
         adda.l  #$7d00,a0                       ; 5E2C0
         move.w  #$7,d3                          ; 5E2C6
@@ -10604,73 +10816,82 @@ l_5E2CA:
 l_5E31A:
         move.w  (dat_1BC18).l,(dat_1BC20).l     ; 5E31A
         rts                                     ; 5E324
-sub_5E326:
-        move.b  d2,(dat_1BBE8).l                ; 5E326
-        move.b  d0,(dat_1BB89).l                ; 5E32C
+
+;-------------------------------------------------------------------------------
+; PrintTimeAt - d1: a time (0-3) printed at its place (dat_5E46C), minutes and seconds; d0 $80
+; highlighted, d2 its colour (TextColourChoice)
+;-------------------------------------------------------------------------------
+PrintTimeAt:
+        move.b  d2,(TextColourChoice).l                ; 5E326
+        move.b  d0,(TimeHighlight).l                ; 5E32C
         movea.l #dat_5E46C,a1                   ; 5E332
-        move.b  $4(a1,d1.w),(dat_1BB6E).l       ; 5E338
-        move.b  #$80,(dat_1BBD3).l              ; 5E340
+        move.b  $4(a1,d1.w),(TextLineOffset).l       ; 5E338
+        move.b  #$80,(TextNoBackground).l              ; 5E340
         move.b  #$1f,d0                         ; 5E348
         jsr     (PrintChar).l                   ; 5E34C
         move.b  #$22,d0                         ; 5E352
         jsr     (PrintChar).l                   ; 5E356
         move.b  (a1,d1.w),d0                    ; 5E35C
         jsr     (PrintChar).l                   ; 5E360
-        move.b  #$5,(dat_1BB6D).l               ; 5E366
+        move.b  #$5,(TextPixelX).l               ; 5E366
         move.b  #$3a,d0                         ; 5E36E
         jsr     (PrintChar).l                   ; 5E372
         addq.b  #$2,(TextCursorX).l             ; 5E378
-        subq.b  #$2,(dat_1BB6E).l               ; 5E37E
-        move.b  #$2,(dat_1BB6D).l               ; 5E384
+        subq.b  #$2,(TextLineOffset).l               ; 5E37E
+        move.b  #$2,(TextPixelX).l               ; 5E384
         move.b  #$2e,d0                         ; 5E38C
         jsr     (PrintChar).l                   ; 5E390
-        move.b  #$0,(dat_1BBD3).l               ; 5E396
-        addq.b  #$2,(dat_1BB6E).l               ; 5E39E
+        move.b  #$0,(TextNoBackground).l               ; 5E396
+        addq.b  #$2,(TextLineOffset).l               ; 5E39E
         subq.b  #$5,(TextCursorX).l             ; 5E3A4
-        move.b  #$6,(dat_1BB6D).l               ; 5E3AA
+        move.b  #$6,(TextPixelX).l               ; 5E3AA
         movea.l #TimeHundredths,a2              ; 5E3B2
         move.b  (a2,d2.w),d0                    ; 5E3B8
         andi.b  #$f,d0                          ; 5E3BC
         jsr     (PrintDigit).l                  ; 5E3C0
         addq.b  #$1,(TextCursorX).l             ; 5E3C6
-        move.b  #$3,(dat_1BB6D).l               ; 5E3CC
-        move.b  (dat_1BBE8).l,d2                ; 5E3D4
+        move.b  #$3,(TextPixelX).l               ; 5E3CC
+        move.b  (TextColourChoice).l,d2                ; 5E3D4
         movea.l #TimeSeconds,a2                 ; 5E3DA
         move.b  (a2,d2.w),d0                    ; 5E3E0
         lsr.b   #$4,d0                          ; 5E3E4
         jsr     (PrintDigit).l                  ; 5E3E6
-        move.b  (dat_1BBE8).l,d2                ; 5E3EC
+        move.b  (TextColourChoice).l,d2                ; 5E3EC
         movea.l #TimeSeconds,a2                 ; 5E3F2
         move.b  (a2,d2.w),d0                    ; 5E3F8
         andi.b  #$f,d0                          ; 5E3FC
         jsr     (PrintDigit).l                  ; 5E400
-        addq.b  #$4,(dat_1BB6D).l               ; 5E406
-        move.b  (dat_1BBE8).l,d2                ; 5E40C
+        addq.b  #$4,(TextPixelX).l               ; 5E406
+        move.b  (TextColourChoice).l,d2                ; 5E40C
         movea.l #TimeMinutes,a2                 ; 5E412
         move.b  (a2,d2.w),d0                    ; 5E418
         lsr.b   #$4,d0                          ; 5E41C
-        tst.b   (dat_1BB89).l                   ; 5E41E
+        tst.b   (TimeHighlight).l                   ; 5E41E
         bmi.w   l_5E42C                         ; 5E424
         move.b  #$f0,d0                         ; 5E428
 l_5E42C:
         jsr     (PrintDigit).l                  ; 5E42C
-        move.b  (dat_1BBE8).l,d2                ; 5E432
+        move.b  (TextColourChoice).l,d2                ; 5E432
         movea.l #TimeMinutes,a2                 ; 5E438
         move.b  (a2,d2.w),d0                    ; 5E43E
         andi.b  #$f,d0                          ; 5E442
-        tst.b   (dat_1BB89).l                   ; 5E446
+        tst.b   (TimeHighlight).l                   ; 5E446
         bmi.w   l_5E454                         ; 5E44C
         move.b  #$f0,d0                         ; 5E450
 l_5E454:
         jsr     (PrintDigit).l                  ; 5E454
-        move.b  #$0,(dat_1BB6D).l               ; 5E45A
-        move.b  #$0,(dat_1BB6E).l               ; 5E462
+        move.b  #$0,(TextPixelX).l               ; 5E45A
+        move.b  #$0,(TextLineOffset).l               ; 5E462
         rts                                     ; 5E46A
 dat_5E46C:
 	dc.b	$16,$17,$16,$17,$02,$04,$02,$04
-sub_5E474:
-        move.b  #$2,(dat_1BB6E).l               ; 5E474
-        move.b  #$2,(dat_1BB6D).l               ; 5E47C
+
+;-------------------------------------------------------------------------------
+; PrintLampLetters - the race's start: the letters L and B printed on the instruments' two lamps
+;-------------------------------------------------------------------------------
+PrintLampLetters:
+        move.b  #$2,(TextLineOffset).l               ; 5E474
+        move.b  #$2,(TextPixelX).l               ; 5E47C
         move.b  #$1f,d0                         ; 5E484
         jsr     (PrintChar).l                   ; 5E488
         move.b  #$5,d0                          ; 5E48E
@@ -10679,7 +10900,7 @@ sub_5E474:
         jsr     (PrintChar).l                   ; 5E49C
         move.b  #$4c,d0                         ; 5E4A2
         jsr     (PrintChar).l                   ; 5E4A6
-        addq.b  #$2,(dat_1BB6D).l               ; 5E4AC
+        addq.b  #$2,(TextPixelX).l               ; 5E4AC
         move.b  #$1f,d0                         ; 5E4B2
         jsr     (PrintChar).l                   ; 5E4B6
         move.b  #$8,d0                          ; 5E4BC
@@ -10688,23 +10909,36 @@ sub_5E474:
         jsr     (PrintChar).l                   ; 5E4CA
         move.b  #$42,d0                         ; 5E4D0
         jsr     (PrintChar).l                   ; 5E4D4
-        move.b  #$0,(dat_1BB6D).l               ; 5E4DA
-        move.b  #$0,(dat_1BB6E).l               ; 5E4E2
+        move.b  #$0,(TextPixelX).l               ; 5E4DA
+        move.b  #$0,(TextLineOffset).l               ; 5E4E2
         rts                                     ; 5E4EA
-sub_5E4EC:
-        move.b  #$80,(dat_1BB8E).l              ; 5E4EC
+
+;-------------------------------------------------------------------------------
+; QueueMessage - d0: a message (dat_5E65A) to show for d2 (dat_5E65B), marked pending (MessagePending)
+;-------------------------------------------------------------------------------
+QueueMessage:
+        move.b  #$80,(MessagePending).l              ; 5E4EC
         move.b  d2,(dat_5E65B).l                ; 5E4F4
         move.b  d0,(dat_5E65A).l                ; 5E4FA
         rts                                     ; 5E500
-sub_5E502:
-        jsr     (sub_5E4EC).l                   ; 5E502
-sub_5E508:
-        tst.b   (dat_1BB8E).l                   ; 5E508
+
+;-------------------------------------------------------------------------------
+; ShowMessageNow - QueueMessage, then ShowMessage
+;-------------------------------------------------------------------------------
+ShowMessageNow:
+        jsr     (QueueMessage).l                   ; 5E502
+
+;-------------------------------------------------------------------------------
+; ShowMessage - the pending message (MessagePending) printed in the cockpit, unless another is showing
+; (MessageTimer) (probably)
+;-------------------------------------------------------------------------------
+ShowMessage:
+        tst.b   (MessagePending).l                   ; 5E508
         bmi.w   l_5E514                         ; 5E50E
 l_5E512:
         rts                                     ; 5E512
 l_5E514:
-        move.b  (dat_1BB6C).l,d0                ; 5E514
+        move.b  (MessageTimer).l,d0                ; 5E514
         beq.w   l_5E536                         ; 5E51A
         bmi.w   l_5E52A                         ; 5E51E
         cmpi.b  #$3,d0                          ; 5E522
@@ -10715,10 +10949,10 @@ l_5E52A:
 l_5E536:
         tst.b   (Paused).l                      ; 5E536
         bmi.w   l_5E512                         ; 5E53C
-        move.b  #$80,(dat_1BBD3).l              ; 5E540
-        move.b  #$80,(dat_1BBBC).l              ; 5E548
+        move.b  #$80,(TextNoBackground).l              ; 5E540
+        move.b  #$80,(TextOneScreen).l              ; 5E548
         move.b  #$0,d0                          ; 5E550
-        tst.b   (dat_1BB88).l                   ; 5E554
+        tst.b   (MessageFlash).l                   ; 5E554
         beq.w   l_5E562                         ; 5E55A
         move.b  #$f,d0                          ; 5E55E
 l_5E562:
@@ -10728,11 +10962,11 @@ l_5E562:
         move.b  d1,-(a7)                        ; 5E578
         move.b  #$4,(TextCursorY).l             ; 5E57A
         move.b  #$13,(TextCursorX).l            ; 5E582
-        move.b  #$3,(dat_1BB6D).l               ; 5E58A
-        move.b  #$0,(dat_1BB6E).l               ; 5E592
+        move.b  #$3,(TextPixelX).l               ; 5E58A
+        move.b  #$0,(TextLineOffset).l               ; 5E592
         cmpi.b  #$2,(dat_5E65A).l               ; 5E59A
         bne.w   l_5E5AE                         ; 5E5A2
-        move.b  #$5,(dat_1BB6E).l               ; 5E5A6
+        move.b  #$5,(TextLineOffset).l               ; 5E5A6
 l_5E5AE:
         movea.l #dat_5E65C,a2                   ; 5E5AE
         move.b  (a2,d2.w),d1                    ; 5E5B4
@@ -10740,8 +10974,8 @@ l_5E5AE:
         bne.w   l_5E5E0                         ; 5E5BC
         move.b  #$13,(TextCursorX).l            ; 5E5C0
         move.b  #$5,(TextCursorY).l             ; 5E5C8
-        move.b  #$3,(dat_1BB6D).l               ; 5E5D0
-        move.b  #$2,(dat_1BB6E).l               ; 5E5D8
+        move.b  #$3,(TextPixelX).l               ; 5E5D0
+        move.b  #$2,(TextLineOffset).l               ; 5E5D8
 l_5E5E0:
         addq.b  #$1,d2                          ; 5E5E0
         move.b  #$3,d0                          ; 5E5E2
@@ -10751,11 +10985,11 @@ l_5E5EC:
         move.b  (a2,d2.w),d0                    ; 5E5F2
         cmpi.b  #$3c,d0                         ; 5E5F6
         bne.w   l_5E608                         ; 5E5FA
-        addq.b  #$4,(dat_1BB6D).l               ; 5E5FE
+        addq.b  #$4,(TextPixelX).l               ; 5E5FE
         bra.w   l_5E614                         ; 5E604
 l_5E608:
         jsr     (PrintChar).l                   ; 5E608
-        addq.b  #$1,(dat_1BB6D).l               ; 5E60E
+        addq.b  #$1,(TextPixelX).l               ; 5E60E
 l_5E614:
         addq.b  #$1,d2                          ; 5E614
         addq.b  #$1,d1                          ; 5E616
@@ -10764,10 +10998,10 @@ l_5E614:
         subq.b  #$1,(dat_1BB90).l               ; 5E622
         bne.w   l_5E5AE                         ; 5E628
         move.b  (a7)+,d1                        ; 5E62C
-        move.b  #$0,(dat_1BBD3).l               ; 5E62E
-        move.b  #$0,(dat_1BBBC).l               ; 5E636
-        move.b  #$0,(dat_1BB6D).l               ; 5E63E
-        move.b  #$0,(dat_1BB6E).l               ; 5E646
+        move.b  #$0,(TextNoBackground).l               ; 5E62E
+        move.b  #$0,(TextOneScreen).l               ; 5E636
+        move.b  #$0,(TextPixelX).l               ; 5E63E
+        move.b  #$0,(TextLineOffset).l               ; 5E646
         move.b  #$0,d0                          ; 5E64E
         jsr     (SetTextColour).l               ; 5E652
         rts                                     ; 5E658
@@ -10807,9 +11041,14 @@ dat_5E65C:
 	dc.b	$03
 	dc.b	'<FACULT!<FOaUND<T'
 	dc.b	$06,$1A
-sub_5E744:
-        move.b  (dat_1BBDB).l,d0                ; 5E744
-        tst.w   (dat_1BD30).l                   ; 5E74A
+
+;-------------------------------------------------------------------------------
+; WheelSpinFrame - the wheels' animation frame (WheelFrame: 0-2) stepped on, or back when going
+; backwards (SpeedForward negative)
+;-------------------------------------------------------------------------------
+WheelSpinFrame:
+        move.b  (WheelFrame).l,d0                ; 5E744
+        tst.w   (SpeedForward).l                   ; 5E74A
         bpl.w   l_5E762                         ; 5E750
         subq.b  #$1,d0                          ; 5E754
         bpl.w   l_5E770                         ; 5E756
@@ -10821,14 +11060,19 @@ l_5E762:
         bcs.w   l_5E770                         ; 5E768
         move.b  #$0,d0                          ; 5E76C
 l_5E770:
-        move.b  d0,(dat_1BBDB).l                ; 5E770
+        move.b  d0,(WheelFrame).l                ; 5E770
         rts                                     ; 5E776
-sub_5E778:
+
+;-------------------------------------------------------------------------------
+; PlaceWheelCutouts - the wheels' cut-outs (CutoutRects) moved up and down with the suspension
+; (WheelSuspension, clamped 0-$7FF) (probably)
+;-------------------------------------------------------------------------------
+PlaceWheelCutouts:
         move.b  #$0,d1                          ; 5E778
         move.w  #$30,d3                         ; 5E77C
         movea.l #CutoutRects,a2                 ; 5E780
 l_5E786:
-        movea.l #dat_1BD14,a0                   ; 5E786
+        movea.l #WheelSuspension,a0                   ; 5E786
         move.w  (a0,d1.w),d0                    ; 5E78C
         addi.w  #$100,d0                        ; 5E790
         bpl.w   l_5E79C                         ; 5E794
@@ -10885,7 +11129,7 @@ l_5E81C:
         move.b  #$80,(ChainsPending).l          ; 5E83E
         rts                                     ; 5E846
 l_5E848:
-        move.b  (dat_1BB6C).l,d0                ; 5E848
+        move.b  (MessageTimer).l,d0                ; 5E848
         bne.w   l_5E8AA                         ; 5E84E
         cmpi.b  #$40,(dat_1BBE2).l              ; 5E852
         beq.w   l_5E874                         ; 5E85A
@@ -10900,10 +11144,10 @@ l_5E874:
         move.b  #$82,d0                         ; 5E888
         move.b  d0,(dat_1BC56).l                ; 5E88C
         move.b  #$3c,d0                         ; 5E892
-        move.b  d0,(dat_1BB6C).l                ; 5E896
+        move.b  d0,(MessageTimer).l                ; 5E896
         move.b  #$2,d0                          ; 5E89C
         move.b  #$0,d2                          ; 5E8A0
-        jsr     (sub_5E4EC).l                   ; 5E8A4
+        jsr     (QueueMessage).l                   ; 5E8A4
 l_5E8AA:
         rts                                     ; 5E8AA
 
@@ -10957,7 +11201,7 @@ ShowLeagueTable:
         move.b  d0,(dat_64B02).l                ; 5E948
         move.b  #$e,d0                          ; 5E94E
         move.b  d0,(dat_5ED20).l                ; 5E952
-        move.b  (dat_1BBCB).l,d0                ; 5E958
+        move.b  (TableMarked).l,d0                ; 5E958
         and.b   (dat_5EB7A).l,d0                ; 5E95E
         bpl.w   l_5EA24                         ; 5E964
         jsr     (ClearPanel).l                  ; 5E968
@@ -10971,7 +11215,7 @@ ShowLeagueTable:
         move.b  (dat_5EB76).l,d0                ; 5E990
         cmpi.b  #$5,d0                          ; 5E996
         bcs.w   l_5E9A4                         ; 5E99A
-        jsr     (sub_64C0E).l                   ; 5E99E
+        jsr     (TextOffsetFour).l                   ; 5E99E
 l_5E9A4:
         move.b  (dat_5EB76).l,d1                ; 5E9A4
         movea.l #dat_5EB64,a1                   ; 5E9AA
@@ -10979,16 +11223,16 @@ l_5E9A4:
         move.b  d0,d2                           ; 5E9B4
         addq.b  #$2,d0                          ; 5E9B6
         move.b  d0,(dat_64B02).l                ; 5E9B8
-        jsr     (sub_5EAE0).l                   ; 5E9BE
+        jsr     (PrintTrackNameAt).l                   ; 5E9BE
         move.b  #$0,d0                          ; 5E9C4
         jsr     (SetTextColour).l               ; 5E9C8
-        jsr     (sub_5EF8E).l                   ; 5E9CE
+        jsr     (AwardRacePoints).l                   ; 5E9CE
         move.b  (dat_5EB76).l,d0                ; 5E9D4
         cmpi.b  #$6,d0                          ; 5E9DA
         beq.w   l_5E9F0                         ; 5E9DE
         cmpi.b  #$5,d0                          ; 5E9E2
         beq.w   l_5E9F0                         ; 5E9E6
-        jsr     (sub_64834).l                   ; 5E9EA
+        jsr     (TextOffsetNone).l                   ; 5E9EA
 l_5E9F0:
         move.b  (dat_5EB76).l,d1                ; 5E9F0
         movea.l #dat_5EB6C,a1                   ; 5E9F6
@@ -11003,10 +11247,10 @@ l_5EA18:
         move.b  d0,(dat_64B02).l                ; 5EA18
         jmp     (l_5EA84).l                     ; 5EA1E
 l_5EA24:
-        jsr     (sub_645C6).l                   ; 5EA24
+        jsr     (PrintSeasonPanel).l                   ; 5EA24
         move.b  #$1,d0                          ; 5EA2A
         jsr     (SetTextColour).l               ; 5EA2E
-        tst.b   (dat_1BBCB).l                   ; 5EA34
+        tst.b   (TableMarked).l                   ; 5EA34
         bmi.w   l_5EA7A                         ; 5EA3A
         move.b  #$86,d1                         ; 5EA3E
         jsr     (PrintMenuText).l               ; 5EA42
@@ -11014,14 +11258,14 @@ l_5EA24:
         bcs.w   l_5EA98                         ; 5EA50
         move.b  #$f,d0                          ; 5EA54
         jsr     (SetTextColour).l               ; 5EA58
-        jsr     (sub_64C0E).l                   ; 5EA5E
+        jsr     (TextOffsetFour).l                   ; 5EA5E
         move.b  #$13,d1                         ; 5EA64
         jsr     (PrintBonusText).l              ; 5EA68
-        jsr     (sub_64834).l                   ; 5EA6E
+        jsr     (TextOffsetNone).l                   ; 5EA6E
         jmp     (l_5EA98).l                     ; 5EA74
 l_5EA7A:
         move.b  #$b,d2                          ; 5EA7A
-        jsr     (sub_5EAE0).l                   ; 5EA7E
+        jsr     (PrintTrackNameAt).l                   ; 5EA7E
 l_5EA84:
         move.b  #$1,d0                          ; 5EA84
         jsr     (SetTextColour).l               ; 5EA88
@@ -11029,23 +11273,33 @@ l_5EA84:
         jsr     (PrintBonusText).l              ; 5EA92
 l_5EA98:
         move.b  #$e,d0                          ; 5EA98
-        move.b  d0,(dat_1BB16).l                ; 5EA9C
+        move.b  d0,(WorkByte1).l                ; 5EA9C
         move.b  (dat_5EB76).l,d0                ; 5EAA2
         addq.b  #$2,d0                          ; 5EAA8
-        jsr     (sub_64B12).l                   ; 5EAAA
+        jsr     (TextAtListLine).l                   ; 5EAAA
 l_5EAB0:
-        jsr     (sub_5EAC8).l                   ; 5EAB0
-        addq.b  #$1,(dat_1BB5E).l               ; 5EAB6
-        jsr     (sub_64718).l                   ; 5EABC
+        jsr     (LeagueTableNextLine).l                   ; 5EAB0
+        addq.b  #$1,(ListLineRow).l               ; 5EAB6
+        jsr     (PrintLeagueLine).l                   ; 5EABC
         bne.w   l_5EAB0                         ; 5EAC2
         rts                                     ; 5EAC6
-sub_5EAC8:
+
+;-------------------------------------------------------------------------------
+; LeagueTableNextLine - ShowLeagueTable: the text cursor to column 5 of line ListLineRow, the line
+; counter WorkByte1 on
+;-------------------------------------------------------------------------------
+LeagueTableNextLine:
         move.b  #$5,d1                          ; 5EAC8
-        move.b  (dat_1BB5E).l,d2                ; 5EACC
+        move.b  (ListLineRow).l,d2                ; 5EACC
         jsr     (SetTextPosition).l             ; 5EAD2
-        addq.b  #$1,(dat_1BB16).l               ; 5EAD8
+        addq.b  #$1,(WorkByte1).l               ; 5EAD8
         rts                                     ; 5EADE
-sub_5EAE0:
+
+;-------------------------------------------------------------------------------
+; PrintTrackNameAt - the track's name printed (its column from dat_6129A by CurrentTrack, 2
+; further left in the super league: SuperLeague), on line d2 (dat_5EB74)
+;-------------------------------------------------------------------------------
+PrintTrackNameAt:
         move.b  d2,(dat_5EB74).l                ; 5EAE0
         move.b  (CurrentTrack).l,d1             ; 5EAE6
         movea.l #dat_6129A,a0                   ; 5EAEC
@@ -11053,7 +11307,7 @@ sub_5EAE0:
         subq.b  #$6,d1                          ; 5EAF6
         tst.b   (dat_5EB76).l                   ; 5EAF8
         beq.w   l_5EB0E                         ; 5EAFE
-        tst.b   (dat_1C9D0).l                   ; 5EB02
+        tst.b   (SuperLeague).l                   ; 5EB02
         beq.w   l_5EB0E                         ; 5EB08
         subq.b  #$2,d1                          ; 5EB0C
 l_5EB0E:
@@ -11066,7 +11320,7 @@ l_5EB0E:
         jsr     (PrintTrackName).l              ; 5EB2E
         move.b  (dat_5EB76).l,d0                ; 5EB34
         beq.w   l_5EB62                         ; 5EB3A
-        move.b  (dat_1C9D0).l,d0                ; 5EB3E
+        move.b  (SuperLeague).l,d0                ; 5EB3E
         beq.w   l_5EB62                         ; 5EB44
         move.b  #$21,d1                         ; 5EB48
         move.b  (dat_5EB74).l,d2                ; 5EB4C
@@ -11198,11 +11452,15 @@ l_5EDAC:
         subq.b  #$1,d2                          ; 5EDB2
         bne.w   l_5EDAC                         ; 5EDB4
         rts                                     ; 5EDB8
-sub_5EDBA:
+
+;-------------------------------------------------------------------------------
+; PrintNumberSpaced - two spaces, then PrintNumber2
+;-------------------------------------------------------------------------------
+PrintNumberSpaced:
         move.b  d0,-(a7)                        ; 5EDBA
         jsr     (PrintSpaces2).l                ; 5EDBC
         move.b  (a7)+,d0                        ; 5EDC2
-        jmp     (sub_5EDD2).l                   ; 5EDC4
+        jmp     (PrintNumber2).l                   ; 5EDC4
 
 ;-------------------------------------------------------------------------------
 ; PrintNumber - d0: a number printed (one or two digits)
@@ -11210,7 +11468,11 @@ sub_5EDBA:
 PrintNumber:
         cmpi.b  #$a,d0                          ; 5EDCA
         bcs.w   l_5EDFE                         ; 5EDCE
-sub_5EDD2:
+
+;-------------------------------------------------------------------------------
+; PrintNumber2 - d0: a number printed in two places (a space first below 10)
+;-------------------------------------------------------------------------------
+PrintNumber2:
         cmpi.b  #$a,d0                          ; 5EDD2
         bcc.w   l_5EDE8                         ; 5EDD6
         move.b  d0,-(a7)                        ; 5EDDA
@@ -11265,16 +11527,21 @@ l_5EE54:
         abcd.b  d3,d0                           ; 5EE60
         move.b  d0,(a2,d2.w)                    ; 5EE62
         rts                                     ; 5EE66
-sub_5EE68:
+
+;-------------------------------------------------------------------------------
+; SetSeasonDrivers - GameLoop: the drivers of the season set up from dat_5AB42, dat_1ED8A and
+; DriverNames into $7A9FA, the order dat_5EB7E turned by a random 1 or 2 (probably)
+;-------------------------------------------------------------------------------
+SetSeasonDrivers:
         move.b  #$6,d1                          ; 5EE68
         tst.b   (dat_5EB76).l                   ; 5EE6C
         beq.w   l_5EF14                         ; 5EE72
         move.b  #$1,d1                          ; 5EE76
         move.b  #$1,(dat_5EB77).l               ; 5EE7A
 l_5EE82:
-        move.b  d1,(dat_1BB1A).l                ; 5EE82
+        move.b  d1,(WorkByte5).l                ; 5EE82
         move.b  d1,d0                           ; 5EE88
-        move.b  (dat_1C9CE).l,d2                ; 5EE8A
+        move.b  (PlayerDivision).l,d2                ; 5EE8A
         beq.w   l_5EEB6                         ; 5EE90
         jsr     (Random).l                      ; 5EE94
         andi.b  #$1,d0                          ; 5EE9A
@@ -11304,7 +11571,7 @@ l_5EEF2:
         addq.b  #$1,d1                          ; 5EEF8
         addq.b  #$1,d2                          ; 5EEFA
         dbra    d3,l_5EEF2                      ; 5EEFC
-        move.b  (dat_1BB1A).l,d1                ; 5EF00
+        move.b  (WorkByte5).l,d1                ; 5EF00
         subq.b  #$1,d1                          ; 5EF06
         bpl.w   l_5EE82                         ; 5EF08
         move.b  (dat_5EB76).l,d1                ; 5EF0C
@@ -11334,7 +11601,12 @@ PrintSpaces2:
 PrintSpace:
         move.b  #$20,d0                         ; 5EF38
         jmp     (PrintChar).l                   ; 5EF3C
-sub_5EF42:
+
+;-------------------------------------------------------------------------------
+; ShowTablesAfterRace - GameLoop: unless linked (below level 2 of dat_5EB76), dat_5EB7A set while
+; ShowTableMarked and ShowDivisionTable run
+;-------------------------------------------------------------------------------
+ShowTablesAfterRace:
         tst.b   (LinkMode).l                    ; 5EF42
         beq.w   l_5EF58                         ; 5EF48
         cmpi.b  #$2,(dat_5EB76).l               ; 5EF4C
@@ -11342,44 +11614,53 @@ sub_5EF42:
 l_5EF58:
         move.b  #$80,d0                         ; 5EF58
         move.b  d0,(dat_5EB7A).l                ; 5EF5C
-        jsr     (sub_5EF76).l                   ; 5EF62
-        jsr     (sub_646E8).l                   ; 5EF68
+        jsr     (ShowTableMarked).l                   ; 5EF62
+        jsr     (ShowDivisionTable).l                   ; 5EF68
         clr.b   (dat_5EB7A).l                   ; 5EF6E
 l_5EF74:
         rts                                     ; 5EF74
-sub_5EF76:
+
+;-------------------------------------------------------------------------------
+; ShowTableMarked - ShowDivisionTable with TableMarked set
+;-------------------------------------------------------------------------------
+ShowTableMarked:
         move.b  #$80,d0                         ; 5EF76
-        move.b  d0,(dat_1BBCB).l                ; 5EF7A
-        jsr     (sub_646E8).l                   ; 5EF80
-        clr.b   (dat_1BBCB).l                   ; 5EF86
+        move.b  d0,(TableMarked).l                ; 5EF7A
+        jsr     (ShowDivisionTable).l                   ; 5EF80
+        clr.b   (TableMarked).l                   ; 5EF86
         rts                                     ; 5EF8C
-sub_5EF8E:
+
+;-------------------------------------------------------------------------------
+; AwardRacePoints - ShowLeagueTable: the race's points (PrintBonusText), DriverWins counted for the
+; winner (RaceWinnerDriver), the drivers' names and UpdateLeague (probably)
+;-------------------------------------------------------------------------------
+AwardRacePoints:
         move.b  #$0,d0                          ; 5EF8E
         jsr     (SetTextColour).l               ; 5EF92
         move.b  #$e,d0                          ; 5EF98
-        move.b  d0,(dat_1BB16).l                ; 5EF9C
+        move.b  d0,(WorkByte1).l                ; 5EF9C
         move.b  #$0,(dat_64C18).l               ; 5EFA2
         move.b  #$3,d0                          ; 5EFAA
-        jsr     (sub_64B12).l                   ; 5EFAE
+        jsr     (TextAtListLine).l                   ; 5EFAE
         move.b  #$23,d1                         ; 5EFB4
         jsr     (PrintBonusText).l              ; 5EFB8
-        move.b  (dat_1CA24).l,d1                ; 5EFBE
+        move.b  (RaceWinnerDriver).l,d1                ; 5EFBE
         beq.w   l_5EFE2                         ; 5EFC4
-        movea.l #dat_1C9DE,a1                   ; 5EFC8
+        movea.l #DriverWins,a1                   ; 5EFC8
         addq.b  #$1,(a1,d1.w)                   ; 5EFCE
         jsr     (PrintDriverName).l             ; 5EFD2
         move.b  #$e9,d1                         ; 5EFD8
         jsr     (PrintMenuText).l               ; 5EFDC
 l_5EFE2:
         move.b  #$5,d1                          ; 5EFE2
-        move.b  (dat_1BB5E).l,d2                ; 5EFE6
+        move.b  (ListLineRow).l,d2                ; 5EFE6
         addq.b  #$1,d2                          ; 5EFEC
         jsr     (SetTextPosition).l             ; 5EFEE
         move.b  #$2f,d1                         ; 5EFF4
         jsr     (PrintBonusText).l              ; 5EFF8
         move.b  (dat_1CA23).l,d1                ; 5EFFE
         beq.w   l_5F022                         ; 5F004
-        movea.l #dat_1C9EA,a1                   ; 5F008
+        movea.l #DriverPoints,a1                   ; 5F008
         addq.b  #$1,(a1,d1.w)                   ; 5F00E
         jsr     (PrintDriverName).l             ; 5F012
         move.b  #$ef,d1                         ; 5F018
@@ -11420,25 +11701,30 @@ l_5F06C:
         move.b  (a1)+,(a0)+                     ; 5F06C
         dbra    d0,l_5F06C                      ; 5F06E
         rts                                     ; 5F072
-sub_5F074:
-        move.b  (dat_1BBB1).l,d0                ; 5F074
+
+;-------------------------------------------------------------------------------
+; PrintRaceResults - ShowRaceScreen: the race's results by RaceResultFlags - the result texts, the times
+; and bonuses (PrintResultText, PrintTime, PrintBonusText)
+;-------------------------------------------------------------------------------
+PrintRaceResults:
+        move.b  (RaceResultFlags).l,d0                ; 5F074
         beq.w   l_5F16A                         ; 5F07A
         move.b  #$1,d0                          ; 5F07E
         jsr     (SetTextColour).l               ; 5F082
         move.b  #$b8,d1                         ; 5F088
         move.b  #$4,(dat_64C18).l               ; 5F08C
         move.b  #$3,d0                          ; 5F094
-        move.b  d0,(dat_1BB16).l                ; 5F098
-        move.b  (dat_1BBB1).l,d0                ; 5F09E
+        move.b  d0,(WorkByte1).l                ; 5F098
+        move.b  (RaceResultFlags).l,d0                ; 5F09E
         andi.b  #$1,d0                          ; 5F0A4
         beq.w   l_5F0E6                         ; 5F0A8
         move.b  #$e3,d1                         ; 5F0AC
         move.b  #$1,d2                          ; 5F0B0
         move.b  #$10,d0                         ; 5F0B4
-        move.b  d0,(dat_1BB16).l                ; 5F0B8
+        move.b  d0,(WorkByte1).l                ; 5F0B8
         move.b  d2,(dat_64C18).l                ; 5F0BE
         jsr     (PrintResultText).l             ; 5F0C4
-        move.b  (dat_1BBB1).l,d0                ; 5F0CA
+        move.b  (RaceResultFlags).l,d0                ; 5F0CA
         andi.b  #$c0,d0                         ; 5F0D0
         cmpi.b  #$c0,d0                         ; 5F0D4
         bne.w   l_5F0E6                         ; 5F0D8
@@ -11448,8 +11734,8 @@ l_5F0E6:
         move.b  #$0,d0                          ; 5F0E6
         jsr     (SetTextColour).l               ; 5F0EA
         move.b  #$3,d0                          ; 5F0F0
-        jsr     (sub_64B12).l                   ; 5F0F4
-        tst.b   (dat_1BBB1).l                   ; 5F0FA
+        jsr     (TextAtListLine).l                   ; 5F0F4
+        tst.b   (RaceResultFlags).l                   ; 5F0FA
         bpl.w   l_5F128                         ; 5F100
         move.b  #$23,d1                         ; 5F104
         jsr     (PrintBonusText).l              ; 5F108
@@ -11459,10 +11745,10 @@ l_5F0E6:
         move.b  #$f,d1                          ; 5F11E
         jsr     (PrintTime).l                   ; 5F122
 l_5F128:
-        btst    #$6,(dat_1BBB1).l               ; 5F128
+        btst    #$6,(RaceResultFlags).l               ; 5F128
         beq.w   l_5F16A                         ; 5F130
         move.b  #$5,d1                          ; 5F134
-        move.b  (dat_1BB5E).l,d2                ; 5F138
+        move.b  (ListLineRow).l,d2                ; 5F138
         addq.b  #$1,d2                          ; 5F13E
         jsr     (SetTextPosition).l             ; 5F140
         move.b  #$2f,d1                         ; 5F146
@@ -11491,10 +11777,10 @@ l_5F188:
         jsr     (CompareTimes).l                ; 5F18C
         bcs.w   l_5F1B0                         ; 5F192
         move.b  #$c9,d2                         ; 5F196
-        jsr     (sub_5F21E).l                   ; 5F19A
-        move.b  (dat_1BBB1).l,d0                ; 5F1A0
+        jsr     (CopyRecordName).l                   ; 5F19A
+        move.b  (RaceResultFlags).l,d0                ; 5F1A0
         ori.b   #$41,d0                         ; 5F1A6
-        move.b  d0,(dat_1BBB1).l                ; 5F1AA
+        move.b  d0,(RaceResultFlags).l                ; 5F1AA
 l_5F1B0:
         move.b  (dat_5EB79).l,d2                ; 5F1B0
         jsr     (CompareTimes).l                ; 5F1B6
@@ -11509,26 +11795,31 @@ l_5F1B0:
         jsr     (CompareTimes).l                ; 5F1DC
         bcs.w   l_5F1F2                         ; 5F1E2
         move.b  (dat_5EB79).l,d0                ; 5F1E6
-        move.b  d0,(dat_1CA24).l                ; 5F1EC
+        move.b  d0,(RaceWinnerDriver).l                ; 5F1EC
 l_5F1F2:
         move.b  #$f,d2                          ; 5F1F2
         jsr     (CompareTimes).l                ; 5F1F6
         bcs.w   l_5F21A                         ; 5F1FC
         move.b  #$d6,d2                         ; 5F200
-        jsr     (sub_5F21E).l                   ; 5F204
-        move.b  (dat_1BBB1).l,d0                ; 5F20A
+        jsr     (CopyRecordName).l                   ; 5F204
+        move.b  (RaceResultFlags).l,d0                ; 5F20A
         ori.b   #$81,d0                         ; 5F210
-        move.b  d0,(dat_1BBB1).l                ; 5F214
+        move.b  d0,(RaceResultFlags).l                ; 5F214
 l_5F21A:
         move.w  (a7)+,d1                        ; 5F21A
         rts                                     ; 5F21C
-sub_5F21E:
+
+;-------------------------------------------------------------------------------
+; CopyRecordName - CheckRecordTimes: a record holder's 12-byte name (dat_1ECAB, by dat_5EB79)
+; copied into ResultTexts at d2
+;-------------------------------------------------------------------------------
+CopyRecordName:
         move.w  d1,-(a7)                        ; 5F21E
         move.b  (dat_5EB79).l,d0                ; 5F220
         asl.b   #$4,d0                          ; 5F226
         move.b  d0,d1                           ; 5F228
         move.b  #$c,d0                          ; 5F22A
-        move.b  d0,(dat_1BB1B).l                ; 5F22E
+        move.b  d0,(WorkByte6).l                ; 5F22E
 l_5F234:
         movea.l #dat_1ECAB,a1                   ; 5F234
         move.b  (a1,d1.w),d0                    ; 5F23A
@@ -11536,23 +11827,28 @@ l_5F234:
         move.b  d0,(a2,d2.w)                    ; 5F244
         addq.b  #$1,d1                          ; 5F248
         addq.b  #$1,d2                          ; 5F24A
-        subq.b  #$1,(dat_1BB1B).l               ; 5F24C
+        subq.b  #$1,(WorkByte6).l               ; 5F24C
         bne.w   l_5F234                         ; 5F252
         move.w  (a7)+,d1                        ; 5F256
         rts                                     ; 5F258
-sub_5F25A:
-        move.b  d0,(dat_1BB1B).l                ; 5F25A
+
+;-------------------------------------------------------------------------------
+; TrackRecordEntry - d0: the track's entry in the records table (by DivisionTracks; 8 further in
+; the super league: SuperLeague), read or written by d0's sign (probably)
+;-------------------------------------------------------------------------------
+TrackRecordEntry:
+        move.b  d0,(WorkByte6).l                ; 5F25A
         move.b  (CurrentTrack).l,d1             ; 5F260
         movea.l #DivisionTracks,a1              ; 5F266
         move.b  (a1,d1.w),d0                    ; 5F26C
-        move.b  (dat_1C9D0).l,d2                ; 5F270
+        move.b  (SuperLeague).l,d2                ; 5F270
         beq.w   l_5F27E                         ; 5F276
         addi.b  #$8,d0                          ; 5F27A
 l_5F27E:
         asl.b   #$4,d0                          ; 5F27E
         move.b  d0,d1                           ; 5F280
         move.b  #$0,d2                          ; 5F282
-        tst.b   (dat_1BB1B).l                   ; 5F286
+        tst.b   (WorkByte6).l                   ; 5F286
         bmi.w   l_5F302                         ; 5F28C
 l_5F290:
         movea.l #dat_5EC48,a2                   ; 5F290
@@ -11598,7 +11894,13 @@ l_5F302:
         move.b  $1(a1,d1.w),(dat_1C92F).l       ; 5F362
         move.b  $2(a1,d1.w),(dat_1C947).l       ; 5F36A
         rts                                     ; 5F372
-sub_5F374:
+
+;-------------------------------------------------------------------------------
+; LeagueTransfer - the league read or written for the link or the save disk (LinkSendPosition,
+; LinkReceivePosition, SaveSlotsScreen): dat_1CA31 checked, the league packed at $7A43A (l_5F8A8)
+; and scrambled (probably)
+;-------------------------------------------------------------------------------
+LeagueTransfer:
         move.b  (dat_1CA31).l,d3                ; 5F374
         eor.b   d3,d0                           ; 5F37A
         bne.w   l_5F3E8                         ; 5F37C
@@ -11625,11 +11927,11 @@ l_5F3B4:
         move.b  d0,(a1,d1.w)                    ; 5F3D8
         subq.b  #$1,d1                          ; 5F3DC
         bne.w   l_5F3B4                         ; 5F3DE
-        jsr     (sub_5F87C).l                   ; 5F3E2
+        jsr     (EncodeNextBlock).l                   ; 5F3E2
 l_5F3E8:
         rts                                     ; 5F3E8
 l_5F3EA:
-        jsr     (sub_5F892).l                   ; 5F3EA
+        jsr     (DecodeNextBlock).l                   ; 5F3EA
         bcs.w   l_5F3E8                         ; 5F3F0
         movea.l #$7a41a,a0                      ; 5F3F4
         movea.l #$7a61a,a1                      ; 5F3FA
@@ -11732,12 +12034,12 @@ l_5F538:
         move.b  (dat_5EB76).l,d0                ; 5F538
         beq.w   l_5F532                         ; 5F53E
 l_5F542:
-        jsr     (sub_64C0E).l                   ; 5F542
+        jsr     (TextOffsetFour).l                   ; 5F542
         move.b  #$6,d1                          ; 5F548
         move.b  #$16,d2                         ; 5F54C
         jsr     (SetTextPosition).l             ; 5F550
         move.b  #$57,d1                         ; 5F556
-        jsr     (sub_5F6F2).l                   ; 5F55A
+        jsr     (CheckNameTable).l                   ; 5F55A
         jsr     (WaitKeyRelease).l              ; 5F560
         move.b  #$19,d1                         ; 5F566
 l_5F56A:
@@ -11745,7 +12047,7 @@ l_5F56A:
         jsr     (PrintChar).l                   ; 5F56E
         subq.b  #$1,d1                          ; 5F574
         bne.w   l_5F56A                         ; 5F576
-        jsr     (sub_64834).l                   ; 5F57A
+        jsr     (TextOffsetNone).l                   ; 5F57A
         ori.b   #$1,ccr                         ; 5F580
         rts                                     ; 5F584
 DriverNameStrings:				; two strings the driver name is checked against
@@ -11754,7 +12056,12 @@ dat_5F58A:
 	dc.b	$48,$41,$4C,$4C
 dat_5F58E:
 	dc.b	$4D,$50,$24,$00
-sub_5F592:
+
+;-------------------------------------------------------------------------------
+; LoadPositionScreen - (no references) the title's background, the driver's name and the save
+; disk's messages (Incorrect File, Problem, Insert) (probably what loaded a position)
+;-------------------------------------------------------------------------------
+LoadPositionScreen:
         move.b  (dat_1BB94).l,d0                ; 5F592
         bmi.w   l_5F5A6                         ; 5F598
         move.b  (dat_1BB6B).l,d0                ; 5F59C
@@ -11762,32 +12069,32 @@ sub_5F592:
 l_5F5A6:
         jsr     (ShowTitleBackground).l         ; 5F5A6
         move.b  #$1,d0                          ; 5F5AC
-        move.b  d0,(dat_1BB16).l                ; 5F5B0
-        jsr     (sub_64B0E).l                   ; 5F5B6
+        move.b  d0,(WorkByte1).l                ; 5F5B0
+        jsr     (TextAtListLineTwo).l                   ; 5F5B6
         move.b  #$c,d1                          ; 5F5BC
         jsr     (PrintDriverName).l             ; 5F5C0
         move.b  (dat_1BB94).l,d0                ; 5F5C6
         bpl.w   l_5F5DA                         ; 5F5CC
         move.b  #$0,d1                          ; 5F5D0
-        jsr     (sub_5F6F2).l                   ; 5F5D4
+        jsr     (CheckNameTable).l                   ; 5F5D4
 l_5F5DA:
         move.b  (dat_1CA31).l,d2                ; 5F5DA
         movea.l #dat_5F636,a2                   ; 5F5E0
         move.b  (a2,d2.w),d1                    ; 5F5E6
-        jsr     (sub_5F6F2).l                   ; 5F5EA
+        jsr     (CheckNameTable).l                   ; 5F5EA
         move.b  (dat_1BB94).l,d0                ; 5F5F0
         bpl.w   l_5F61C                         ; 5F5F6
-        jsr     (sub_64B0E).l                   ; 5F5FA
+        jsr     (TextAtListLineTwo).l                   ; 5F5FA
         move.b  (dat_1BB94).l,d2                ; 5F600
         addq.b  #$2,d2                          ; 5F606
         andi.b  #$7,d2                          ; 5F608
         movea.l #dat_5F636,a2                   ; 5F60C
         move.b  (a2,d2.w),d1                    ; 5F612
-        jsr     (sub_5F6F2).l                   ; 5F616
+        jsr     (CheckNameTable).l                   ; 5F616
 l_5F61C:
         jsr     (FadeStep).l                    ; 5F61C
         jsr     (WaitFire).l                    ; 5F622
-        jsr     (sub_64834).l                   ; 5F628
+        jsr     (TextOffsetNone).l                   ; 5F628
 l_5F62E:
         move.b  (dat_1BB94).l,d0                ; 5F62E
         rts                                     ; 5F634
@@ -11813,14 +12120,22 @@ dat_5F641:
 l_5F6EA:
         jsr     (PrintChar).l                   ; 5F6EA
         addq.b  #$1,d1                          ; 5F6F0
-sub_5F6F2:
+
+;-------------------------------------------------------------------------------
+; CheckNameTable - CheckDriverName: entry d1 of dat_5F641 - $FF ends it, otherwise on at l_5F6EA
+;-------------------------------------------------------------------------------
+CheckNameTable:
         movea.l #dat_5F641,a1                   ; 5F6F2
         move.b  (a1,d1.w),d0                    ; 5F6F8
         cmpi.b  #$ff,d0                         ; 5F6FC
         bne.w   l_5F6EA                         ; 5F700
         rts                                     ; 5F704
 	dc.b	$4E,$75
-sub_5F708:
+
+;-------------------------------------------------------------------------------
+; ScrambleNext - dat_5F720 x 5 (a word): the scrambling sequence's next number, d0 = it / 4
+;-------------------------------------------------------------------------------
+ScrambleNext:
         move.w  (dat_5F720).l,d0                ; 5F708
         asl.w   #$2,d0                          ; 5F70E
         add.w   (dat_5F720).l,d0                ; 5F710
@@ -11829,38 +12144,48 @@ sub_5F708:
         rts                                     ; 5F71E
 dat_5F720:
 	dc.b	$68,$3B
-sub_5F722:
+
+;-------------------------------------------------------------------------------
+; EncodeLeagueBlock - the league's block at LeagueBlockPointer scrambled (ScrambleLeague with d0 = 0)
+;-------------------------------------------------------------------------------
+EncodeLeagueBlock:
         move.b  #$0,d0                          ; 5F722
         jmp     (l_5F730).l                     ; 5F726
-sub_5F72C:
+
+;-------------------------------------------------------------------------------
+; ScrambleLeague - d0 $80: the league's block at $7A41A read back, else written - each byte
+; through a 256-byte sequence built at $7A81A (ScrambleNext from $683B) (probably the link's and
+; the save disk's encoding)
+;-------------------------------------------------------------------------------
+ScrambleLeague:
         move.b  #$80,d0                         ; 5F72C
 l_5F730:
-        move.b  d0,(dat_1BB16).l                ; 5F730
-        move.l  #$7a41a,(dat_1BCC0).l           ; 5F736
+        move.b  d0,(WorkByte1).l                ; 5F730
+        move.l  #$7a41a,(LeagueBlockPointer).l           ; 5F736
         move.w  #$683b,(dat_5F720).l            ; 5F740
         move.b  #$0,d1                          ; 5F748
 l_5F74C:
-        jsr     (sub_5F708).l                   ; 5F74C
+        jsr     (ScrambleNext).l                   ; 5F74C
         movea.l #$7a81a,a1                      ; 5F752
         move.b  d0,(a1,d1.w)                    ; 5F758
         addq.b  #$1,d1                          ; 5F75C
         bne.w   l_5F74C                         ; 5F75E
         move.b  #$f,d2                          ; 5F762
-        tst.b   (dat_1BB16).l                   ; 5F766
+        tst.b   (WorkByte1).l                   ; 5F766
         bmi.w   l_5F786                         ; 5F76C
         move.b  (dat_60C86).l,d0                ; 5F770
-        movea.l (dat_1BCC0).l,a0                ; 5F776
+        movea.l (LeagueBlockPointer).l,a0                ; 5F776
         move.b  d0,(a0,d2.w)                    ; 5F77C
         jmp     (l_5F796).l                     ; 5F780
 l_5F786:
-        movea.l (dat_1BCC0).l,a0                ; 5F786
+        movea.l (LeagueBlockPointer).l,a0                ; 5F786
         move.b  (a0,d2.w),d0                    ; 5F78C
         move.b  d0,(dat_60C86).l                ; 5F790
 l_5F796:
         move.b  #$0,d2                          ; 5F796
-        movea.l (dat_1BCC0).l,a0                ; 5F79A
+        movea.l (LeagueBlockPointer).l,a0                ; 5F79A
         movea.l #$7a81a,a1                      ; 5F7A0
-        tst.b   (dat_1BB16).l                   ; 5F7A6
+        tst.b   (WorkByte1).l                   ; 5F7A6
         bmi.w   l_5F7CC                         ; 5F7AC
         move.b  d2,d0                           ; 5F7B0
         move.b  #$ef,d2                         ; 5F7B2
@@ -11874,24 +12199,24 @@ l_5F7CC:
         move.b  #$0,d1                          ; 5F7CC
 l_5F7D0:
         move.b  (a0,d2.w),d0                    ; 5F7D0
-        move.b  d0,(dat_1BB18).l                ; 5F7D4
-        move.b  d1,(dat_1BB17).l                ; 5F7DA
+        move.b  d0,(WorkByte3).l                ; 5F7D4
+        move.b  d1,(WorkByte2).l                ; 5F7DA
         move.b  (dat_60C86).l,d1                ; 5F7E0
         move.b  (a1,d1.w),d0                    ; 5F7E6
         addq.b  #$1,(dat_60C86).l               ; 5F7EA
-        move.b  (dat_1BB17).l,d1                ; 5F7F0
+        move.b  (WorkByte2).l,d1                ; 5F7F0
         addq.b  #$1,d1                          ; 5F7F6
-        tst.b   (dat_1BB16).l                   ; 5F7F8
+        tst.b   (WorkByte1).l                   ; 5F7F8
         bpl.w   l_5F810                         ; 5F7FE
-        cmp.b   (dat_1BB18).l,d1                ; 5F802
+        cmp.b   (WorkByte3).l,d1                ; 5F802
         beq.w   l_5F81C                         ; 5F808
         bne.w   l_5F7D0                         ; 5F80C
 l_5F810:
-        cmp.b   (dat_1BB18).l,d0                ; 5F810
+        cmp.b   (WorkByte3).l,d0                ; 5F810
         bne.w   l_5F7D0                         ; 5F816
         move.b  d1,d0                           ; 5F81A
 l_5F81C:
-        movea.l (dat_1BCC0).l,a0                ; 5F81C
+        movea.l (LeagueBlockPointer).l,a0                ; 5F81C
         move.b  d0,(a0,d2.w)                    ; 5F822
         move.b  (dat_60C86).l,d0                ; 5F826
         add.b   (a1,d1.w),d0                    ; 5F82C
@@ -11902,7 +12227,7 @@ l_5F81C:
 l_5F840:
         addq.b  #$1,d2                          ; 5F840
         bne.w   l_5F7CC                         ; 5F842
-        tst.b   (dat_1BB16).l                   ; 5F846
+        tst.b   (WorkByte1).l                   ; 5F846
         bpl.w   l_5F87A                         ; 5F84C
         move.b  #$ef,d2                         ; 5F850
         move.b  (a0,d2.w),d0                    ; 5F854
@@ -11916,13 +12241,21 @@ l_5F840:
         ori.b   #$1,ccr                         ; 5F876
 l_5F87A:
         rts                                     ; 5F87A
-sub_5F87C:
-        jsr     (sub_5F722).l                   ; 5F87C
-        addi.l  #$100,(dat_1BCC0).l             ; 5F882
+
+;-------------------------------------------------------------------------------
+; EncodeNextBlock - EncodeLeagueBlock, then the next 256 bytes (LeagueBlockPointer + $100)
+;-------------------------------------------------------------------------------
+EncodeNextBlock:
+        jsr     (EncodeLeagueBlock).l                   ; 5F87C
+        addi.l  #$100,(LeagueBlockPointer).l             ; 5F882
         jmp     (l_5F796).l                     ; 5F88C
-sub_5F892:
-        jsr     (sub_5F72C).l                   ; 5F892
-        addi.l  #$100,(dat_1BCC0).l             ; 5F898
+
+;-------------------------------------------------------------------------------
+; DecodeNextBlock - ScrambleLeague (read), then the next 256 bytes (LeagueBlockPointer + $100)
+;-------------------------------------------------------------------------------
+DecodeNextBlock:
+        jsr     (ScrambleLeague).l                   ; 5F892
+        addi.l  #$100,(LeagueBlockPointer).l             ; 5F898
         jmp     (l_5F796).l                     ; 5F8A2
 l_5F8A8:
         move.b  (dat_1CA31).l,d0                ; 5F8A8
@@ -11935,7 +12268,7 @@ l_5F8B6:
         move.b  d0,(a1,d1.w)                    ; 5F8C6
         cmpi.b  #$3c,d1                         ; 5F8CA
         bcc.w   l_5F8E6                         ; 5F8CE
-        movea.l #dat_1C9DE,a1                   ; 5F8D2
+        movea.l #DriverWins,a1                   ; 5F8D2
         move.b  (a1,d1.w),d0                    ; 5F8D8
         movea.l #$7a4ba,a1                      ; 5F8DC
         move.b  d0,(a1,d1.w)                    ; 5F8E2
@@ -11951,10 +12284,10 @@ l_5F902:
         bpl.w   l_5F8B6                         ; 5F904
         move.b  (dat_5EB76).l,d0                ; 5F908
         move.b  d0,(mem_7A4F6).l                ; 5F90E
-        jsr     (sub_5F722).l                   ; 5F914
+        jsr     (EncodeLeagueBlock).l                   ; 5F914
         rts                                     ; 5F91A
 l_5F91C:
-        jsr     (sub_5F72C).l                   ; 5F91C
+        jsr     (ScrambleLeague).l                   ; 5F91C
         bcs.w   l_5F988                         ; 5F922
         move.b  #$7f,d1                         ; 5F926
 l_5F92A:
@@ -11966,7 +12299,7 @@ l_5F92A:
         bcc.w   l_5F95A                         ; 5F942
         movea.l #$7a4ba,a1                      ; 5F946
         move.b  (a1,d1.w),d0                    ; 5F94C
-        movea.l #dat_1C9DE,a1                   ; 5F950
+        movea.l #DriverWins,a1                   ; 5F950
         move.b  d0,(a1,d1.w)                    ; 5F956
 l_5F95A:
         cmpi.b  #$c,d1                          ; 5F95A
@@ -11982,36 +12315,41 @@ l_5F976:
         move.b  d0,(dat_5EB76).l                ; 5F982
 l_5F988:
         rts                                     ; 5F988
-sub_5F98A:
+
+;-------------------------------------------------------------------------------
+; DefineKeys - LinkWaitBoth: F1 held - the 5 control keys redefined: each control's message shown
+; (ClearMessagePanel, ShowMessageNow), a key waited for and kept in ControlKeys (probably)
+;-------------------------------------------------------------------------------
+DefineKeys:
         move.b  #$50,d1                         ; 5F98A
         jsr     (KeyDown).l                     ; 5F98E
         bne.w   l_5FADA                         ; 5F994
         move.l  (ScreenDraw).l,-(a7)            ; 5F998
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 5F99E
 l_5F9A8:
-        jsr     (sub_5FAE8).l                   ; 5F9A8
+        jsr     (ClearMessagePanel).l                   ; 5F9A8
         move.b  #$64,d2                         ; 5F9AE
         move.b  #$4,d0                          ; 5F9B2
-        jsr     (sub_5E502).l                   ; 5F9B6
+        jsr     (ShowMessageNow).l                   ; 5F9B6
         move.b  #$1,(dat_5FADD).l               ; 5F9BC
 l_5F9C4:
         move.b  #$28,d2                         ; 5F9C4
         jsr     (Wait).l                        ; 5F9C8
         move.b  #$4,d1                          ; 5F9CE
 l_5F9D2:
-        jsr     (sub_5FAE8).l                   ; 5F9D2
+        jsr     (ClearMessagePanel).l                   ; 5F9D2
         move.b  d1,(dat_5FADC).l                ; 5F9D8
         movea.l #dat_5FAE3,a1                   ; 5F9DE
         move.b  (a1,d1.w),d2                    ; 5F9E4
         move.b  #$4,d0                          ; 5F9E8
-        jsr     (sub_5E502).l                   ; 5F9EC
+        jsr     (ShowMessageNow).l                   ; 5F9EC
 l_5F9F2:
         move.b  #$67,d1                         ; 5F9F2
 l_5F9F6:
-        move.b  d1,(dat_1BB18).l                ; 5F9F6
+        move.b  d1,(WorkByte3).l                ; 5F9F6
         jsr     (KeyDown).l                     ; 5F9FC
         bne.w   l_5FA86                         ; 5FA02
-        move.b  (dat_1BB18).l,d0                ; 5FA06
+        move.b  (WorkByte3).l,d0                ; 5FA06
         move.b  (dat_5FADC).l,d1                ; 5FA0C
         movea.l #dat_5FADE,a1                   ; 5FA12
         move.b  (a1,d1.w),d2                    ; 5FA18
@@ -12020,10 +12358,10 @@ l_5F9F6:
         bne.w   l_5FA58                         ; 5FA28
         cmp.b   (a2,d2.w),d0                    ; 5FA2C
         beq.w   l_5FA5C                         ; 5FA30
-        jsr     (sub_5FAE8).l                   ; 5FA34
+        jsr     (ClearMessagePanel).l                   ; 5FA34
         move.b  #$d4,d2                         ; 5FA3A
         move.b  #$4,d0                          ; 5FA3E
-        jsr     (sub_5E502).l                   ; 5FA42
+        jsr     (ShowMessageNow).l                   ; 5FA42
         move.b  #$28,d2                         ; 5FA48
         jsr     (Wait).l                        ; 5FA4C
         jmp     (l_5F9A8).l                     ; 5FA52
@@ -12033,14 +12371,14 @@ l_5FA5C:
         move.b  #$0,d0                          ; 5FA5C
         jsr     (PlaySample).l                  ; 5FA60
 l_5FA66:
-        move.b  (dat_1BB18).l,d1                ; 5FA66
+        move.b  (WorkByte3).l,d1                ; 5FA66
         jsr     (KeyDown).l                     ; 5FA6C
         beq.w   l_5FA66                         ; 5FA72
         move.b  #$3,d2                          ; 5FA76
         jsr     (Wait).l                        ; 5FA7A
         jmp     (l_5FA96).l                     ; 5FA80
 l_5FA86:
-        move.b  (dat_1BB18).l,d1                ; 5FA86
+        move.b  (WorkByte3).l,d1                ; 5FA86
         subq.b  #$1,d1                          ; 5FA8C
         bne.w   l_5F9F6                         ; 5FA8E
         bra.w   l_5F9F2                         ; 5FA92
@@ -12048,17 +12386,17 @@ l_5FA96:
         move.b  (dat_5FADC).l,d1                ; 5FA96
         subq.b  #$1,d1                          ; 5FA9C
         bpl.w   l_5F9D2                         ; 5FA9E
-        jsr     (sub_5FAE8).l                   ; 5FAA2
+        jsr     (ClearMessagePanel).l                   ; 5FAA2
         subq.b  #$1,(dat_5FADD).l               ; 5FAA8
         bmi.w   l_5FAC6                         ; 5FAAE
         move.b  #$c4,d2                         ; 5FAB2
         move.b  #$4,d0                          ; 5FAB6
-        jsr     (sub_5E502).l                   ; 5FABA
+        jsr     (ShowMessageNow).l                   ; 5FABA
         jmp     (l_5F9C4).l                     ; 5FAC0
 l_5FAC6:
         move.b  #$4c,d2                         ; 5FAC6
         move.b  #$2,d0                          ; 5FACA
-        jsr     (sub_5E502).l                   ; 5FACE
+        jsr     (ShowMessageNow).l                   ; 5FACE
         move.l  (a7)+,(ScreenDraw).l            ; 5FAD4
 l_5FADA:
         rts                                     ; 5FADA
@@ -12070,7 +12408,12 @@ dat_5FADE:
 	dc.b	$00,$01,$04,$03,$02
 dat_5FAE3:
 	dc.b	$B4,$A4,$94,$84,$74
-sub_5FAE8:
+
+;-------------------------------------------------------------------------------
+; ClearMessagePanel - cut-out $33 drawn: the cockpit's message panel cleared (probably)
+; (CheckPauseKey, the race, DefineKeys)
+;-------------------------------------------------------------------------------
+ClearMessagePanel:
         move.b  #$33,d0                         ; 5FAE8
         jmp     (DrawCutout).l                  ; 5FAEC
 
@@ -12078,13 +12421,13 @@ sub_5FAE8:
 ; DefineControlKeys - the control keys redefined (ControlKeys), probably
 ;-------------------------------------------------------------------------------
 DefineControlKeys:
-        move.b  d0,(dat_1BB1B).l                ; 5FAF2
+        move.b  d0,(WorkByte6).l                ; 5FAF2
         move.b  (dat_5EB76).l,d0                ; 5FAF8
         beq.w   l_5FB2C                         ; 5FAFE
         move.b  (dat_5EB79).l,d0                ; 5FB02
         jsr     (KeyEntryPosition).l            ; 5FB08
         movea.l #ControlKeys,a1                 ; 5FB0E
-        tst.b   (dat_1BB1B).l                   ; 5FB14
+        tst.b   (WorkByte6).l                   ; 5FB14
         bpl.w   l_5FB2E                         ; 5FB1A
 l_5FB1E:
         move.b  (a2,d2.w),(a1,d1.w)             ; 5FB1E
@@ -12096,7 +12439,12 @@ l_5FB2C:
 l_5FB2E:
         jsr     (CopyBytesDown).l               ; 5FB2E
         jmp     (l_583E8).l                     ; 5FB34
-sub_5FB3A:		; (no references found: found by the code sweep)
+
+;-------------------------------------------------------------------------------
+; KeyEntryNotCode - (no references) not code: bytes after KeyEntryPosition the code sweep took for
+; instructions
+;-------------------------------------------------------------------------------
+KeyEntryNotCode:		; (no references found: found by the code sweep)
         movea.l d0,a5                           ; 5FB3A
         move.l  -(a2),-(a0)                     ; 5FB3C
         neg.b   $4021(a2)                       ; 5FB3E
@@ -12123,7 +12471,7 @@ LoadSaveMenu:
         bclr    #$0,(dat_5EB7D).l               ; 5FB6C
         bne.w   l_5FB9A                         ; 5FB74
         move.b  #$3,d2                          ; 5FB78
-        move.b  (dat_1C9CE).l,d0                ; 5FB7C
+        move.b  (PlayerDivision).l,d0                ; 5FB7C
         eori.b  #$3,d0                          ; 5FB82
         move.b  #$18,d1                         ; 5FB86
         jsr     (RunMenu).l                     ; 5FB8A
@@ -12153,7 +12501,7 @@ HallOfFame:
         move.l  (ScreenBack).l,(ScreenDraw).l   ; 5FBE0
         move.b  #$7f,d1                         ; 5FBEA
         move.b  #$7f,d2                         ; 5FBEE
-        move.b  (dat_1C9D0).l,d0                ; 5FBF2
+        move.b  (SuperLeague).l,d0                ; 5FBF2
         beq.w   l_5FC00                         ; 5FBF8
         move.b  #$ff,d2                         ; 5FBFC
 l_5FC00:
@@ -12172,13 +12520,13 @@ l_5FC00:
         jsr     (SetPictureColours).l           ; 5FC36
         move.b  #$f,d0                          ; 5FC3C
         jsr     (SetTextColour).l               ; 5FC40
-        move.b  #$80,(dat_1BBD3).l              ; 5FC46
+        move.b  #$80,(TextNoBackground).l              ; 5FC46
         movea.l #DiskPicture+$22,a0           ; 5FC4E
         movea.l (ScreenBack).l,a1               ; 5FC54
         jsr     (UnpackPicture).l               ; 5FC5A
-        move.b  #$2,(dat_1BB6D).l               ; 5FC60
+        move.b  #$2,(TextPixelX).l               ; 5FC60
         move.b  #$3b,d1                         ; 5FC68
-        move.b  (dat_1C9D0).l,d0                ; 5FC6C
+        move.b  (SuperLeague).l,d0                ; 5FC6C
         beq.w   l_5FC8A                         ; 5FC72
         move.b  #$7,d0                          ; 5FC76
         jsr     (SetTextColour).l               ; 5FC7A
@@ -12189,20 +12537,20 @@ l_5FC8A:
         jsr     (SetTextColour).l               ; 5FC8E
         move.b  #$5b,d1                         ; 5FC94
         jsr     (PrintBonusText).l              ; 5FC98
-        move.b  #$7,(dat_1BB16).l               ; 5FC9E
+        move.b  #$7,(WorkByte1).l               ; 5FC9E
 l_5FCA6:
         move.b  #$7,d0                          ; 5FCA6
-        sub.b   (dat_1BB16).l,d0                ; 5FCAA
+        sub.b   (WorkByte1).l,d0                ; 5FCAA
         asl.b   #$1,d0                          ; 5FCB0
         addi.b  #$9,d0                          ; 5FCB2
         move.b  d0,d2                           ; 5FCB6
         move.b  #$0,d1                          ; 5FCB8
         jsr     (SetTextPosition).l             ; 5FCBC
-        move.b  (dat_1BB16).l,d0                ; 5FCC2
+        move.b  (WorkByte1).l,d0                ; 5FCC2
         asl.b   #$1,d0                          ; 5FCC8
         move.b  d0,d1                           ; 5FCCA
         move.b  #$1,d0                          ; 5FCCC
-        move.b  d0,(dat_1BB6D).l                ; 5FCD0
+        move.b  d0,(TextPixelX).l                ; 5FCD0
         move.b  #$f,d0                          ; 5FCD6
         jsr     (SetTextColour).l               ; 5FCDA
         movea.l #dat_5FDE0,a1                   ; 5FCE0
@@ -12212,10 +12560,10 @@ l_5FCA6:
         move.b  (a1,d1.w),d0                    ; 5FCF6
         jsr     (PrintChar).l                   ; 5FCFA
         jsr     (PrintSpace).l                  ; 5FD00
-        move.b  #$4,(dat_1BB6D).l               ; 5FD06
+        move.b  #$4,(TextPixelX).l               ; 5FD06
         move.b  #$0,(dat_1BB48).l               ; 5FD0E
 l_5FD16:
-        move.b  (dat_1BB16).l,d0                ; 5FD16
+        move.b  (WorkByte1).l,d0                ; 5FD16
         asl.b   #$4,d0                          ; 5FD1C
         or.b    (dat_1BB48).l,d0                ; 5FD1E
         move.b  d0,d1                           ; 5FD24
@@ -12232,7 +12580,7 @@ l_5FD34:
         move.b  #$f,d0                          ; 5FD4C
         jsr     (SetTextColour).l               ; 5FD50
         jsr     (PrintSpace).l                  ; 5FD56
-        subq.b  #$1,(dat_1BB6D).l               ; 5FD5C
+        subq.b  #$1,(TextPixelX).l               ; 5FD5C
         movea.l #TrackPieceFlags,a1             ; 5FD62
         move.b  (a1,d1.w),(TimeHundredths).l    ; 5FD68
         move.b  $1(a1,d1.w),(TimeSeconds).l     ; 5FD70
@@ -12245,13 +12593,13 @@ l_5FD34:
         bpl.w   l_5FDB4                         ; 5FD9A
         jsr     (PrintSpaces2).l                ; 5FD9E
         move.b  #$2,d0                          ; 5FDA4
-        move.b  d0,(dat_1BB6D).l                ; 5FDA8
+        move.b  d0,(TextPixelX).l                ; 5FDA8
         jmp     (l_5FD16).l                     ; 5FDAE
 l_5FDB4:
-        subq.b  #$1,(dat_1BB16).l               ; 5FDB4
+        subq.b  #$1,(WorkByte1).l               ; 5FDB4
         bpl.w   l_5FCA6                         ; 5FDBA
         move.b  #$0,d0                          ; 5FDBE
-        move.b  d0,(dat_1BB6D).l                ; 5FDC2
+        move.b  d0,(TextPixelX).l                ; 5FDC2
         jsr     (FadeStep).l                    ; 5FDC8
         jsr     (WaitFire).l                    ; 5FDCE
         move.l  (a7)+,(ScreenDraw).l            ; 5FDD4
@@ -12272,21 +12620,26 @@ l_5FDFA:
         move.l  d7,(a0)+                        ; 5FDFC
         dbra    d0,l_5FDFA                      ; 5FDFE
         rts                                     ; 5FE02
-sub_5FE04:
+
+;-------------------------------------------------------------------------------
+; GridSquarePiece - the piece in the grid square at the player's (PlayerGridX, PlayerGridY) +
+; (GridOffsetX, GridOffsetY): d0 from TrackGrid; C set outside the 16 x 16 grid
+;-------------------------------------------------------------------------------
+GridSquarePiece:
         move.b  (PlayerGridY).l,d0              ; 5FE04
-        add.b   (dat_1BBD6).l,d0                ; 5FE0A
+        add.b   (GridOffsetY).l,d0                ; 5FE0A
         cmpi.b  #$10,d0                         ; 5FE10
         bcc.w   l_5FE50                         ; 5FE14
         asl.b   #$4,d0                          ; 5FE18
-        move.b  d0,(dat_1BB1B).l                ; 5FE1A
+        move.b  d0,(WorkByte6).l                ; 5FE1A
         move.b  (PlayerGridX).l,d0              ; 5FE20
-        add.b   (dat_1BBD5).l,d0                ; 5FE26
+        add.b   (GridOffsetX).l,d0                ; 5FE26
         cmpi.b  #$10,d0                         ; 5FE2C
         bcc.w   l_5FE50                         ; 5FE30
         andi.b  #$f,d0                          ; 5FE34
-        or.b    (dat_1BB1B).l,d0                ; 5FE38
+        or.b    (WorkByte6).l,d0                ; 5FE38
         move.b  d0,d1                           ; 5FE3E
-        movea.l #dat_1C280,a1                   ; 5FE40
+        movea.l #TrackGrid,a1                   ; 5FE40
         move.b  (a1,d1.w),d0                    ; 5FE46
         andi.b  #$1e,ccr                        ; 5FE4A
         rts                                     ; 5FE4E
@@ -12304,7 +12657,7 @@ LoadPiece:
         move.b  d2,(dat_1BB79).l                ; 5FE60
         asl.b   #$1,d2                          ; 5FE66
         movea.l #PieceShapes,a2                 ; 5FE68
-        move.w  (a2,d2.w),(dat_1BC8C).l         ; 5FE6E
+        move.w  (a2,d2.w),(TrackDataPointer).l         ; 5FE6E
         movea.l #TrackPieceHeights,a1           ; 5FE76
         move.b  (a1,d1.w),d2                    ; 5FE7C
         asl.b   #$1,d2                          ; 5FE80
@@ -12314,7 +12667,7 @@ LoadPiece:
         move.b  d0,(dat_1BBDC).l                ; 5FE8A
         movea.l #PieceShapes,a2                 ; 5FE90
         move.w  (a2,d2.w),d0                    ; 5FE96
-        move.w  d0,(dat_1BC90).l                ; 5FE9A
+        move.w  d0,(TrackDataStart).l                ; 5FE9A
         asl.b   #$1,d1                          ; 5FEA0
         movea.l #dat_1C650,a1                   ; 5FEA2
         move.w  (a1,d1.w),(dat_1BC0E).l         ; 5FEA8
@@ -12328,21 +12681,21 @@ LoadPiece:
         move.b  (a1,d1.w),d0                    ; 5FED4
         andi.b  #$10,d0                         ; 5FED8
         asl.b   #$3,d0                          ; 5FEDC
-        move.b  d0,(dat_1BC32).l                ; 5FEDE
+        move.b  d0,(PieceReversed).l                ; 5FEDE
         move.b  (a1,d1.w),d0                    ; 5FEE4
         andi.b  #$f,d0                          ; 5FEE8
-        move.b  d0,(dat_1BB86).l                ; 5FEEC
+        move.b  d0,(PieceCurve).l                ; 5FEEC
         asl.b   #$1,d0                          ; 5FEF2
         move.b  d0,d2                           ; 5FEF4
         movea.l #Data6502,a2                   ; 5FEF6
-        move.w  (a2,d2.w),(dat_1BCBC).l         ; 5FEFC
-        move.w  (dat_1BCBC).l,d0                ; 5FF04
+        move.w  (a2,d2.w),(PieceDataPointer).l         ; 5FEFC
+        move.w  (PieceDataPointer).l,d0                ; 5FF04
         rol.w   #$8,d0                          ; 5FF0A
         subi.w  #$b100,d0                       ; 5FF0C
         andi.l  #$ffff,d0                       ; 5FF10
         addi.l  #Data6502,d0                    ; 5FF16
         movea.l d0,a0                           ; 5FF1C
-        move.b  $1(a0),(dat_1BB4D).l            ; 5FF1E
+        move.b  $1(a0),(PieceDirection).l            ; 5FF1E
         move.b  $0(a0),d2                       ; 5FF26
         move.b  (a0,d2.w),d0                    ; 5FF2A
         addq.b  #$1,d2                          ; 5FF2E
@@ -12357,7 +12710,7 @@ LoadPiece:
         move.b  (dat_1BB97).l,d0                ; 5FF50
         lsr.b   #$1,d0                          ; 5FF56
         subq.b  #$1,d0                          ; 5FF58
-        move.b  d0,(dat_1BB6A).l                ; 5FF5A
+        move.b  d0,(PieceSections).l                ; 5FF5A
         move.b  (a0,d2.w),d0                    ; 5FF60
         addq.b  #$1,d2                          ; 5FF64
         lsr.b   #$1,d0                          ; 5FF66
@@ -12406,17 +12759,22 @@ l_5FFF2:
         move.b  d3,(dat_65EC2).l                ; 5FFF8
         asl.b   #$3,d0                          ; 5FFFE
         add.b   (dat_1BB2E).l,d0                ; 60000
-        move.b  d0,(dat_1BB22).l                ; 60006
+        move.b  d0,(CarSquareX).l                ; 60006
         asl.b   #$3,d3                          ; 6000C
         add.b   (dat_1BB32).l,d3                ; 6000E
-        move.b  d3,(dat_1BB26).l                ; 60014
+        move.b  d3,(CarSquareZ).l                ; 60014
         rts                                     ; 6001A
-sub_6001C:
-        move.b  d0,(dat_1BB1B).l                ; 6001C
-        move.b  d2,(dat_1BB1A).l                ; 60022
-        cmp.b   (dat_1BB1B).l,d2                ; 60028
+
+;-------------------------------------------------------------------------------
+; NextGridSquare - RaceView: d1 a grid square (16 x 16: y in its high 4 bits) moved a square in x
+; or y by d0 and d2, unless at the grid's edge (probably)
+;-------------------------------------------------------------------------------
+NextGridSquare:
+        move.b  d0,(WorkByte6).l                ; 6001C
+        move.b  d2,(WorkByte5).l                ; 60022
+        cmp.b   (WorkByte6).l,d2                ; 60028
         bcc.w   l_60066                         ; 6002E
-        add.b   (dat_1BB1A).l,d0                ; 60032
+        add.b   (WorkByte5).l,d0                ; 60032
         bcc.w   l_60052                         ; 60038
         move.b  d1,d0                           ; 6003C
         andi.b  #$f,d0                          ; 6003E
@@ -12431,7 +12789,7 @@ l_60052:
         subi.b  #$10,d1                         ; 6005C
         jmp     (l_60094).l                     ; 60060
 l_60066:
-        add.b   (dat_1BB1A).l,d0                ; 60066
+        add.b   (WorkByte5).l,d0                ; 60066
         bcc.w   l_60088                         ; 6006C
         move.b  d1,d0                           ; 60070
         andi.b  #$f0,d0                         ; 60072
@@ -12445,16 +12803,21 @@ l_60088:
         beq.w   l_600A0                         ; 6008E
         subq.b  #$1,d1                          ; 60092
 l_60094:
-        movea.l #dat_1C280,a1                   ; 60094
+        movea.l #TrackGrid,a1                   ; 60094
         move.b  (a1,d1.w),d0                    ; 6009A
         rts                                     ; 6009E
 l_600A0:
         move.b  #$ff,d0                         ; 600A0
         rts                                     ; 600A4
-sub_600A6:
+
+;-------------------------------------------------------------------------------
+; CarGridSquare - the car's grid square (PlayerGridX, PlayerGridY, from its x and z: CarX,
+; CarZ) and its place in the square (CarInSquareX, CarInSquareZ) (probably)
+;-------------------------------------------------------------------------------
+CarGridSquare:
         lsr.w   #$8,d0                          ; 600A6
-        move.b  d0,(dat_1BB19).l                ; 600A8
-        movea.l #dat_1BCD8,a0                   ; 600AE
+        move.b  d0,(WorkByte4).l                ; 600A8
+        movea.l #CarX,a0                   ; 600AE
         movea.l #dat_1BB07,a1                   ; 600B4
         movea.l #PlayerGridX,a2                 ; 600BA
         tst.w   $2(a0)                          ; 600C0
@@ -12477,42 +12840,48 @@ l_600E4:
         move.b  d0,$2(a1)                       ; 600EC
         lsr.w   #$8,d0                          ; 600F0
         move.b  d0,$2(a2)                       ; 600F2
-        tst.b   (dat_1BB19).l                   ; 600F6
+        tst.b   (WorkByte4).l                   ; 600F6
         bmi.w   l_60140                         ; 600FC
-        btst    #$6,(dat_1BB19).l               ; 60100
+        btst    #$6,(WorkByte4).l               ; 60100
         bne.w   l_60122                         ; 60108
-        move.l  (dat_1BCD8).l,(dat_1BCCC).l     ; 6010C
-        move.l  (dat_1BCE0).l,(dat_1BCD4).l     ; 60116
+        move.l  (CarX).l,(CarInSquareX).l     ; 6010C
+        move.l  (CarZ).l,(CarInSquareZ).l     ; 60116
         rts                                     ; 60120
 l_60122:
-        move.l  (dat_1BCD8).l,(dat_1BCD4).l     ; 60122
+        move.l  (CarX).l,(CarInSquareZ).l     ; 60122
         move.l  #$8000000,d0                    ; 6012C
-        sub.l   (dat_1BCE0).l,d0                ; 60132
-        move.l  d0,(dat_1BCCC).l                ; 60138
+        sub.l   (CarZ).l,d0                ; 60132
+        move.l  d0,(CarInSquareX).l                ; 60138
         rts                                     ; 6013E
 l_60140:
-        btst    #$6,(dat_1BB19).l               ; 60140
+        btst    #$6,(WorkByte4).l               ; 60140
         bne.w   l_60172                         ; 60148
         move.l  #$8000000,d0                    ; 6014C
-        sub.l   (dat_1BCD8).l,d0                ; 60152
-        move.l  d0,(dat_1BCCC).l                ; 60158
+        sub.l   (CarX).l,d0                ; 60152
+        move.l  d0,(CarInSquareX).l                ; 60158
         move.l  #$8000000,d0                    ; 6015E
-        sub.l   (dat_1BCE0).l,d0                ; 60164
-        move.l  d0,(dat_1BCD4).l                ; 6016A
+        sub.l   (CarZ).l,d0                ; 60164
+        move.l  d0,(CarInSquareZ).l                ; 6016A
         rts                                     ; 60170
 l_60172:
         move.l  #$8000000,d0                    ; 60172
-        sub.l   (dat_1BCD8).l,d0                ; 60178
-        move.l  d0,(dat_1BCD4).l                ; 6017E
-        move.l  (dat_1BCE0).l,(dat_1BCCC).l     ; 60184
+        sub.l   (CarX).l,d0                ; 60178
+        move.l  d0,(CarInSquareZ).l                ; 6017E
+        move.l  (CarZ).l,(CarInSquareX).l     ; 60184
         rts                                     ; 6018E
-sub_60190:
-        move.w  (dat_1BCE6).l,d0                ; 60190
+
+;-------------------------------------------------------------------------------
+; CarToPieceCoords - PlaceCarOnPiece: the car's place made relative to its square and piece
+; (CarGridSquare) - dat_1BC30, dat_1BCD0, dat_1BB23, dat_1BB27, dat_1BB2E, dat_1BB32, dat_1BC2E
+; (probably)
+;-------------------------------------------------------------------------------
+CarToPieceCoords:
+        move.w  (CarHeading).l,d0                ; 60190
         addi.w  #$2000,d0                       ; 60196
         andi.w  #$c000,d0                       ; 6019A
         move.w  d0,(dat_1BC30).l                ; 6019E
-        jsr     (sub_600A6).l                   ; 601A4
-        move.l  (dat_1BCDC).l,d0                ; 601AA
+        jsr     (CarGridSquare).l                   ; 601A4
+        move.l  (CarY).l,d0                ; 601AA
         lsr.l   #$8,d0                          ; 601B0
         lsr.l   #$3,d0                          ; 601B2
         move.w  d0,(dat_1BCD0).l                ; 601B4
@@ -12524,7 +12893,7 @@ sub_60190:
         move.w  #$280,d3                        ; 601CE
 l_601D2:
         add.w   d3,d0                           ; 601D2
-        move.w  (dat_1BCE4).l,d3                ; 601D4
+        move.w  (CarPitch).l,d3                ; 601D4
         bpl.w   l_601E2                         ; 601DA
         asr.w   #$1,d3                          ; 601DE
         sub.w   d3,d0                           ; 601E0
@@ -12532,7 +12901,7 @@ l_601E2:
         asr.w   #$4,d0                          ; 601E2
         add.w   (dat_1BCD0).l,d0                ; 601E4
         move.w  d0,(dat_1BBFA).l                ; 601EA
-        move.l  (dat_1BCCC).l,d0                ; 601F0
+        move.l  (CarInSquareX).l,d0                ; 601F0
         lsr.l   #$8,d0                          ; 601F6
         lsr.l   #$4,d0                          ; 601F8
         andi.w  #$7ff,d0                        ; 601FA
@@ -12540,7 +12909,7 @@ l_601E2:
         move.b  d0,(dat_1BB23).l                ; 60200
         lsr.w   #$8,d0                          ; 60206
         move.b  d0,(dat_1BB2E).l                ; 60208
-        move.l  (dat_1BCD4).l,d0                ; 6020E
+        move.l  (CarInSquareZ).l,d0                ; 6020E
         lsr.l   #$8,d0                          ; 60214
         lsr.l   #$4,d0                          ; 60216
         andi.w  #$7ff,d0                        ; 60218
@@ -12548,17 +12917,23 @@ l_601E2:
         move.b  d0,(dat_1BB27).l                ; 6021E
         lsr.w   #$8,d0                          ; 60224
         move.b  d0,(dat_1BB32).l                ; 60226
-        move.w  (dat_1BCE6).l,d0                ; 6022C
+        move.w  (CarHeading).l,d0                ; 6022C
         addi.w  #$2000,d0                       ; 60232
         andi.w  #$3ffe,d0                       ; 60236
         subi.w  #$2000,d0                       ; 6023A
         move.w  d0,(dat_1BC2E).l                ; 6023E
         rts                                     ; 60244
-sub_60246:
+
+;-------------------------------------------------------------------------------
+; SetDrivingDirection - PlaceCarOnPiece: which way the car goes along its piece (DrivingBackwards, from
+; PieceReversed and CarAcrossTrack), dat_1BB9C, dat_1BB41, dat_1BB75; the sparks cleared (ClearSparks)
+; (probably)
+;-------------------------------------------------------------------------------
+SetDrivingDirection:
         move.b  #$0,(dat_1BBD1).l               ; 60246
-        move.w  (dat_1BC5E).l,d0                ; 6024E
+        move.w  (CarAcrossTrack).l,d0                ; 6024E
         subi.w  #$c0,d0                         ; 60254
-        tst.b   (dat_1BC32).l                   ; 60258
+        tst.b   (PieceReversed).l                   ; 60258
         bpl.w   l_60264                         ; 6025E
         neg.w   d0                              ; 60262
 l_60264:
@@ -12578,9 +12953,9 @@ l_60292:
         tst.b   (dat_1BB9C).l                   ; 6029A
         bmi.w   l_602C4                         ; 602A0
         move.b  #$80,(dat_1BB9C).l              ; 602A4
-        move.b  (dat_1BC5C).l,(dat_1BBE1).l     ; 602AC
+        move.b  (dat_1BC5C).l,(DrivingBackwards).l     ; 602AC
         move.b  #$10,(dat_1BB41).l              ; 602B6
-        jsr     (sub_60CDE).l                   ; 602BE
+        jsr     (ClearSparks).l                   ; 602BE
 l_602C4:
         rts                                     ; 602C4
 l_602C6:
@@ -12589,26 +12964,36 @@ l_602C6:
         move.b  #$0,(dat_1BB9C).l               ; 602D2
         move.b  #$0,(dat_1BB75).l               ; 602DA
         rts                                     ; 602E2
-sub_602E4:
+
+;-------------------------------------------------------------------------------
+; PreviewDraw - SetPreviewCamera: dat_1BB93, then PreviewPieces
+;-------------------------------------------------------------------------------
+PreviewDraw:
         move.b  #$10,d2                         ; 602E4
 l_602E8:
         move.b  #$8,d1                          ; 602E8
         move.b  #$0,(dat_1BB93).l               ; 602EC
 l_602F4:
-        jsr     (sub_60324).l                   ; 602F4
+        jsr     (PreviewPieces).l                   ; 602F4
         subq.b  #$1,d1                          ; 602FA
         bne.w   l_602F4                         ; 602FC
         move.b  #$f8,d1                         ; 60300
         move.b  #$80,(dat_1BB93).l              ; 60304
 l_6030C:
-        jsr     (sub_60324).l                   ; 6030C
+        jsr     (PreviewPieces).l                   ; 6030C
         addq.b  #$1,d1                          ; 60312
         bmi.w   l_6030C                         ; 60314
         beq.w   l_6030C                         ; 60318
         subq.b  #$1,d2                          ; 6031C
         bpl.w   l_602E8                         ; 6031E
         rts                                     ; 60322
-sub_60324:
+
+;-------------------------------------------------------------------------------
+; PreviewPieces - the track's preview: the pieces near the camera projected and drawn
+; (GridSquarePiece, ProjectNearPiece, DrawNearRows), the row table and the edge buffers set up for
+; it (probably)
+;-------------------------------------------------------------------------------
+PreviewPieces:
         move.b  d1,(dat_1BB8B).l                ; 60324
         move.b  d2,(dat_1BB8D).l                ; 6032A
         tst.b   (dat_1BC30).l                   ; 60330
@@ -12632,12 +13017,12 @@ l_6037C:
         neg.b   d1                              ; 60382
         move.b  (dat_1BB8B).l,d2                ; 60384
 l_6038A:
-        move.b  d1,(dat_1BBD5).l                ; 6038A
-        move.b  d2,(dat_1BBD6).l                ; 60390
+        move.b  d1,(GridOffsetX).l                ; 6038A
+        move.b  d2,(GridOffsetY).l                ; 60390
         move.w  #$0,d0                          ; 60396
         move.w  d0,(dat_1BC26).l                ; 6039A
         move.b  d0,(dat_1BB58).l                ; 603A0
-        jsr     (sub_5FE04).l                   ; 603A6
+        jsr     (GridSquarePiece).l                   ; 603A6
         bcs.w   l_604A6                         ; 603AC
         cmpi.b  #$ff,d0                         ; 603B0
         beq.w   l_604A6                         ; 603B4
@@ -12664,15 +13049,15 @@ l_6041A:
         move.b  #$0,(dat_1BC5C).l               ; 6041A
 l_60422:
         move.b  #$0,(dat_1BB66).l               ; 60422
-        move.b  (dat_1BB4D).l,d0                ; 6042A
+        move.b  (PieceDirection).l,d0                ; 6042A
         andi.b  #$c0,d0                         ; 60430
         bne.w   l_6044C                         ; 60434
-        btst    #$6,(dat_1BBF2).l               ; 60438
+        btst    #$6,(PieceAxes).l               ; 60438
         bne.w   l_6044C                         ; 60440
         move.b  #$80,(dat_1BB66).l              ; 60444
 l_6044C:
         move.b  (dat_1BB5A).l,d1                ; 6044C
-        movea.l #dat_1BDD0,a0                   ; 60452
+        movea.l #SectionFlags,a0                   ; 60452
         move.b  #$0,(a0)                        ; 60458
         move.b  #$0,(a0,d1.w)                   ; 6045C
         move.w  (dat_1BC1E).l,(RowOffset).l     ; 60462
@@ -12682,7 +13067,7 @@ l_6044C:
         move.b  #$0,(dat_1BBE4).l               ; 60480
         addi.w  #$10,(RowOffset).l              ; 60488
         move.l  #$3d80,(EdgeBufferNext).l            ; 60490
-        jsr     (sub_672CC).l                   ; 6049A
+        jsr     (ScanNextPieceEdges).l                   ; 6049A
         jsr     (DrawNearRows).l                   ; 604A0
 l_604A6:
         move.b  (dat_1BB8B).l,d1                ; 604A6
@@ -12698,20 +13083,20 @@ SetPreviewCamera:
         move.b  (dat_1BB57).l,d1                ; 604C4
         andi.b  #$3,d1                          ; 604CA
         movea.l #dat_60552,a1                   ; 604CE
-        move.b  (a1,d1.w),(dat_1BCD8).l         ; 604D4
+        move.b  (a1,d1.w),(CarX).l         ; 604D4
         movea.l #dat_60556,a1                   ; 604DC
-        move.b  (a1,d1.w),(dat_1BCE0).l         ; 604E2
+        move.b  (a1,d1.w),(CarZ).l         ; 604E2
         movea.l #dat_6055A,a1                   ; 604EA
-        move.b  (a1,d1.w),(dat_1BCE6).l         ; 604F0
-        move.b  #$3,(dat_1BCDC).l               ; 604F8
+        move.b  (a1,d1.w),(CarHeading).l         ; 604F0
+        move.b  #$3,(CarY).l               ; 604F8
         move.b  #$f0,(dat_1BCDD).l              ; 60500
         move.b  #$0,(dat_1BCC8).l               ; 60508
-        move.w  #$700,(dat_1BC42).l             ; 60510
-        jsr     (sub_64E18).l                   ; 60518
+        move.w  #$700,(ViewPitch).l             ; 60510
+        jsr     (StartView).l                   ; 60518
         jsr     (CopyScreenBand).l              ; 6051E
         jsr     (FadeStep).l                    ; 60524
         move.b  #$80,(dat_1BB8F).l              ; 6052A
-        jsr     (sub_602E4).l                   ; 60532
+        jsr     (PreviewDraw).l                   ; 60532
         move.b  #$0,(dat_1BB8F).l               ; 60538
         move.w  #$0,(dat_1BC1E).l               ; 60540
         move.b  #$0,(dat_1BB68).l               ; 60548
@@ -12722,9 +13107,14 @@ dat_60556:
 	dc.b	$00,$04,$08,$04
 dat_6055A:
 	dc.b	$00,$40,$80,$C0
-sub_6055E:
+
+;-------------------------------------------------------------------------------
+; ReversePieceHeights - ProjectNearPiece: a piece driven the other way - its PointHeights and
+; SectionFlags entries put in the reverse order
+;-------------------------------------------------------------------------------
+ReversePieceHeights:
         movea.l #PointHeights,a6                ; 6055E
-        movea.l #dat_1BDD0,a0                   ; 60564
+        movea.l #SectionFlags,a0                   ; 60564
         move.b  (dat_1BB97).l,d4                ; 6056A
         lsr.b   #$1,d4                          ; 60570
         move.w  #$0,d1                          ; 60572
@@ -12774,7 +13164,7 @@ l_605EC:
         subq.b  #$1,d2                          ; 605FC
         bpl.w   l_605EC                         ; 605FE
 l_60602:
-        movea.l #dat_1BCCC,a0                   ; 60602
+        movea.l #CarInSquareX,a0                   ; 60602
 l_60608:
         move.b  #$0,(a0)+                       ; 60608
         cmpa.l  #dat_1BD5E,a0                   ; 6060C
@@ -12784,26 +13174,26 @@ l_60608:
         movea.l #TrackPieceGrid,a1              ; 60624
         move.b  (a1,d1.w),d0                    ; 6062A
         andi.b  #$f,d0                          ; 6062E
-        move.b  d0,(dat_1BBD5).l                ; 60632
+        move.b  d0,(GridOffsetX).l                ; 60632
         move.b  (a1,d1.w),d0                    ; 60638
         lsr.b   #$4,d0                          ; 6063C
-        move.b  d0,(dat_1BBD6).l                ; 6063E
+        move.b  d0,(GridOffsetY).l                ; 6063E
         move.w  #$0,d0                          ; 60644
         move.w  d0,(dat_1BCDA).l                ; 60648
         move.w  d0,(dat_1BCE2).l                ; 6064E
-        move.b  (dat_1BBD5).l,d0                ; 60654
+        move.b  (GridOffsetX).l,d0                ; 60654
         andi.w  #$ff,d0                         ; 6065A
         asl.w   #$7,d0                          ; 6065E
         addi.w  #$40,d0                         ; 60660
-        move.w  d0,(dat_1BCD8).l                ; 60664
-        move.b  (dat_1BBD6).l,d0                ; 6066A
+        move.w  d0,(CarX).l                ; 60664
+        move.b  (GridOffsetY).l,d0                ; 6066A
         andi.w  #$ff,d0                         ; 60670
         asl.w   #$7,d0                          ; 60674
         addi.w  #$40,d0                         ; 60676
-        move.w  d0,(dat_1BCE0).l                ; 6067A
-        move.b  #$4,(dat_1BCDC).l               ; 60680
+        move.w  d0,(CarZ).l                ; 6067A
+        move.b  #$4,(CarY).l               ; 60680
         move.b  #$0,d1                          ; 60688
-        move.b  (dat_1BB86).l,d0                ; 6068C
+        move.b  (PieceCurve).l,d0                ; 6068C
         cmpi.b  #$4,d0                          ; 60692
         beq.w   l_606A2                         ; 60696
         cmpi.b  #$a,d0                          ; 6069A
@@ -12812,16 +13202,16 @@ l_606A2:
         move.b  #$20,d1                         ; 606A2
 l_606A6:
         move.b  (dat_1BC4A).l,d0                ; 606A6
-        move.b  (dat_1BC32).l,d3                ; 606AC
+        move.b  (PieceReversed).l,d3                ; 606AC
         eor.b   d3,d0                           ; 606B2
         add.b   d1,d0                           ; 606B4
-        move.b  d0,(dat_1BCE6).l                ; 606B6
-        jsr     (sub_60190).l                   ; 606BC
-        jsr     (sub_5BE44).l                   ; 606C2
-        jsr     (sub_60246).l                   ; 606C8
+        move.b  d0,(CarHeading).l                ; 606B6
+        jsr     (CarToPieceCoords).l                   ; 606BC
+        jsr     (CarPiecePosition).l                   ; 606C2
+        jsr     (SetDrivingDirection).l                   ; 606C8
         jsr     (CarPhysics).l                  ; 606CE
         move.w  #$0,(dat_1BCDE).l               ; 606D4
-        move.w  #$10,(dat_1BCDC).l              ; 606DC
+        move.w  #$10,(CarY).l              ; 606DC
         move.l  (dat_1BCAC).l,d0                ; 606E4
         move.l  d0,d3                           ; 606EA
         move.b  (dat_1BBC4).l,d2                ; 606EC
@@ -12829,15 +13219,15 @@ l_606A6:
         asl.l   #$8,d0                          ; 606F6
         asl.l   #$1,d0                          ; 606F8
         addi.l  #$180000,d0                     ; 606FA
-        move.l  d0,(dat_1BCDC).l                ; 60700
+        move.l  d0,(CarY).l                ; 60700
         move.b  #$e6,(DropCountdown).l          ; 60706
 l_6070E:
         lsr.l   #$2,d3                          ; 6070E
         move.w  d3,(dat_1BC60).l                ; 60710
-        jsr     (sub_5B506).l                   ; 60716
+        jsr     (PlaceCarAhead).l                   ; 60716
         move.b  #$8,d1                          ; 6071C
-        movea.l #dat_1BCA4,a1                   ; 60720
-        movea.l #dat_1BC94,a2                   ; 60726
+        movea.l #WheelTrackHeights,a1                   ; 60720
+        movea.l #FrontHeight,a2                   ; 60726
 l_6072C:
         move.l  #$1000,(a1,d1.w)                ; 6072C
         move.l  #$1000,(a2,d1.w)                ; 60734
@@ -12845,24 +13235,30 @@ l_6072C:
         bpl.w   l_6072C                         ; 6073E
         move.l  #$0,(dat_1BD1A).l               ; 60742
         move.w  #$0,(dat_1BD1E).l               ; 6074C
-        jsr     (sub_60190).l                   ; 60754
+        jsr     (CarToPieceCoords).l                   ; 60754
         move.b  #$b0,(dat_1BBEA).l              ; 6075A
         move.b  #$8,(dat_1BBE9).l               ; 60762
         rts                                     ; 6076A
-sub_6076C:
+
+;-------------------------------------------------------------------------------
+; UpdateOpponentDistance - OpponentDistance from the two cars' pieces and places on them
+; (OpponentPiece, PlayerPiece, OpponentPiecePos, PlayerPiecePos, PieceDistances), OpponentGap, dat_1BBB8
+; (probably)
+;-------------------------------------------------------------------------------
+UpdateOpponentDistance:
         move.w  (OpponentPiecePos).l,d0         ; 6076C
         sub.w   (PlayerPiecePos).l,d0           ; 60772
         asr.w   #$3,d0                          ; 60778
         move.b  (OpponentPiece).l,d1            ; 6077A
         move.b  (PlayerPiece).l,d2              ; 60780
-        movea.l #dat_1C7E0,a0                   ; 60786
+        movea.l #PieceDistances,a0                   ; 60786
         asl.b   #$1,d1                          ; 6078C
         asl.b   #$1,d2                          ; 6078E
         move.w  (a0,d1.w),d3                    ; 60790
         sub.w   (a0,d2.w),d3                    ; 60794
         add.w   d3,d0                           ; 60798
         move.w  d0,d5                           ; 6079A
-        move.w  d0,(dat_1BC3E).l                ; 6079C
+        move.w  d0,(OpponentGap).l                ; 6079C
         bpl.w   l_607A8                         ; 607A2
         neg.w   d0                              ; 607A6
 l_607A8:
@@ -12878,87 +13274,116 @@ l_607BC:
         lsr.w   #$8,d5                          ; 607C6
         move.b  d5,(dat_1BBB8).l                ; 607C8
         rts                                     ; 607CE
-sub_607D0:
+
+;-------------------------------------------------------------------------------
+; OpponentLead - d0: how far the opponent is ahead (its laps - the player's; else its pieces from
+; the start, LapStartPiece, - the player's), Z when level (OpponentGap 0)
+;-------------------------------------------------------------------------------
+OpponentLead:
         move.b  (OpponentLaps).l,d0             ; 607D0
         sub.b   (PlayerLaps).l,d0               ; 607D6
         bne.w   l_60822                         ; 607DC
         move.b  (PlayerPiece).l,d0              ; 607E0
-        sub.b   (dat_1CA32).l,d0                ; 607E6
+        sub.b   (LapStartPiece).l,d0                ; 607E6
         bcc.w   l_607F6                         ; 607EC
         add.b   (TrackPieceCount).l,d0          ; 607F0
 l_607F6:
         move.b  (OpponentPiece).l,d3            ; 607F6
-        sub.b   (dat_1CA32).l,d3                ; 607FC
+        sub.b   (LapStartPiece).l,d3                ; 607FC
         bcc.w   l_6080C                         ; 60802
         add.b   (TrackPieceCount).l,d3          ; 60806
 l_6080C:
         sub.b   d0,d3                           ; 6080C
         bne.w   l_60822                         ; 6080E
-        move.w  (dat_1BC3E).l,d0                ; 60812
+        move.w  (OpponentGap).l,d0                ; 60812
         bne.w   l_60822                         ; 60818
         move.b  (LinkMode).l,d0                 ; 6081C
 l_60822:
         rts                                     ; 60822
-sub_60824:
-        move.b  (dat_1CA20).l,d3                ; 60824
+
+;-------------------------------------------------------------------------------
+; PrintBoost - the boost left (BoostLeft) printed on the instruments (probably)
+;-------------------------------------------------------------------------------
+PrintBoost:
+        move.b  (BoostLeft).l,d3                ; 60824
         andi.b  #$f,ccr                         ; 6082A
         abcd.b  d3,d0                           ; 6082E
         cmp.b   (dat_1BB95).l,d0                ; 60830
         bcs.w   l_60840                         ; 60836
         move.b  (dat_1BB95).l,d0                ; 6083A
 l_60840:
-        move.b  d0,(dat_1CA20).l                ; 60840
+        move.b  d0,(BoostLeft).l                ; 60840
         move.b  #$1f,d0                         ; 60846
         jsr     (PrintChar).l                   ; 6084A
         move.b  #$9,d0                          ; 60850
         jsr     (PrintChar).l                   ; 60854
         move.b  #$16,d0                         ; 6085A
         jsr     (PrintChar).l                   ; 6085E
-        move.b  #$4,(dat_1BB6D).l               ; 60864
-        move.b  #$2,(dat_1BB6E).l               ; 6086C
-        move.b  (dat_1CA20).l,d0                ; 60874
+        move.b  #$4,(TextPixelX).l               ; 60864
+        move.b  #$2,(TextLineOffset).l               ; 6086C
+        move.b  (BoostLeft).l,d0                ; 60874
         lsr.b   #$4,d0                          ; 6087A
         jsr     (PrintDigitNext).l              ; 6087C
-        move.b  (dat_1CA20).l,d0                ; 60882
+        move.b  (BoostLeft).l,d0                ; 60882
         andi.b  #$f,d0                          ; 60888
         jsr     (PrintDigitNext).l              ; 6088C
-        move.b  #$0,(dat_1BB6D).l               ; 60892
-        move.b  #$0,(dat_1BB6E).l               ; 6089A
+        move.b  #$0,(TextPixelX).l               ; 60892
+        move.b  #$0,(TextLineOffset).l               ; 6089A
         rts                                     ; 608A2
-sub_608A4:
-        move.b  (dat_1BB70).l,d0                ; 608A4
+
+;-------------------------------------------------------------------------------
+; UseBoost - the input: fire held (ControlBits) uses the boost (BoostLeft, PrintBoost) - dat_1BB3D,
+; dat_1BB62 (probably)
+;-------------------------------------------------------------------------------
+UseBoost:
+        move.b  (ThrottleOff).l,d0                ; 608A4
         or.b    (dat_1BCA2).l,d0                ; 608AA
         bne.w   l_60910                         ; 608B0
         move.b  (dat_1BBA8).l,d0                ; 608B4
         bmi.w   l_608CC                         ; 608BA
-        move.b  (dat_1BB47).l,d0                ; 608BE
+        move.b  (ControlBits).l,d0                ; 608BE
         andi.b  #$3,d0                          ; 608C4
         beq.w   l_60910                         ; 608C8
 l_608CC:
-        move.b  (dat_1CA20).l,d0                ; 608CC
+        move.b  (BoostLeft).l,d0                ; 608CC
         beq.w   l_60910                         ; 608D2
-        tst.b   (dat_1BBCD).l                   ; 608D6
+        tst.b   (ClockTick).l                   ; 608D6
         bmi.w   l_60900                         ; 608DC
         subq.b  #$1,(dat_1BB3D).l               ; 608E0
         bpl.w   l_60900                         ; 608E6
         move.b  (dat_1BAFE).l,d2                ; 608EA
         move.b  d2,(dat_1BB3D).l                ; 608F0
         move.b  #$99,d0                         ; 608F6
-        jsr     (sub_60824).l                   ; 608FA
+        jsr     (PrintBoost).l                   ; 608FA
 l_60900:
         move.b  #$80,(dat_1BB62).l              ; 60900
-        asl.w   (dat_1BD2A).l                   ; 60908
+        asl.w   (DriveSetting).l                   ; 60908
         rts                                     ; 6090E
 l_60910:
         move.b  #$0,(dat_1BB62).l               ; 60910
         rts                                     ; 60918
-sub_6091A:
+
+;-------------------------------------------------------------------------------
+; DrawHoleMark - d2: a damage mark (cut-out $17 or $18) drawn at its place into both screens
+; (probably a hole)
+;-------------------------------------------------------------------------------
+DrawHoleMark:
         move.b  #$17,d1                         ; 6091A
         bra.w   l_6092E                         ; 6091E
-sub_60922:
+
+;-------------------------------------------------------------------------------
+; DrawCrackMark - d2: a damage mark (cut-out $19 or $1A) drawn at its place into both screens
+; (probably a crack)
+;-------------------------------------------------------------------------------
+DrawCrackMark:
         move.b  #$19,d1                         ; 60922
         bra.w   l_6092E                         ; 60926
-sub_6092A:
+
+;-------------------------------------------------------------------------------
+; DrawDamageMark - d2: a damage mark (cut-out $1B or $1C; the code from l_6092E draws all three
+; kinds) - its place in dat_6A174 from d2, drawn into both screens
+;-------------------------------------------------------------------------------
+DrawDamageMark:
         move.b  #$1b,d1                         ; 6092A
 l_6092E:
         move.w  d1,-(a7)                        ; 6092E
@@ -12989,23 +13414,28 @@ l_60946:
 l_60988:
         move.b  #$9,d2                          ; 60988
 l_6098C:
-        cmp.b   (dat_1C9CF).l,d2                ; 6098C
+        cmp.b   (DamageMarks).l,d2                ; 6098C
         bge.w   l_609A0                         ; 60992
-        jsr     (sub_6092A).l                   ; 60996
+        jsr     (DrawDamageMark).l                   ; 60996
         bra.w   l_609A6                         ; 6099C
 l_609A0:
-        jsr     (sub_6091A).l                   ; 609A0
+        jsr     (DrawHoleMark).l                   ; 609A0
 l_609A6:
         subq.b  #$1,d2                          ; 609A6
         bpl.w   l_6098C                         ; 609A8
         rts                                     ; 609AC
-sub_609AE:
-        move.b  d0,(dat_1BB16).l                ; 609AE
+
+;-------------------------------------------------------------------------------
+; SavedGameSettings - d0 $80: RandomSeed and the season's settings put back from the save area
+; ($7A035, ...), else kept there (MainMenu) (probably)
+;-------------------------------------------------------------------------------
+SavedGameSettings:
+        move.b  d0,(WorkByte1).l                ; 609AE
         movea.l #RandomSeed,a0                  ; 609B4
         movea.l #$7a035,a1                      ; 609BA
         move.b  #$4,d1                          ; 609C0
 l_609C4:
-        tst.b   (dat_1BB16).l                   ; 609C4
+        tst.b   (WorkByte1).l                   ; 609C4
         bmi.w   l_609DE                         ; 609CA
         move.b  (a0)+,(a1,d1.w)                 ; 609CE
         jmp     (l_609EC).l                     ; 609D2
@@ -13019,7 +13449,7 @@ l_609DE:
 l_609EC:
         subq.b  #$1,d1                          ; 609EC
         bpl.w   l_609C4                         ; 609EE
-        tst.b   (dat_1BB16).l                   ; 609F2
+        tst.b   (WorkByte1).l                   ; 609F2
         bmi.w   l_60A1E                         ; 609F8
         move.b  #$b,d1                          ; 609FC
 l_60A00:
@@ -13033,26 +13463,26 @@ l_60A00:
 l_60A1E:
         move.b  #$1a,d1                         ; 60A1E
 l_60A22:
-        tst.b   (dat_1BB16).l                   ; 60A22
+        tst.b   (WorkByte1).l                   ; 60A22
         bpl.w   l_60A4C                         ; 60A28
         movea.l #$7a01a,a1                      ; 60A2C
         move.b  (a1,d1.w),d0                    ; 60A32
-        move.b  d0,(dat_1BB18).l                ; 60A36
+        move.b  d0,(WorkByte3).l                ; 60A36
         movea.l #$7a03f,a1                      ; 60A3C
         move.b  (a1,d1.w),d0                    ; 60A42
-        move.b  d0,(dat_1BB19).l                ; 60A46
+        move.b  d0,(WorkByte4).l                ; 60A46
 l_60A4C:
         move.b  #$0,d2                          ; 60A4C
-        move.b  d2,(dat_1BB1A).l                ; 60A50
+        move.b  d2,(WorkByte5).l                ; 60A50
 l_60A56:
-        addq.b  #$1,(dat_1BB1A).l               ; 60A56
+        addq.b  #$1,(WorkByte5).l               ; 60A56
         bne.w   l_60A66                         ; 60A5C
         addq.b  #$1,d2                          ; 60A60
         bmi.w   l_60B82                         ; 60A62
 l_60A66:
         jsr     (Random).l                      ; 60A66
-        move.b  d0,(dat_1BB17).l                ; 60A6C
-        tst.b   (dat_1BB16).l                   ; 60A72
+        move.b  d0,(WorkByte2).l                ; 60A6C
+        tst.b   (WorkByte1).l                   ; 60A72
         bmi.w   l_60AAC                         ; 60A78
         movea.l #dat_1C9B6,a1                   ; 60A7C
         cmp.b   (a1,d1.w),d0                    ; 60A82
@@ -13060,17 +13490,17 @@ l_60A66:
         move.b  d2,d0                           ; 60A8A
         movea.l #$7a01a,a1                      ; 60A8C
         move.b  d0,(a1,d1.w)                    ; 60A92
-        move.b  (dat_1BB1A).l,d0                ; 60A96
+        move.b  (WorkByte5).l,d0                ; 60A96
         movea.l #$7a03f,a1                      ; 60A9C
         move.b  d0,(a1,d1.w)                    ; 60AA2
         jmp     (l_60AD6).l                     ; 60AA6
 l_60AAC:
-        cmp.b   (dat_1BB18).l,d2                ; 60AAC
+        cmp.b   (WorkByte3).l,d2                ; 60AAC
         bne.w   l_60A56                         ; 60AB2
-        move.b  (dat_1BB1A).l,d0                ; 60AB6
-        cmp.b   (dat_1BB19).l,d0                ; 60ABC
+        move.b  (WorkByte5).l,d0                ; 60AB6
+        cmp.b   (WorkByte4).l,d0                ; 60ABC
         bne.w   l_60A56                         ; 60AC2
-        move.b  (dat_1BB17).l,d0                ; 60AC6
+        move.b  (WorkByte2).l,d0                ; 60AC6
         movea.l #$7a41a,a1                      ; 60ACC
         move.b  d0,(a1,d1.w)                    ; 60AD2
 l_60AD6:
@@ -13081,7 +13511,7 @@ l_60AD6:
         move.b  #$9,d2                          ; 60AE6
 l_60AEA:
         move.b  (a0)+,d0                        ; 60AEA
-        tst.b   (dat_1BB16).l                   ; 60AEC
+        tst.b   (WorkByte1).l                   ; 60AEC
         bmi.w   l_60B04                         ; 60AF2
         movea.l #$7a03a,a1                      ; 60AF6
         move.b  d0,(a1,d1.w)                    ; 60AFC
@@ -13093,7 +13523,7 @@ l_60B04:
 l_60B12:
         subq.b  #$1,d1                          ; 60B12
         bpl.w   l_60AEA                         ; 60B14
-        tst.b   (dat_1BB16).l                   ; 60B18
+        tst.b   (WorkByte1).l                   ; 60B18
         bpl.w   l_60B72                         ; 60B1E
         movea.l #dat_1C9B6,a3                   ; 60B22
         movea.l #$7a41a,a0                      ; 60B28
@@ -13124,8 +13554,8 @@ l_60B72:
         rts                                     ; 60B80
 l_60B82:
         move.b  #$3b,(dat_625A5).l              ; 60B82
-        move.b  (dat_1BB16).l,d0                ; 60B8A
-        bpl.w   sub_609AE                       ; 60B90
+        move.b  (WorkByte1).l,d0                ; 60B8A
+        bpl.w   SavedGameSettings                       ; 60B90
         ori.b   #$1,ccr                         ; 60B94
         rts                                     ; 60B98
 
@@ -13193,16 +13623,16 @@ l_60C4C:
         andi.b  #$1f,d0                         ; 60C4C
         tst.b   (LinkMode).l                    ; 60C50
         beq.w   l_60C7E                         ; 60C56
-        move.b  d0,(dat_1BB47).l                ; 60C5A
+        move.b  d0,(ControlBits).l                ; 60C5A
         move.b  #$45,d1                         ; 60C60
         jsr     (KeyDown).l                     ; 60C64
         move.w  sr,-(a7)                        ; 60C6A
-        move.b  (dat_1BB47).l,d0                ; 60C6C
+        move.b  (ControlBits).l,d0                ; 60C6C
         move.w  (a7)+,sr                        ; 60C72
         beq.w   l_60C7E                         ; 60C74
         jsr     (LinkExchangeControls).l        ; 60C78
 l_60C7E:
-        move.b  d0,(dat_1BB47).l                ; 60C7E
+        move.b  d0,(ControlBits).l                ; 60C7E
         rts                                     ; 60C84
 dat_60C86:
 	dc.b	$11,$11
@@ -13210,9 +13640,14 @@ ControlKeys:				; the 5 control keys' raw codes (redefinable)
 	dc.b	$2A,$40,$21,$22,$44
 dat_60C8D:
 	dc.b	$01,$02,$03,$04,$00
-sub_60C92:
+
+;-------------------------------------------------------------------------------
+; StartScrapeSparks - the scraping's sound (dat_0F360 6, a random pitch dat_1B732 from $1C2) and
+; its sparks (dat_1BBD7, from SpeedForSparks), on at l_60DA2 (probably)
+;-------------------------------------------------------------------------------
+StartScrapeSparks:
         move.b  #$6,(dat_0F360).l               ; 60C92
-        move.b  (dat_1BD5C).l,d0                ; 60C9A
+        move.b  (SpeedForSparks).l,d0                ; 60C9A
         cmpi.b  #$10,d0                         ; 60CA0
         blt.w   l_60CAC                         ; 60CA4
         move.b  #$10,d0                         ; 60CA8
@@ -13230,16 +13665,25 @@ l_60CC4:
         bra.w   l_60DA2                         ; 60CD8
 l_60CDC:
         rts                                     ; 60CDC
-sub_60CDE:
+
+;-------------------------------------------------------------------------------
+; ClearSparks - the 32 sparks' places (SparkPlaces) put out of the view ($D4)
+;-------------------------------------------------------------------------------
+ClearSparks:
         move.w  #$3e,d1                         ; 60CDE
         move.w  #$d4,d0                         ; 60CE2
 l_60CE6:
-        movea.l #dat_1C3C0,a1                   ; 60CE6
+        movea.l #SparkPlaces,a1                   ; 60CE6
         move.w  d0,(a1,d1.w)                    ; 60CEC
         subq.b  #$2,d1                          ; 60CF0
         bpl.w   l_60CE6                         ; 60CF2
         rts                                     ; 60CF6
-sub_60CF8:
+
+;-------------------------------------------------------------------------------
+; StartKnockSparks - the sound and sparks of a knock (dat_0F360, dat_1BBD7 by dat_1BBDA,
+; dat_1BCA2, SpeedForSparks) (probably)
+;-------------------------------------------------------------------------------
+StartKnockSparks:
         move.b  #$1,(dat_0F360).l               ; 60CF8
         move.b  (dat_1BBDA).l,d0                ; 60D00
         bne.w   l_60D14                         ; 60D06
@@ -13248,7 +13692,7 @@ sub_60CF8:
 l_60D14:
         tst.b   (dat_1BB9C).l                   ; 60D14
         bmi.w   l_60CDC                         ; 60D1A
-        move.b  (dat_1BD5C).l,d0                ; 60D1E
+        move.b  (SpeedForSparks).l,d0                ; 60D1E
         cmpi.b  #$1,d0                          ; 60D24
         blt.w   l_60CDC                         ; 60D28
         cmpi.b  #$32,d0                         ; 60D2C
@@ -13263,7 +13707,12 @@ l_60D38:
         move.b  (dat_1BBD7).l,d0                ; 60D4E
         lsr.b   #$1,d0                          ; 60D54
         bra.w   l_60D82                         ; 60D56
-sub_60D5A:		; (no references found: found by the code sweep)
+
+;-------------------------------------------------------------------------------
+; SparksAndSound - (no references) the scraping's sound by d0 and d2 (dat_1B6E2), then the sparks
+; made (NewSpark), moved and drawn (DrawSparks) (probably)
+;-------------------------------------------------------------------------------
+SparksAndSound:		; (no references found: found by the code sweep)
         cmpi.b  #$8,d0                          ; 60D5A
         bge.w   l_60D6A                         ; 60D5E
         move.b  #$8,d0                          ; 60D62
@@ -13287,16 +13736,16 @@ l_60D8E:
         move.w  d0,(dat_1B6E2).l                ; 60D9C
 l_60DA2:
         asl.b   #$1,d1                          ; 60DA2
-        move.b  d1,(dat_1BBA7).l                ; 60DA4
-        move.b  (dat_1BB7E).l,d0                ; 60DAA
-        beq.w   sub_60CDE                       ; 60DB0
+        move.b  d1,(OpponentPace).l                ; 60DA4
+        move.b  (WheelsDown).l,d0                ; 60DAA
+        beq.w   ClearSparks                       ; 60DB0
         move.b  (dat_0F360).l,d0                ; 60DB4
         jsr     (PlaySample).l                  ; 60DBA
-        movea.l #dat_1C380,a4                   ; 60DC0
-        movea.l #dat_1C400,a5                   ; 60DC6
-        move.b  (dat_1BBA7).l,d1                ; 60DCC
+        movea.l #SparkMoves,a4                   ; 60DC0
+        movea.l #SparkPaths,a5                   ; 60DC6
+        move.b  (OpponentPace).l,d1                ; 60DCC
 l_60DD2:
-        jsr     (sub_60E88).l                   ; 60DD2
+        jsr     (DrawSparks).l                   ; 60DD2
         bne.w   l_60DF0                         ; 60DD8
         addq.w  #$2,$40(a5,d1.w)                ; 60DDC
         move.w  $40(a5,d1.w),d0                 ; 60DE0
@@ -13306,7 +13755,7 @@ l_60DD2:
 l_60DF0:
         subq.b  #$2,d1                          ; 60DF0
         bpl.w   l_60DD2                         ; 60DF2
-        move.b  (dat_1BBA7).l,d1                ; 60DF6
+        move.b  (OpponentPace).l,d1                ; 60DF6
 l_60DFC:
         move.w  $40(a4,d1.w),d0                 ; 60DFC
         cmpi.w  #$80,d0                         ; 60E00
@@ -13326,7 +13775,7 @@ l_60E2A:
         move.w  d0,$40(a5,d1.w)                 ; 60E2E
         tst.b   (dat_1BB9C).l                   ; 60E32
         bpl.w   l_60E48                         ; 60E38
-        jsr     (sub_60F36).l                   ; 60E3C
+        jsr     (NewSpark).l                   ; 60E3C
         jmp     (l_60E6E).l                     ; 60E42
 l_60E48:
         jsr     (Random).l                      ; 60E48
@@ -13343,12 +13792,16 @@ l_60E6E:
         subi.w  #$80,d0                         ; 60E70
         asr.w   #$3,d0                          ; 60E74
         move.w  d0,(a5,d1.w)                    ; 60E76
-        jsr     (sub_60E88).l                   ; 60E7A
+        jsr     (DrawSparks).l                   ; 60E7A
 l_60E80:
         subq.b  #$2,d1                          ; 60E80
         bpl.w   l_60DFC                         ; 60E82
         rts                                     ; 60E86
-sub_60E88:
+
+;-------------------------------------------------------------------------------
+; DrawSparks - the sparks drawn (PlotPixel), moved by SparkOffsets (probably)
+;-------------------------------------------------------------------------------
+DrawSparks:
         move.b  d1,(dat_1BBE4).l                ; 60E88
         move.w  $40(a4,d1.w),d5                 ; 60E8E
         cmpi.w  #$80,d5                         ; 60E92
@@ -13364,7 +13817,7 @@ l_60EAE:
 l_60EB6:
         tst.b   (dat_1BB9C).l                   ; 60EB6
         bpl.w   l_60ECC                         ; 60EBC
-        jsr     (sub_60F5A).l                   ; 60EC0
+        jsr     (SparkOffsets).l                   ; 60EC0
         jmp     (l_60F2A).l                     ; 60EC6
 l_60ECC:
         move.w  d0,d4                           ; 60ECC
@@ -13397,7 +13850,11 @@ l_60F2A:
         move.b  (dat_1BBE4).l,d1                ; 60F2A
         move.b  #$0,d0                          ; 60F30
         rts                                     ; 60F34
-sub_60F36:
+
+;-------------------------------------------------------------------------------
+; NewSpark - a spark at d1: a random x (0-255) and y ($76-$7D) (probably)
+;-------------------------------------------------------------------------------
+NewSpark:
         jsr     (Random).l                      ; 60F36
         andi.w  #$ff,d0                         ; 60F3C
         move.w  d0,(a4,d1.w)                    ; 60F40
@@ -13407,10 +13864,15 @@ sub_60F36:
         addi.w  #$76,d0                         ; 60F50
         move.w  d0,$40(a4,d1.w)                 ; 60F54
         rts                                     ; 60F58
-sub_60F5A:
+
+;-------------------------------------------------------------------------------
+; SparkOffsets - a spark's movement from Offsets60F9C and Sequence60FAC by the step (StepCountdown)
+; (probably)
+;-------------------------------------------------------------------------------
+SparkOffsets:
         move.b  d1,d2                           ; 60F5A
         lsr.b   #$1,d2                          ; 60F5C
-        add.b   (dat_1BBAC).l,d2                ; 60F5E
+        add.b   (StepCountdown).l,d2                ; 60F5E
         andi.w  #$f,d2                          ; 60F64
         movea.l #Sequence60FAC,a0                     ; 60F68
         move.b  (a0,d2.w),d2                    ; 60F6E
@@ -13425,19 +13887,24 @@ sub_60F5A:
         lsr.b   #$1,d0                          ; 60F90
         addi.b  #$1d,d0                         ; 60F92
         jmp     (l_6A0BE).l                     ; 60F96
-Offsets60F9C:				; 8 words: x offsets, picked through Sequence60FAC (sub_60F5A; data the code sweep took for code)
+Offsets60F9C:				; 8 words: x offsets, picked through Sequence60FAC (SparkOffsets; data the code sweep took for code)
 	dc.b	$00,$20,$00,$20,$00,$20,$00,$28,$00,$18,$00,$20,$00,$20,$00,$20
-Sequence60FAC:				; 16 bytes 0-7: which of Offsets60F9C, by frame (sub_60F5A)
+Sequence60FAC:				; 16 bytes 0-7: which of Offsets60F9C, by frame (SparkOffsets)
 	dc.b	$03,$06,$07,$02,$01,$05,$00,$04,$00,$05,$01,$02,$07,$06,$02,$07
 RaceFlag60FBC:				; a flag: tested and set to $80 by the game loop ($5CF6C)
 	dc.b	$00,$00
-sub_60FBE:
-        move.w  (dat_1BD30).l,d0                ; 60FBE
+
+;-------------------------------------------------------------------------------
+; SetSpeed - CarPhysics: Speed (the instruments' figure) and SpeedForSparks from the speed SpeedForward
+; (probably)
+;-------------------------------------------------------------------------------
+SetSpeed:
+        move.w  (SpeedForward).l,d0                ; 60FBE
         bpl.w   l_60FCA                         ; 60FC4
         neg.w   d0                              ; 60FC8
 l_60FCA:
-        move.w  d0,(dat_1BD5C).l                ; 60FCA
-        move.b  (dat_1BB7E).l,d1                ; 60FD0
+        move.w  d0,(SpeedForSparks).l                ; 60FCA
+        move.b  (WheelsDown).l,d1                ; 60FD0
         bne.w   l_60FEA                         ; 60FD6
         move.w  (Speed).l,d0                    ; 60FDA
         lsr.w   #$2,d0                          ; 60FE0
@@ -13457,16 +13924,21 @@ l_60FFC:
 l_6100A:
         move.w  d0,(Speed).l                    ; 6100A
         rts                                     ; 61010
-sub_61012:
+
+;-------------------------------------------------------------------------------
+; CarPhysicsPieces - CarPhysics: the pieces the car is on kept up to date as it moves (LoadPiece,
+; NextPiece) (probably; not studied)
+;-------------------------------------------------------------------------------
+CarPhysicsPieces:
         move.b  (PlayerPiece).l,d1              ; 61012
         move.b  d1,(PieceIndex).l               ; 61018
         jsr     (LoadPiece).l                   ; 6101E
         move.w  (dat_1BD5A).l,d4                ; 61024
-        sub.w   (dat_1BCE6).l,d4                ; 6102A
-        move.w  (dat_1BC32).l,d3                ; 61030
+        sub.w   (CarHeading).l,d4                ; 6102A
+        move.w  (PieceReversed).l,d3                ; 61030
         eor.w   d3,d4                           ; 61036
         move.b  #$0,d2                          ; 61038
-        tst.b   (dat_1BB4D).l                   ; 6103C
+        tst.b   (PieceDirection).l                   ; 6103C
         bpl.w   l_61056                         ; 61042
         addq.b  #$2,d2                          ; 61046
         move.w  (dat_1BC44).l,d0                ; 61048
@@ -13490,7 +13962,7 @@ l_61084:
         asl.w   #$4,d0                          ; 61084
 l_61086:
         move.w  d0,(dat_1BC3C).l                ; 61086
-        move.b  (dat_1BB6A).l,d0                ; 6108C
+        move.b  (PieceSections).l,d0                ; 6108C
         sub.b   (PlayerPiecePos).l,d0           ; 61092
         cmpi.b  #$2,d0                          ; 61098
         bcc.w   l_610AC                         ; 6109C
@@ -13498,17 +13970,17 @@ l_61086:
         jsr     (LoadPiece).l                   ; 610A6
 l_610AC:
         move.b  (dat_1BC44).l,d0                ; 610AC
-        move.b  (dat_1BC32).l,d3                ; 610B2
+        move.b  (PieceReversed).l,d3                ; 610B2
         eor.b   d3,d0                           ; 610B8
         move.b  d0,(dat_1BB5D).l                ; 610BA
-        move.b  (dat_1BBC6).l,d0                ; 610C0
+        move.b  (SteeringInput).l,d0                ; 610C0
         beq.w   l_6113C                         ; 610C6
         move.b  (dat_1BBF6).l,d3                ; 610CA
         eor.b   d3,d0                           ; 610D0
-        move.b  d0,(dat_1BB1B).l                ; 610D2
-        move.b  (dat_1BB4D).l,d0                ; 610D8
+        move.b  d0,(WorkByte6).l                ; 610D2
+        move.b  (PieceDirection).l,d0                ; 610D8
         bpl.w   l_61120                         ; 610DE
-        move.b  (dat_1BBC6).l,d0                ; 610E2
+        move.b  (SteeringInput).l,d0                ; 610E2
         move.b  (dat_1BB5D).l,d3                ; 610E8
         eor.b   d3,d0                           ; 610EE
         bmi.w   l_61104                         ; 610F0
@@ -13517,27 +13989,27 @@ l_610AC:
         jmp     (l_61126).l                     ; 610FE
 l_61104:
         move.b  (dat_1BB5D).l,d0                ; 61104
-        move.b  d0,(dat_1BBC6).l                ; 6110A
+        move.b  d0,(SteeringInput).l                ; 6110A
         move.b  (dat_1BBD4).l,d0                ; 61110
         subi.b  #$23,d0                         ; 61116
         jmp     (l_61136).l                     ; 6111A
 l_61120:
         move.b  (dat_1BBD4).l,d0                ; 61120
 l_61126:
-        tst.b   (dat_1BB1B).l                   ; 61126
+        tst.b   (WorkByte6).l                   ; 61126
         bmi.w   l_61136                         ; 6112C
         add.b   (dat_1BC3C).l,d0                ; 61130
 l_61136:
         jmp     (l_6121C).l                     ; 61136
 l_6113C:
         move.w  #$0,d4                          ; 6113C
-        move.b  (dat_1BB4D).l,d0                ; 61140
+        move.b  (PieceDirection).l,d0                ; 61140
         bpl.w   l_61160                         ; 61146
-        move.b  (dat_1BB5D).l,(dat_1BBC6).l     ; 6114A
+        move.b  (dat_1BB5D).l,(SteeringInput).l     ; 6114A
         move.b  (dat_1BBD4).l,d0                ; 61154
         jmp     (l_6121C).l                     ; 6115A
 l_61160:
-        move.b  (dat_1BBF6).l,(dat_1BBC6).l     ; 61160
+        move.b  (dat_1BBF6).l,(SteeringInput).l     ; 61160
         move.w  (dat_1BC2A).l,d0                ; 6116A
         move.b  d0,d2                           ; 61170
         move.b  (dat_1BC2A).l,d3                ; 61172
@@ -13546,8 +14018,8 @@ l_61160:
         bpl.w   l_611C2                         ; 61180
         move.b  #$ff,d2                         ; 61184
 l_61188:
-        move.b  d2,(dat_1BB1A).l                ; 61188
-        move.w  (dat_1BD30).l,d0                ; 6118E
+        move.b  d2,(WorkByte5).l                ; 61188
+        move.w  (SpeedForward).l,d0                ; 6118E
         bpl.w   l_6119A                         ; 61194
         neg.w   d0                              ; 61198
 l_6119A:
@@ -13555,7 +14027,7 @@ l_6119A:
         bpl.w   l_611A6                         ; 6119E
         move.w  #$7f00,d0                       ; 611A2
 l_611A6:
-        move.b  (dat_1BB1A).l,d3                ; 611A6
+        move.b  (WorkByte5).l,d3                ; 611A6
         asl.w   #$7,d3                          ; 611AC
         bclr    #$f,d3                          ; 611AE
         muls.w  d3,d0                           ; 611B2
@@ -13570,10 +14042,10 @@ l_611C2:
         bpl.w   l_611CE                         ; 611C8
         neg.w   d0                              ; 611CC
 l_611CE:
-        add.w   d0,(dat_1BCE6).l                ; 611CE
+        add.w   d0,(CarHeading).l                ; 611CE
 l_611D4:
         move.w  #$0,d2                          ; 611D4
-        move.w  (dat_1BCF2).l,d0                ; 611D8
+        move.w  (TurnSpeedHeading).l,d0                ; 611D8
         andi.l  #$f,d2                          ; 611DE
         lsr.w   d2,d0                           ; 611E4
         sub.w   d0,d4                           ; 611E6
@@ -13583,23 +14055,23 @@ l_611D4:
         addi.l  #$36729563,d3                   ; 611FA
         cmp.l   (a0),d3                         ; 61200
         bne.w   l_61210                         ; 61202
-        tst.b   (dat_1BB7E).l                   ; 61206
+        tst.b   (WheelsDown).l                   ; 61206
         bne.w   l_61214                         ; 6120C
 l_61210:
         move.w  #$0,d4                          ; 61210
 l_61214:
-        move.w  d4,(dat_1BCFE).l                ; 61214
+        move.w  d4,(TurnForceHeading).l                ; 61214
         rts                                     ; 6121A
 l_6121C:
-        move.b  d0,(dat_1BB1A).l                ; 6121C
-        move.w  (dat_1BD30).l,d0                ; 61222
-        move.b  (dat_1BB1A).l,d3                ; 61228
+        move.b  d0,(WorkByte5).l                ; 6121C
+        move.w  (SpeedForward).l,d0                ; 61222
+        move.b  (WorkByte5).l,d3                ; 61228
         asl.w   #$7,d3                          ; 6122E
         bclr    #$f,d3                          ; 61230
         muls.w  d3,d0                           ; 61234
         asl.l   #$1,d0                          ; 61236
         swap    d0                              ; 61238
-        tst.b   (dat_1BBC6).l                   ; 6123A
+        tst.b   (SteeringInput).l                   ; 6123A
         bpl.w   l_61246                         ; 61240
         neg.w   d0                              ; 61244
 l_61246:
@@ -13615,7 +14087,7 @@ dat_6125A:
 ; PrintTrackTitle - the track's division and name printed
 ;-------------------------------------------------------------------------------
 PrintTrackTitle:
-        jsr     (sub_64C0E).l                   ; 61260
+        jsr     (TextOffsetFour).l                   ; 61260
         move.b  (CurrentTrack).l,d1             ; 61266
         movea.l #dat_6129A,a1                   ; 6126C
         move.b  (a1,d1.w),d0                    ; 61272
@@ -13624,7 +14096,7 @@ PrintTrackTitle:
         jsr     (PrintMenuText).l               ; 61280
         move.b  (CurrentTrack).l,d1             ; 61286
         jsr     (PrintTrackName).l              ; 6128C
-        jsr     (sub_64834).l                   ; 61292
+        jsr     (TextOffsetNone).l                   ; 61292
         rts                                     ; 61298
 dat_6129A:
 	dc.b	$0F,$0D,$10,$10,$10,$0F,$10,$0D
@@ -13634,11 +14106,11 @@ dat_6129A:
 ;-------------------------------------------------------------------------------
 MulFraction:
         andi.w  #$ff,d0                         ; 612A2
-        move.b  (dat_1BB1A).l,d3                ; 612A6
+        move.b  (WorkByte5).l,d3                ; 612A6
         andi.w  #$ff,d3                         ; 612AC
         mulu.w  d0,d3                           ; 612B0
         move.w  d3,d0                           ; 612B2
-        move.b  d0,(dat_1BB1B).l                ; 612B4
+        move.b  d0,(WorkByte6).l                ; 612B4
         lsr.w   #$8,d0                          ; 612BA
         rts                                     ; 612BC
 
@@ -13650,38 +14122,48 @@ KeyDown:
         move.b  (a0,d1.w),d1                    ; 612C4
         cmpi.b  #$b3,d1                         ; 612C8
         rts                                     ; 612CC
-sub_612CE:		; (no references found: found by the code sweep)
+
+;-------------------------------------------------------------------------------
+; SignedMulFraction - (no references) MulFraction with the signs of d0 and WorkSign: the product
+; negated when they differ, its low byte in WorkByte6 and d0 its high byte
+;-------------------------------------------------------------------------------
+SignedMulFraction:		; (no references found: found by the code sweep)
         tst.b   d0                              ; 612CE
         bmi.w   l_612E2                         ; 612D0
-        tst.b   (dat_1BBBB).l                   ; 612D4
+        tst.b   (WorkSign).l                   ; 612D4
         bmi.w   l_612EE                         ; 612DA
 l_612DE:
         bra.w   MulFraction                     ; 612DE
 l_612E2:
         neg.b   d0                              ; 612E2
-        tst.b   (dat_1BBBB).l                   ; 612E4
+        tst.b   (WorkSign).l                   ; 612E4
         bmi.w   l_612DE                         ; 612EA
 l_612EE:
         jsr     (MulFraction).l                 ; 612EE
         neg.w   d3                              ; 612F4
         move.w  d3,d0                           ; 612F6
-        move.b  d3,(dat_1BB1B).l                ; 612F8
+        move.b  d3,(WorkByte6).l                ; 612F8
         lsr.w   #$8,d0                          ; 612FE
         rts                                     ; 61300
-sub_61302:		; (no references found: found by the code sweep)
-        bclr    #$7,(dat_1BBBB).l               ; 61302
+
+;-------------------------------------------------------------------------------
+; SignedMulWord - (no references) (d0 x 256 + WorkByte6) x WorkByte5 / 256, negated by WorkSign's
+; sign (cleared): the low byte in WorkByte6, d0 the high byte
+;-------------------------------------------------------------------------------
+SignedMulWord:		; (no references found: found by the code sweep)
+        bclr    #$7,(WorkSign).l               ; 61302
         asl.w   #$8,d0                          ; 6130A
-        or.b    (dat_1BB1B).l,d0                ; 6130C
-        move.b  (dat_1BB1A).l,d3                ; 61312
+        or.b    (WorkByte6).l,d0                ; 6130C
+        move.b  (WorkByte5).l,d3                ; 61312
         andi.w  #$ff,d3                         ; 61318
-        tst.b   (dat_1BBBB).l                   ; 6131C
+        tst.b   (WorkSign).l                   ; 6131C
         bpl.w   l_61328                         ; 61322
         neg.w   d3                              ; 61326
 l_61328:
         muls.w  d0,d3                           ; 61328
         asr.l   #$8,d3                          ; 6132A
         move.w  d3,d0                           ; 6132C
-        move.b  d0,(dat_1BB1B).l                ; 6132E
+        move.b  d0,(WorkByte6).l                ; 6132E
         lsr.w   #$8,d0                          ; 61334
         rts                                     ; 61336
 
@@ -13728,21 +14210,21 @@ l_61366:
 ;-------------------------------------------------------------------------------
 BuildViewMatrix:
         movea.l #ViewMatrix,a5                  ; 61368
-        move.w  (dat_1BCE6).l,d0                ; 6136E
+        move.w  (CarHeading).l,d0                ; 6136E
         jsr     (Sin).l                         ; 61374
         move.w  d0,$4(a5)                       ; 6137A
         move.w  d0,$c(a5)                       ; 6137E
         move.w  d0,$e(a5)                       ; 61382
         move.w  d0,$14(a5)                      ; 61386
         move.w  d0,$16(a5)                      ; 6138A
-        move.w  (dat_1BCE6).l,d0                ; 6138E
+        move.w  (CarHeading).l,d0                ; 6138E
         jsr     (Cos).l                         ; 61394
         move.w  d0,$6(a5)                       ; 6139A
         move.w  d0,$10(a5)                      ; 6139E
         move.w  d0,$12(a5)                      ; 613A2
         move.w  d0,$18(a5)                      ; 613A6
         move.w  d0,$1a(a5)                      ; 613AA
-        move.w  (dat_1BCE6).l,d0                ; 613AE
+        move.w  (CarHeading).l,d0                ; 613AE
         sub.w   (dat_1BD5A).l,d0                ; 613B4
         move.w  d0,-(a7)                        ; 613BA
         jsr     (Sin).l                         ; 613BC
@@ -13754,18 +14236,18 @@ BuildViewMatrix:
         move.w  d0,$38(a5)                      ; 613D6
         move.w  d0,$3e(a5)                      ; 613DA
         move.w  d0,$46(a5)                      ; 613DE
-        move.w  (dat_1BCE4).l,d0                ; 613E2
+        move.w  (CarPitch).l,d0                ; 613E2
         jsr     (Sin).l                         ; 613E8
         move.w  d0,$8(a5)                       ; 613EE
-        move.w  (dat_1BCE4).l,d0                ; 613F2
+        move.w  (CarPitch).l,d0                ; 613F2
         jsr     (Cos).l                         ; 613F8
         move.w  d0,$a(a5)                       ; 613FE
         move.w  d0,$1c(a5)                      ; 61402
         move.w  d0,$1e(a5)                      ; 61406
-        move.w  (dat_1BCE8).l,d0                ; 6140A
+        move.w  (CarRoll).l,d0                ; 6140A
         jsr     (Cos).l                         ; 61410
         move.w  d0,$22(a5)                      ; 61416
-        move.w  (dat_1BCE8).l,d0                ; 6141A
+        move.w  (CarRoll).l,d0                ; 6141A
         jsr     (Sin).l                         ; 61420
         move.w  d0,$20(a5)                      ; 61426
         move.w  $8(a5),d5                       ; 6142A
@@ -13877,21 +14359,27 @@ l_6152A:
         neg.w   d0                              ; 61584
         move.w  d0,$24(a5)                      ; 61586
         rts                                     ; 6158A
-sub_6158C:
+
+;-------------------------------------------------------------------------------
+; VelocityToCarAxes - CarPhysics: the car's velocity (VelocityX-VelocityZ) turned into its own
+; axes through dat_1EC46's matrix entries (MatrixTimes): SpeedSideways, SpeedUp, SpeedForward
+; (SpeedForward the speed forward) (probably)
+;-------------------------------------------------------------------------------
+VelocityToCarAxes:
         move.w  #$2,d2                          ; 6158C
         movea.l #dat_1EC46,a5                   ; 61590
-        movea.l #dat_1BD2C,a4                   ; 61596
+        movea.l #SpeedSideways,a4                   ; 61596
 l_6159C:
         move.w  #$0,d5                          ; 6159C
-        move.w  (dat_1BCEA).l,d0                ; 615A0
+        move.w  (VelocityX).l,d0                ; 615A0
         move.b  (a5,d2.w),d1                    ; 615A6
         jsr     (MatrixTimes).l                 ; 615AA
         add.w   d0,d5                           ; 615B0
-        move.w  (dat_1BCEC).l,d0                ; 615B2
+        move.w  (VelocityY).l,d0                ; 615B2
         move.b  $3(a5,d2.w),d1                  ; 615B8
         jsr     (MatrixTimes).l                 ; 615BC
         add.w   d0,d5                           ; 615C2
-        move.w  (dat_1BCEE).l,d0                ; 615C4
+        move.w  (VelocityZ).l,d0                ; 615C4
         move.b  $6(a5,d2.w),d1                  ; 615CA
         jsr     (MatrixTimes).l                 ; 615CE
         add.w   d0,d5                           ; 615D4
@@ -13901,32 +14389,42 @@ l_6159C:
         subq.b  #$2,d2                          ; 615DE
         bpl.w   l_6159C                         ; 615E0
         rts                                     ; 615E4
-sub_615E6:
+
+;-------------------------------------------------------------------------------
+; GravityInCarAxes - CarPhysics: three of the matrix's entries (MatrixTimesNeg, MatrixTimesPos) as
+; GravityUp, GravityForward, GravitySide - gravity in the car's axes (probably)
+;-------------------------------------------------------------------------------
+GravityInCarAxes:
         move.w  #$f,d1                          ; 615E6
         jsr     (MatrixTimesNeg).l              ; 615EA
-        move.w  d0,(dat_1BD10).l                ; 615F0
+        move.w  d0,(GravityUp).l                ; 615F0
         move.w  #$4,d1                          ; 615F6
         jsr     (MatrixTimesNeg).l              ; 615FA
-        move.w  d0,(dat_1BD12).l                ; 61600
+        move.w  d0,(GravityForward).l                ; 61600
         move.w  #$e,d1                          ; 61606
         jsr     (MatrixTimesPos).l              ; 6160A
-        move.w  d0,(dat_1BD0E).l                ; 61610
+        move.w  d0,(GravitySide).l                ; 61610
         rts                                     ; 61616
-sub_61618:
+
+;-------------------------------------------------------------------------------
+; ForceToWorld - CarPhysics: the forces in the car's axes (CarForceSide-CarForceForward) turned into the
+; world's (dat_1EC46's entries, MatrixTimes) - into ForceX-ForceZ (probably)
+;-------------------------------------------------------------------------------
+ForceToWorld:
         move.w  #$2,d2                          ; 61618
         movea.l #dat_1EC46,a5                   ; 6161C
-        movea.l #dat_1BCF6,a4                   ; 61622
+        movea.l #ForceX,a4                   ; 61622
 l_61628:
         move.w  #$0,d5                          ; 61628
-        move.w  (dat_1BD32).l,d0                ; 6162C
+        move.w  (CarForceSide).l,d0                ; 6162C
         move.b  $9(a5,d2.w),d1                  ; 61632
         jsr     (MatrixTimes).l                 ; 61636
         add.w   d0,d5                           ; 6163C
-        move.w  (dat_1BD34).l,d0                ; 6163E
+        move.w  (CarForceUp).l,d0                ; 6163E
         move.b  $c(a5,d2.w),d1                  ; 61644
         jsr     (MatrixTimes).l                 ; 61648
         add.w   d0,d5                           ; 6164E
-        move.w  (dat_1BD36).l,d0                ; 61650
+        move.w  (CarForceForward).l,d0                ; 61650
         move.b  $f(a5,d2.w),d1                  ; 61656
         jsr     (MatrixTimes).l                 ; 6165A
         add.w   d0,d5                           ; 61660
@@ -13936,17 +14434,22 @@ l_61628:
         subq.b  #$1,d2                          ; 6166A
         bpl.w   l_61628                         ; 6166C
         rts                                     ; 61670
-sub_61672:
+
+;-------------------------------------------------------------------------------
+; TorqueToWorld - CarPhysics: the turning forces in the car's axes (CarTurnForcePitch-CarTurnForceRoll) turned
+; into the world's (MatrixTimes) - into TurnForcePitch-TurnForceRoll (probably)
+;-------------------------------------------------------------------------------
+TorqueToWorld:
         move.w  #$1,d2                          ; 61672
         movea.l #dat_1EC46,a5                   ; 61676
-        movea.l #dat_1BD3A,a4                   ; 6167C
+        movea.l #CarTurnForcePitch,a4                   ; 6167C
 l_61682:
         move.w  #$0,d5                          ; 61682
-        move.w  (dat_1BCF0).l,d0                ; 61686
+        move.w  (TurnSpeedPitch).l,d0                ; 61686
         move.b  $12(a5,d2.w),d1                 ; 6168C
         jsr     (MatrixTimes).l                 ; 61690
         add.w   d0,d5                           ; 61696
-        move.w  (dat_1BCF2).l,d0                ; 61698
+        move.w  (TurnSpeedHeading).l,d0                ; 61698
         move.b  $14(a5,d2.w),d1                 ; 6169E
         jsr     (MatrixTimes).l                 ; 616A2
         add.w   d0,d5                           ; 616A8
@@ -13955,11 +14458,11 @@ l_61682:
         lsr.w   #$1,d2                          ; 616B0
         subq.b  #$1,d2                          ; 616B2
         bpl.w   l_61682                         ; 616B4
-        move.w  (dat_1BD3C).l,d0                ; 616B8
+        move.w  (CarTurnForceHeading).l,d0                ; 616B8
         move.w  #$4,d1                          ; 616BE
         jsr     (MatrixTimes).l                 ; 616C2
-        add.w   (dat_1BCF4).l,d0                ; 616C8
-        move.w  d0,(dat_1BD3E).l                ; 616CE
+        add.w   (TurnSpeedRoll).l,d0                ; 616C8
+        move.w  d0,(CarTurnForceRoll).l                ; 616CE
         rts                                     ; 616D4
 	dc.b	$00,$00
 Countdown1:				; counted down to 0 by VBlankTick each frame
@@ -13987,11 +14490,11 @@ l_61700:
         bpl.w   l_6171A                         ; 61706
         tst.b   (dat_1BBB9).l                   ; 6170A
         bne.w   l_6171A                         ; 61710
-        jsr     (sub_651B8).l                   ; 61714
+        jsr     (UpdateWheelSprites).l                   ; 61714
 l_6171A:
         move.w  (dat_69EDE).l,(CUSTOM+DMACON).l ; 6171A
-        move.w  (dat_1BC34).l,d0                ; 61724
-        add.w   (dat_1BBF4).l,d0                ; 6172A
+        move.w  (EngineRevs).l,d0                ; 61724
+        add.w   (EngineRevTarget).l,d0                ; 6172A
         bpl.w   l_61756                         ; 61730
         tst.b   (dat_1BB63).l                   ; 61734
         beq.w   l_61752                         ; 6173A
@@ -14001,7 +14504,7 @@ l_6171A:
 l_61752:
         move.w  #$0,d0                          ; 61752
 l_61756:
-        move.w  d0,(dat_1BC34).l                ; 61756
+        move.w  d0,(EngineRevs).l                ; 61756
         addi.w  #$17a,d0                        ; 6175C
         move.l  #$493e00,d3                     ; 61760
         divu.w  d0,d3                           ; 61766
@@ -14033,7 +14536,12 @@ l_617A2:
 l_617C2:
         rts                                     ; 617C2
 	dc.b	$4C,$DF,$7F,$FF,$4E,$75,$00,$00,$4B,$26,$49,$27
-sub_617D0:
+
+;-------------------------------------------------------------------------------
+; RaiseFarSides - EdgesNextPiece: the two points d1's pair (PointScreenX more than $A0 from the
+; centre) moved down by an eighth of the excess (probably a correction for the wide-angle view)
+;-------------------------------------------------------------------------------
+RaiseFarSides:
         move.b  (dat_1BBE4).l,d1                ; 617D0
         move.b  #$2,d3                          ; 617D6
 l_617DA:
@@ -14053,7 +14561,11 @@ l_61806:
         subq.b  #$1,d3                          ; 61806
         bne.w   l_617DA                         ; 61808
         rts                                     ; 6180C
-sub_6180E:
+
+;-------------------------------------------------------------------------------
+; ScaleAdd114 - d0 x $114 / 256 + d6 (WheelsOnTrack, OpponentPhysics)
+;-------------------------------------------------------------------------------
+ScaleAdd114:
         move.w  #$114,d3                        ; 6180E
         beq.w   l_6181A                         ; 61812
         muls.w  d3,d0                           ; 61816
@@ -14061,7 +14573,12 @@ sub_6180E:
 l_6181A:
         add.w   d6,d0                           ; 6181A
         rts                                     ; 6181C
-sub_6181E:
+
+;-------------------------------------------------------------------------------
+; AddLapPartTime - CheckLapPiece: car d1's place on its piece (PlayerPiecePos) as a time - its
+; part of the piece x 13 / 256, adjusted, added (AddTime) (probably)
+;-------------------------------------------------------------------------------
+AddLapPartTime:
         move.w  d1,d3                           ; 6181E
         movea.l #PlayerPiecePos,a0              ; 61820
         asl.b   #$1,d3                          ; 61826
@@ -14069,7 +14586,7 @@ sub_6181E:
         bne.w   l_6185A                         ; 6182C
         move.b  $1(a0,d3.w),d0                  ; 61830
         eori.b  #$ff,d0                         ; 61834
-        move.b  d0,(dat_1BB1A).l                ; 61838
+        move.b  d0,(WorkByte5).l                ; 61838
         move.b  #$d,d0                          ; 6183E
         jsr     (MulFraction).l                 ; 61842
         cmpi.b  #$a,d0                          ; 61848
@@ -14086,27 +14603,32 @@ l_6185A:
 ;-------------------------------------------------------------------------------
 CarPhysics:
         jsr     (BuildViewMatrix).l             ; 6185C
-        jsr     (sub_618CE).l                   ; 61862
-        jsr     (sub_5C1D0).l                   ; 61868
-        jsr     (sub_61B70).l                   ; 6186E
-        jsr     (sub_6158C).l                   ; 61874
-        jsr     (sub_60FBE).l                   ; 6187A
-        jsr     (sub_615E6).l                   ; 61880
+        jsr     (SuspensionOffsets).l                   ; 61862
+        jsr     (TrackUnderWheels).l                   ; 61868
+        jsr     (CornerHeights).l                   ; 6186E
+        jsr     (VelocityToCarAxes).l                   ; 61874
+        jsr     (SetSpeed).l                   ; 6187A
+        jsr     (GravityInCarAxes).l                   ; 61880
         jsr     (WheelsOnTrack).l               ; 61886
         move.b  (dat_1BB72).l,d0                ; 6188C
         beq.w   l_618C0                         ; 61892
-        jsr     (sub_620B8).l                   ; 61896
-        jsr     (sub_61012).l                   ; 6189C
-        jsr     (sub_61618).l                   ; 618A2
-        jsr     (sub_621F4).l                   ; 618A8
-        jsr     (sub_62138).l                   ; 618AE
-        jsr     (sub_61B26).l                   ; 618B4
-        jsr     (sub_61672).l                   ; 618BA
+        jsr     (WheelForces).l                   ; 61896
+        jsr     (CarPhysicsPieces).l                   ; 6189C
+        jsr     (ForceToWorld).l                   ; 618A2
+        jsr     (DriveForce).l                   ; 618A8
+        jsr     (TurnForces).l                   ; 618AE
+        jsr     (AddTorque).l                   ; 618B4
+        jsr     (TorqueToWorld).l                   ; 618BA
 l_618C0:
-        jsr     (sub_61ADC).l                   ; 618C0
-        jsr     (sub_61950).l                   ; 618C6
+        jsr     (AddForce).l                   ; 618C0
+        jsr     (MoveCar).l                   ; 618C6
         rts                                     ; 618CC
-sub_618CE:
+
+;-------------------------------------------------------------------------------
+; SuspensionOffsets - CarPhysics: the wheels' offsets (SuspensionOffset0-dat_1BD0C) from the car model's
+; corners (dat_1C264-dat_1C276) (probably)
+;-------------------------------------------------------------------------------
+SuspensionOffsets:
         move.w  (dat_1C26E).l,d4                ; 618CE
         move.w  (dat_1C264).l,d0                ; 618D4
         asr.w   #$1,d4                          ; 618DA
@@ -14127,17 +14649,23 @@ sub_618CE:
         neg.w   (dat_1BD06).l                   ; 6190C
         move.w  d3,(dat_1BD0C).l                ; 61912
         neg.w   (dat_1BD0C).l                   ; 61918
-        move.w  d0,(dat_1BD02).l                ; 6191E
+        move.w  d0,(SuspensionOffset0).l                ; 6191E
         move.w  d0,(dat_1BD04).l                ; 61924
         move.w  d3,(dat_1BD08).l                ; 6192A
         move.w  d3,(dat_1BD0A).l                ; 61930
-        sub.w   d4,(dat_1BD02).l                ; 61936
+        sub.w   d4,(SuspensionOffset0).l                ; 61936
         sub.w   d5,(dat_1BD08).l                ; 6193C
         add.w   d4,(dat_1BD04).l                ; 61942
         add.w   d5,(dat_1BD0A).l                ; 61948
         rts                                     ; 6194E
-sub_61950:
-        move.w  (dat_1BCEA).l,d0                ; 61950
+
+;-------------------------------------------------------------------------------
+; MoveCar - CarPhysics: the car moved by its velocity (its place CarX-CarZ, longs) and
+; turned by its turning speeds (its angles CarPitch-CarRoll); ViewPitch (the view's pitch)
+; (probably)
+;-------------------------------------------------------------------------------
+MoveCar:
+        move.w  (VelocityX).l,d0                ; 61950
         move.b  #$ee,d2                         ; 61956
         beq.w   l_61962                         ; 6195A
         muls.w  d2,d0                           ; 6195E
@@ -14145,8 +14673,8 @@ sub_61950:
 l_61962:
         ext.l   d0                              ; 61962
         asl.l   #$6,d0                          ; 61964
-        add.l   d0,(dat_1BCD8).l                ; 61966
-        move.w  (dat_1BCEC).l,d0                ; 6196C
+        add.l   d0,(CarX).l                ; 61966
+        move.w  (VelocityY).l,d0                ; 6196C
         move.b  #$ee,d2                         ; 61972
         beq.w   l_6197E                         ; 61976
         muls.w  d2,d0                           ; 6197A
@@ -14154,8 +14682,8 @@ l_61962:
 l_6197E:
         ext.l   d0                              ; 6197E
         asl.l   #$7,d0                          ; 61980
-        add.l   d0,(dat_1BCDC).l                ; 61982
-        move.w  (dat_1BCEE).l,d0                ; 61988
+        add.l   d0,(CarY).l                ; 61982
+        move.w  (VelocityZ).l,d0                ; 61988
         move.b  #$ee,d2                         ; 6198E
         beq.w   l_6199A                         ; 61992
         muls.w  d2,d0                           ; 61996
@@ -14163,33 +14691,33 @@ l_6197E:
 l_6199A:
         ext.l   d0                              ; 6199A
         asl.l   #$6,d0                          ; 6199C
-        add.l   d0,(dat_1BCE0).l                ; 6199E
-        move.w  (dat_1BCDC).l,d0                ; 619A4
+        add.l   d0,(CarZ).l                ; 6199E
+        move.w  (CarY).l,d0                ; 619A4
         cmpi.w  #$3e8,d0                        ; 619AA
         blt.w   l_619BA                         ; 619AE
-        move.w  #$3e8,(dat_1BCDC).l             ; 619B2
+        move.w  #$3e8,(CarY).l             ; 619B2
 l_619BA:
-        move.w  (dat_1BD3A).l,d0                ; 619BA
+        move.w  (CarTurnForcePitch).l,d0                ; 619BA
         move.b  #$ee,d2                         ; 619C0
         beq.w   l_619CC                         ; 619C4
         muls.w  d2,d0                           ; 619C8
         asr.l   #$8,d0                          ; 619CA
 l_619CC:
-        add.w   d0,(dat_1BCE4).l                ; 619CC
-        move.w  (dat_1BD3C).l,d0                ; 619D2
+        add.w   d0,(CarPitch).l                ; 619CC
+        move.w  (CarTurnForceHeading).l,d0                ; 619D2
         move.b  #$ee,d2                         ; 619D8
         beq.w   l_619E4                         ; 619DC
         muls.w  d2,d0                           ; 619E0
         asr.l   #$8,d0                          ; 619E2
 l_619E4:
-        add.w   d0,(dat_1BCE6).l                ; 619E4
-        move.w  (dat_1BD3E).l,d0                ; 619EA
+        add.w   d0,(CarHeading).l                ; 619E4
+        move.w  (CarTurnForceRoll).l,d0                ; 619EA
         move.b  #$ee,d2                         ; 619F0
         beq.w   l_619FC                         ; 619F4
         muls.w  d2,d0                           ; 619F8
         asr.l   #$8,d0                          ; 619FA
 l_619FC:
-        add.w   d0,(dat_1BCE8).l                ; 619FC
+        add.w   d0,(CarRoll).l                ; 619FC
         move.w  #$0,d2                          ; 61A02
         tst.b   (dat_1BB75).l                   ; 61A06
         bpl.w   l_61A20                         ; 61A0C
@@ -14199,7 +14727,7 @@ l_619FC:
         addq.b  #$2,d2                          ; 61A1E
 l_61A20:
         movea.l #dat_61AD4,a0                   ; 61A20
-        move.w  (dat_1BCE4).l,d3                ; 61A26
+        move.w  (CarPitch).l,d3                ; 61A26
         bmi.w   l_61A3E                         ; 61A2C
         move.w  (a0,d2.w),d0                    ; 61A30
         cmp.w   d3,d0                           ; 61A34
@@ -14210,13 +14738,13 @@ l_61A3E:
         cmp.w   d3,d0                           ; 61A42
         bcs.w   l_61A62                         ; 61A44
 l_61A48:
-        move.w  d0,(dat_1BCE4).l                ; 61A48
-        move.w  (dat_1BCF0).l,d3                ; 61A4E
+        move.w  d0,(CarPitch).l                ; 61A48
+        move.w  (TurnSpeedPitch).l,d3                ; 61A4E
         eor.w   d3,d0                           ; 61A54
         bmi.w   l_61A62                         ; 61A56
-        move.w  #$0,(dat_1BCF0).l               ; 61A5A
+        move.w  #$0,(TurnSpeedPitch).l               ; 61A5A
 l_61A62:
-        move.w  (dat_1BCE8).l,d3                ; 61A62
+        move.w  (CarRoll).l,d3                ; 61A62
         bmi.w   l_61A7A                         ; 61A68
         move.w  (a0,d2.w),d0                    ; 61A6C
         cmp.w   d3,d0                           ; 61A70
@@ -14227,14 +14755,14 @@ l_61A7A:
         cmp.w   d3,d0                           ; 61A7E
         bcs.w   l_61A9E                         ; 61A80
 l_61A84:
-        move.w  d0,(dat_1BCE8).l                ; 61A84
-        move.w  (dat_1BCF4).l,d3                ; 61A8A
+        move.w  d0,(CarRoll).l                ; 61A84
+        move.w  (TurnSpeedRoll).l,d3                ; 61A8A
         eor.w   d3,d0                           ; 61A90
         bmi.w   l_61A9E                         ; 61A92
-        move.w  #$0,(dat_1BCF4).l               ; 61A96
+        move.w  #$0,(TurnSpeedRoll).l               ; 61A96
 l_61A9E:
         bclr    #$7,(dat_1BBAB).l               ; 61A9E
-        move.b  (dat_1BCE4).l,d0                ; 61AA6
+        move.b  (CarPitch).l,d0                ; 61AA6
         bpl.w   l_61AB2                         ; 61AAC
         neg.b   d0                              ; 61AB0
 l_61AB2:
@@ -14243,81 +14771,97 @@ l_61AB2:
         bset    #$7,(dat_1BBAB).l               ; 61ABA
 l_61AC2:
         move.w  #$0,d0                          ; 61AC2
-        sub.w   (dat_1BCE4).l,d0                ; 61AC6
-        move.w  d0,(dat_1BC42).l                ; 61ACC
+        sub.w   (CarPitch).l,d0                ; 61AC6
+        move.w  d0,(ViewPitch).l                ; 61ACC
         rts                                     ; 61AD2
 dat_61AD4:
 	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
-sub_61ADC:
-        move.w  (dat_1BCF6).l,d0                ; 61ADC
+
+;-------------------------------------------------------------------------------
+; AddForce - CarPhysics: the velocity (VelocityX-VelocityZ) changed by the forces
+; (ForceX-ForceZ) x $EE / 256
+;-------------------------------------------------------------------------------
+AddForce:
+        move.w  (ForceX).l,d0                ; 61ADC
         move.b  #$ee,d2                         ; 61AE2
         beq.w   l_61AEE                         ; 61AE6
         muls.w  d2,d0                           ; 61AEA
         asr.l   #$8,d0                          ; 61AEC
 l_61AEE:
-        add.w   d0,(dat_1BCEA).l                ; 61AEE
-        move.w  (dat_1BCF8).l,d0                ; 61AF4
+        add.w   d0,(VelocityX).l                ; 61AEE
+        move.w  (ForceY).l,d0                ; 61AF4
         move.b  #$ee,d2                         ; 61AFA
         beq.w   l_61B06                         ; 61AFE
         muls.w  d2,d0                           ; 61B02
         asr.l   #$8,d0                          ; 61B04
 l_61B06:
-        add.w   d0,(dat_1BCEC).l                ; 61B06
-        move.w  (dat_1BCFA).l,d0                ; 61B0C
+        add.w   d0,(VelocityY).l                ; 61B06
+        move.w  (ForceZ).l,d0                ; 61B0C
         move.b  #$ee,d2                         ; 61B12
         beq.w   l_61B1E                         ; 61B16
         muls.w  d2,d0                           ; 61B1A
         asr.l   #$8,d0                          ; 61B1C
 l_61B1E:
-        add.w   d0,(dat_1BCEE).l                ; 61B1E
+        add.w   d0,(VelocityZ).l                ; 61B1E
         rts                                     ; 61B24
-sub_61B26:
-        move.w  (dat_1BCFC).l,d0                ; 61B26
+
+;-------------------------------------------------------------------------------
+; AddTorque - CarPhysics: the turning speeds (TurnSpeedPitch-TurnSpeedRoll) changed by the turning forces
+; (TurnForcePitch-TurnForceRoll) x $EE / 256
+;-------------------------------------------------------------------------------
+AddTorque:
+        move.w  (TurnForcePitch).l,d0                ; 61B26
         move.b  #$ee,d2                         ; 61B2C
         beq.w   l_61B38                         ; 61B30
         muls.w  d2,d0                           ; 61B34
         asr.l   #$8,d0                          ; 61B36
 l_61B38:
-        add.w   d0,(dat_1BCF0).l                ; 61B38
-        move.w  (dat_1BCFE).l,d0                ; 61B3E
+        add.w   d0,(TurnSpeedPitch).l                ; 61B38
+        move.w  (TurnForceHeading).l,d0                ; 61B3E
         move.b  #$ee,d2                         ; 61B44
         beq.w   l_61B50                         ; 61B48
         muls.w  d2,d0                           ; 61B4C
         asr.l   #$8,d0                          ; 61B4E
 l_61B50:
-        add.w   d0,(dat_1BCF2).l                ; 61B50
-        move.w  (dat_1BD00).l,d0                ; 61B56
+        add.w   d0,(TurnSpeedHeading).l                ; 61B50
+        move.w  (TurnForceRoll).l,d0                ; 61B56
         move.b  #$ee,d2                         ; 61B5C
         beq.w   l_61B68                         ; 61B60
         muls.w  d2,d0                           ; 61B64
         asr.l   #$8,d0                          ; 61B66
 l_61B68:
-        add.w   d0,(dat_1BCF4).l                ; 61B68
+        add.w   d0,(TurnSpeedRoll).l                ; 61B68
         rts                                     ; 61B6E
-sub_61B70:
-        move.w  (dat_1BCE4).l,d0                ; 61B70
+
+;-------------------------------------------------------------------------------
+; CornerHeights - CarPhysics: the heights of the car's front, middle and back (FrontHeight,
+; MiddleHeight, BackHeight) from its height (CarY) and the sines of its pitch and roll
+; (CarPitch, CarRoll) (probably)
+;-------------------------------------------------------------------------------
+CornerHeights:
+        move.w  (CarPitch).l,d0                ; 61B70
         jsr     (Sin).l                         ; 61B76
         move.w  d0,(dat_1BBF6).l                ; 61B7C
-        move.w  (dat_1BCE8).l,d0                ; 61B82
+        move.w  (CarRoll).l,d0                ; 61B82
         jsr     (Sin).l                         ; 61B88
         ext.l   d0                              ; 61B8E
         asl.l   #$3,d0                          ; 61B90
         move.w  (dat_1BBF6).l,d3                ; 61B92
         ext.l   d3                              ; 61B98
         asl.l   #$4,d3                          ; 61B9A
-        move.l  (dat_1BCDC).l,d4                ; 61B9C
+        move.l  (CarY).l,d4                ; 61B9C
         sub.l   d3,d4                           ; 61BA2
         asr.l   #$8,d4                          ; 61BA4
-        move.l  d4,(dat_1BC9C).l                ; 61BA6
-        move.l  (dat_1BCDC).l,d4                ; 61BAC
+        move.l  d4,(BackHeight).l                ; 61BA6
+        move.l  (CarY).l,d4                ; 61BAC
         add.l   d3,d4                           ; 61BB2
         move.l  d4,d5                           ; 61BB4
         sub.l   d0,d5                           ; 61BB6
         asr.l   #$8,d5                          ; 61BB8
-        move.l  d5,(dat_1BC98).l                ; 61BBA
+        move.l  d5,(MiddleHeight).l                ; 61BBA
         add.l   d0,d4                           ; 61BC0
         asr.l   #$8,d4                          ; 61BC2
-        move.l  d4,(dat_1BC94).l                ; 61BC4
+        move.l  d4,(FrontHeight).l                ; 61BC4
         rts                                     ; 61BCA
 
 ;-------------------------------------------------------------------------------
@@ -14326,9 +14870,9 @@ sub_61B70:
 ;-------------------------------------------------------------------------------
 WheelsOnTrack:
         move.b  #$0,(dat_1BB7D).l               ; 61BCC
-        move.b  #$0,(dat_1BC3A).l               ; 61BD4
-        move.l  (dat_1BCA4).l,d0                ; 61BDC
-        sub.l   (dat_1BC94).l,d0                ; 61BE2
+        move.b  #$0,(KnockForce).l               ; 61BD4
+        move.l  (WheelTrackHeights).l,d0                ; 61BDC
+        sub.l   (FrontHeight).l,d0                ; 61BE2
         sub.l   (dat_1BCA0).l,d0                ; 61BE8
         move.l  d0,(dat_1BCB0).l                ; 61BEE
         bmi.w   l_61C06                         ; 61BF4
@@ -14343,11 +14887,11 @@ l_61C06:
 l_61C1A:
         move.l  #$1400,d0                       ; 61C1A
 l_61C20:
-        move.w  d0,(dat_1BD14).l                ; 61C20
+        move.w  d0,(WheelSuspension).l                ; 61C20
         move.w  d0,d6                           ; 61C26
         move.w  (dat_1BD1A).l,d3                ; 61C28
         sub.w   d3,d0                           ; 61C2E
-        jsr     (sub_6180E).l                   ; 61C30
+        jsr     (ScaleAdd114).l                   ; 61C30
         bmi.w   l_61CEA                         ; 61C36
         move.w  (dat_1BD20).l,d4                ; 61C3A
         move.w  d0,(dat_1BD20).l                ; 61C40
@@ -14364,12 +14908,12 @@ l_61C5C:
         bmi.w   l_61CF2                         ; 61C6C
         cmpi.w  #$700,d0                        ; 61C70
         blt.w   l_61CF2                         ; 61C74
-        cmp.w   (dat_1BC3A).l,d0                ; 61C78
+        cmp.w   (KnockForce).l,d0                ; 61C78
         bcs.w   l_61C88                         ; 61C7E
-        move.w  d0,(dat_1BC3A).l                ; 61C82
+        move.w  d0,(KnockForce).l                ; 61C82
 l_61C88:
         subi.w  #$600,d0                        ; 61C88
-        tst.b   (dat_1BBCD).l                   ; 61C8C
+        tst.b   (ClockTick).l                   ; 61C8C
         bmi.w   l_61CD0                         ; 61C92
         addq.b  #$1,(dat_1BB56).l               ; 61C96
         move.b  (dat_1BB56).l,d3                ; 61C9C
@@ -14379,12 +14923,12 @@ l_61C88:
         move.b  d0,d3                           ; 61CAE
         lsr.b   #$1,d3                          ; 61CB0
         add.b   d3,d0                           ; 61CB2
-        add.b   (dat_1BB4F).l,d0                ; 61CB4
+        add.b   (KnockStrength1).l,d0                ; 61CB4
         bcc.w   l_61CC2                         ; 61CBA
         move.b  #$ff,d0                         ; 61CBE
 l_61CC2:
-        move.b  d0,(dat_1BB4F).l                ; 61CC2
-        move.b  #$80,(dat_1BB54).l              ; 61CC8
+        move.b  d0,(KnockStrength1).l                ; 61CC2
+        move.b  #$80,(KnockHappened).l              ; 61CC8
 l_61CD0:
         move.w  (dat_1BD20).l,d0                ; 61CD0
         cmpi.w  #$1200,d0                       ; 61CD6
@@ -14397,9 +14941,9 @@ l_61CEA:
 l_61CF2:
         move.b  #$0,(dat_1BB56).l               ; 61CF2
 l_61CFA:
-        move.w  (dat_1BD14).l,(dat_1BD1A).l     ; 61CFA
+        move.w  (WheelSuspension).l,(dat_1BD1A).l     ; 61CFA
         move.l  (dat_1BCA8).l,d0                ; 61D04
-        sub.l   (dat_1BC98).l,d0                ; 61D0A
+        sub.l   (MiddleHeight).l,d0                ; 61D0A
         sub.l   (dat_1BCA0).l,d0                ; 61D10
         move.l  d0,(dat_1BCB4).l                ; 61D16
         bmi.w   l_61D2E                         ; 61D1C
@@ -14418,7 +14962,7 @@ l_61D48:
         move.w  d0,d6                           ; 61D4E
         move.w  (dat_1BD1C).l,d3                ; 61D50
         sub.w   d3,d0                           ; 61D56
-        jsr     (sub_6180E).l                   ; 61D58
+        jsr     (ScaleAdd114).l                   ; 61D58
         bmi.w   l_61E12                         ; 61D5E
         move.w  (dat_1BD22).l,d4                ; 61D62
         move.w  d0,(dat_1BD22).l                ; 61D68
@@ -14435,12 +14979,12 @@ l_61D84:
         bmi.w   l_61E1A                         ; 61D94
         cmpi.w  #$700,d0                        ; 61D98
         blt.w   l_61E1A                         ; 61D9C
-        cmp.w   (dat_1BC3A).l,d0                ; 61DA0
+        cmp.w   (KnockForce).l,d0                ; 61DA0
         bcs.w   l_61DB0                         ; 61DA6
-        move.w  d0,(dat_1BC3A).l                ; 61DAA
+        move.w  d0,(KnockForce).l                ; 61DAA
 l_61DB0:
         subi.w  #$600,d0                        ; 61DB0
-        tst.b   (dat_1BBCD).l                   ; 61DB4
+        tst.b   (ClockTick).l                   ; 61DB4
         bmi.w   l_61DF8                         ; 61DBA
         addq.b  #$1,(dat_1BB56).l               ; 61DBE
         move.b  (dat_1BB56).l,d3                ; 61DC4
@@ -14455,7 +14999,7 @@ l_61DB0:
         move.b  #$ff,d0                         ; 61DE6
 l_61DEA:
         move.b  d0,(dat_1BB50).l                ; 61DEA
-        move.b  #$80,(dat_1BB54).l              ; 61DF0
+        move.b  #$80,(KnockHappened).l              ; 61DF0
 l_61DF8:
         move.w  (dat_1BD22).l,d0                ; 61DF8
         cmpi.w  #$1200,d0                       ; 61DFE
@@ -14470,7 +15014,7 @@ l_61E1A:
 l_61E22:
         move.w  (dat_1BD16).l,(dat_1BD1C).l     ; 61E22
         move.l  (dat_1BCAC).l,d0                ; 61E2C
-        sub.l   (dat_1BC9C).l,d0                ; 61E32
+        sub.l   (BackHeight).l,d0                ; 61E32
         sub.l   (dat_1BCA0).l,d0                ; 61E38
         move.l  d0,(dat_1BCB8).l                ; 61E3E
         bmi.w   l_61E56                         ; 61E44
@@ -14489,7 +15033,7 @@ l_61E70:
         move.w  d0,d6                           ; 61E76
         move.w  (dat_1BD1E).l,d3                ; 61E78
         sub.w   d3,d0                           ; 61E7E
-        jsr     (sub_6180E).l                   ; 61E80
+        jsr     (ScaleAdd114).l                   ; 61E80
         bmi.w   l_61F3A                         ; 61E86
         move.w  (dat_1BD24).l,d4                ; 61E8A
         move.w  d0,(dat_1BD24).l                ; 61E90
@@ -14506,12 +15050,12 @@ l_61EAC:
         bmi.w   l_61F42                         ; 61EBC
         cmpi.w  #$700,d0                        ; 61EC0
         blt.w   l_61F42                         ; 61EC4
-        cmp.w   (dat_1BC3A).l,d0                ; 61EC8
+        cmp.w   (KnockForce).l,d0                ; 61EC8
         bcs.w   l_61ED8                         ; 61ECE
-        move.w  d0,(dat_1BC3A).l                ; 61ED2
+        move.w  d0,(KnockForce).l                ; 61ED2
 l_61ED8:
         subi.w  #$600,d0                        ; 61ED8
-        tst.b   (dat_1BBCD).l                   ; 61EDC
+        tst.b   (ClockTick).l                   ; 61EDC
         bmi.w   l_61F20                         ; 61EE2
         addq.b  #$1,(dat_1BB56).l               ; 61EE6
         move.b  (dat_1BB56).l,d3                ; 61EEC
@@ -14526,7 +15070,7 @@ l_61ED8:
         move.b  #$ff,d0                         ; 61F0E
 l_61F12:
         move.b  d0,(dat_1BB51).l                ; 61F12
-        move.b  #$80,(dat_1BB54).l              ; 61F18
+        move.b  #$80,(KnockHappened).l              ; 61F18
 l_61F20:
         move.w  (dat_1BD24).l,d0                ; 61F20
         cmpi.w  #$1200,d0                       ; 61F26
@@ -14547,7 +15091,7 @@ l_61F4A:
         add.w   (dat_1BD24).l,d0                ; 61F68
         asr.w   #$1,d0                          ; 61F6E
         move.w  d0,(dat_1BD38).l                ; 61F70
-        jsr     (sub_622DC).l                   ; 61F76
+        jsr     (SuspensionForces).l                   ; 61F76
         move.w  (dat_1BD20).l,d0                ; 61F7C
         sub.w   (dat_1BD22).l,d0                ; 61F82
         move.w  d0,d3                           ; 61F88
@@ -14570,12 +15114,12 @@ l_61FA8:
         move.w  d0,(dat_1BD26).l                ; 61FBA
         move.b  (dat_1BD38).l,d0                ; 61FC0
         or.b    (dat_1BD39).l,d0                ; 61FC6
-        move.b  d0,(dat_1BB7E).l                ; 61FCC
+        move.b  d0,(WheelsDown).l                ; 61FCC
         bne.w   l_62042                         ; 61FD2
         tst.b   (DropCountdown).l               ; 61FD6
         bne.w   l_62042                         ; 61FDC
         move.w  #$ff80,d3                       ; 61FE0
-        move.w  (dat_1BCE4).l,d0                ; 61FE4
+        move.w  (CarPitch).l,d0                ; 61FE4
         bpl.w   l_62014                         ; 61FEA
         move.b  (CurrentTrack).l,d0             ; 61FEE
         cmpi.b  #$7,d0                          ; 61FF4
@@ -14594,23 +15138,23 @@ l_62014:
 l_62020:
         sub.w   (dat_1BD26).l,d3                ; 62020
         bpl.w   l_62042                         ; 62026
-        move.b  (dat_1BCF0).l,d0                ; 6202A
+        move.b  (TurnSpeedPitch).l,d0                ; 6202A
         bpl.w   l_6203C                         ; 62030
         cmpi.b  #$ff,d0                         ; 62034
         bne.w   l_62042                         ; 62038
 l_6203C:
         move.w  d3,(dat_1BD26).l                ; 6203C
 l_62042:
-        jsr     (sub_5B32E).l                   ; 62042
-        move.w  (dat_1BD44).l,(dat_1BD46).l     ; 62048
-        jsr     (sub_63E2E).l                   ; 62052
+        jsr     (UpdateDrop).l                   ; 62042
+        move.w  (SpringForceForward).l,(dat_1BD46).l     ; 62048
+        jsr     (ApplyCollision).l                   ; 62052
         tst.b   (dat_620B6).l                   ; 62058
         beq.w   l_62068                         ; 6205E
         subq.b  #$1,(dat_620B6).l               ; 62062
 l_62068:
         tst.b   (dat_1BB7D).l                   ; 62068
         beq.w   l_620B4                         ; 6206E
-        move.b  (dat_1BC3A).l,d0                ; 62072
+        move.b  (KnockForce).l,d0                ; 62072
         cmpi.b  #$7,d0                          ; 62078
         bcc.w   l_62084                         ; 6207C
         move.b  #$7,d0                          ; 62080
@@ -14630,92 +15174,117 @@ l_620B4:
         rts                                     ; 620B4
 dat_620B6:
 	dc.b	$00,$00
-sub_620B8:
-        move.w  (dat_1BD10).l,d0                ; 620B8
-        add.w   (dat_1BD42).l,d0                ; 620BE
-        move.w  d0,(dat_1BD34).l                ; 620C4
-        move.b  (dat_1BD2A).l,d0                ; 620CA
-        or.b    (dat_1BD30).l,d0                ; 620D0
+
+;-------------------------------------------------------------------------------
+; WheelForces - CarPhysics: the wheels' forces in the car's axes (CarForceUp, CarForceForward) from the
+; suspension (GravityUp, GravityForward, SpringForceUp, SpringForceForward) and the speed (SpeedForward), DriveSetting;
+; SideForce (probably)
+;-------------------------------------------------------------------------------
+WheelForces:
+        move.w  (GravityUp).l,d0                ; 620B8
+        add.w   (SpringForceUp).l,d0                ; 620BE
+        move.w  d0,(CarForceUp).l                ; 620C4
+        move.b  (DriveSetting).l,d0                ; 620CA
+        or.b    (SpeedForward).l,d0                ; 620D0
         bmi.w   l_620EE                         ; 620D6
         tst.b   (dat_1BD2B).l                   ; 620DA
         beq.w   l_620EE                         ; 620E0
         andi.w  #$ff,d0                         ; 620E4
-        sub.w   d0,(dat_1BD2A).l                ; 620E8
+        sub.w   d0,(DriveSetting).l                ; 620E8
 l_620EE:
-        move.w  (dat_1BD2A).l,d3                ; 620EE
+        move.w  (DriveSetting).l,d3                ; 620EE
         bpl.w   l_620FA                         ; 620F4
         neg.w   d3                              ; 620F8
 l_620FA:
-        jsr     (sub_621DA).l                   ; 620FA
+        jsr     (GroundForce).l                   ; 620FA
         sub.w   d0,d3                           ; 62100
         bcs.w   l_62118                         ; 62102
-        tst.b   (dat_1BD2A).l                   ; 62106
+        tst.b   (DriveSetting).l                   ; 62106
         bpl.w   l_62112                         ; 6210C
         neg.w   d0                              ; 62110
 l_62112:
-        move.w  d0,(dat_1BD2A).l                ; 62112
+        move.w  d0,(DriveSetting).l                ; 62112
 l_62118:
-        move.w  (dat_1BD2A).l,d0                ; 62118
-        add.w   (dat_1BD44).l,d0                ; 6211E
-        add.w   (dat_1BD12).l,d0                ; 62124
-        move.w  d0,(dat_1BD36).l                ; 6212A
-        jsr     (sub_6217A).l                   ; 62130
+        move.w  (DriveSetting).l,d0                ; 62118
+        add.w   (SpringForceForward).l,d0                ; 6211E
+        add.w   (GravityForward).l,d0                ; 62124
+        move.w  d0,(CarForceForward).l                ; 6212A
+        jsr     (SideForce).l                   ; 62130
         rts                                     ; 62136
-sub_62138:
-        move.w  (dat_1BCF0).l,d3                ; 62138
+
+;-------------------------------------------------------------------------------
+; TurnForces - CarPhysics: the turning forces TurnForcePitch, TurnForceRoll from the turning speeds
+; (TurnSpeedPitch, TurnSpeedRoll) and dat_1BD26, dat_1BD28 (probably)
+;-------------------------------------------------------------------------------
+TurnForces:
+        move.w  (TurnSpeedPitch).l,d3                ; 62138
         asr.w   #$4,d3                          ; 6213E
         move.w  (dat_1BD26).l,d0                ; 62140
         sub.w   d3,d0                           ; 62146
-        tst.b   (dat_1BB7E).l                   ; 62148
+        tst.b   (WheelsDown).l                   ; 62148
         beq.w   l_6215C                         ; 6214E
-        move.w  (dat_1BD36).l,d3                ; 62152
+        move.w  (CarForceForward).l,d3                ; 62152
         asr.w   #$2,d3                          ; 62158
         add.w   d3,d0                           ; 6215A
 l_6215C:
-        move.w  d0,(dat_1BCFC).l                ; 6215C
-        move.w  (dat_1BCF4).l,d3                ; 62162
+        move.w  d0,(TurnForcePitch).l                ; 6215C
+        move.w  (TurnSpeedRoll).l,d3                ; 62162
         asr.w   #$4,d3                          ; 62168
         move.w  (dat_1BD28).l,d0                ; 6216A
         sub.w   d3,d0                           ; 62170
-        move.w  d0,(dat_1BD00).l                ; 62172
+        move.w  d0,(TurnForceRoll).l                ; 62172
         rts                                     ; 62178
-sub_6217A:
-        move.w  (dat_1BD0E).l,d4                ; 6217A
-        add.w   (dat_1BD40).l,d4                ; 62180
+
+;-------------------------------------------------------------------------------
+; SideForce - WheelForces: the sideways force CarForceSide from the sideways speed (SpeedSideways),
+; gravity (GravitySide) and SpringForceSide; dat_1BBC1 (probably the grip)
+;-------------------------------------------------------------------------------
+SideForce:
+        move.w  (GravitySide).l,d4                ; 6217A
+        add.w   (SpringForceSide).l,d4                ; 62180
         move.w  d4,d3                           ; 62186
-        sub.w   (dat_1BD2C).l,d3                ; 62188
+        sub.w   (SpeedSideways).l,d3                ; 62188
         bpl.w   l_62194                         ; 6218E
         neg.w   d3                              ; 62192
 l_62194:
-        jsr     (sub_621DA).l                   ; 62194
+        jsr     (GroundForce).l                   ; 62194
         cmp.w   d0,d3                           ; 6219A
         bcs.w   l_621BE                         ; 6219C
-        tst.b   (dat_1BD2C).l                   ; 621A0
+        tst.b   (SpeedSideways).l                   ; 621A0
         bpl.w   l_621AC                         ; 621A6
         neg.w   d0                              ; 621AA
 l_621AC:
         sub.w   d0,d4                           ; 621AC
-        move.w  d4,(dat_1BD32).l                ; 621AE
+        move.w  d4,(CarForceSide).l                ; 621AE
         move.b  #$80,(dat_1BBC1).l              ; 621B4
         rts                                     ; 621BC
 l_621BE:
-        move.w  (dat_1BD40).l,d0                ; 621BE
-        sub.w   (dat_1BD2C).l,d0                ; 621C4
-        move.w  d0,(dat_1BD32).l                ; 621CA
+        move.w  (SpringForceSide).l,d0                ; 621BE
+        sub.w   (SpeedSideways).l,d0                ; 621C4
+        move.w  d0,(CarForceSide).l                ; 621CA
         move.b  #$0,(dat_1BBC1).l               ; 621D0
         rts                                     ; 621D8
-sub_621DA:
-        tst.b   (dat_1BB7E).l                   ; 621DA
+
+;-------------------------------------------------------------------------------
+; GroundForce - d0 = 2 x SpringForceUp with the wheels on the track (WheelsDown), else 0
+;-------------------------------------------------------------------------------
+GroundForce:
+        tst.b   (WheelsDown).l                   ; 621DA
         beq.w   l_621EE                         ; 621E0
-        move.w  (dat_1BD42).l,d0                ; 621E4
+        move.w  (SpringForceUp).l,d0                ; 621E4
         asl.w   #$1,d0                          ; 621EA
         rts                                     ; 621EC
 l_621EE:
         move.w  #$0,d0                          ; 621EE
         rts                                     ; 621F2
-sub_621F4:
+
+;-------------------------------------------------------------------------------
+; DriveForce - CarPhysics: the forces ForceX-ForceZ from the throttle and brake, the speed
+; in the car's axes (SpeedSideways-SpeedForward), the drag, the drop (probably)
+;-------------------------------------------------------------------------------
+DriveForce:
         move.l  #$1,d7                          ; 621F4
-        tst.b   (dat_1BB7E).l                   ; 621FA
+        tst.b   (WheelsDown).l                   ; 621FA
         beq.w   l_6222E                         ; 62200
         move.b  (dat_1BD46).l,d0                ; 62204
         bpl.w   l_62212                         ; 6220A
@@ -14736,11 +15305,11 @@ l_6223E:
         move.w  #$6000,d0                       ; 6223E
         bra.w   l_622A4                         ; 62242
 l_62246:
-        move.w  (dat_1BD2C).l,d0                ; 62246
+        move.w  (SpeedSideways).l,d0                ; 62246
         bpl.w   l_62252                         ; 6224C
         neg.w   d0                              ; 62250
 l_62252:
-        move.w  (dat_1BD2E).l,d3                ; 62252
+        move.w  (SpeedUp).l,d3                ; 62252
         bpl.w   l_6225E                         ; 62258
         neg.w   d3                              ; 6225C
 l_6225E:
@@ -14748,7 +15317,7 @@ l_6225E:
         bge.w   l_62266                         ; 62260
         move.w  d3,d0                           ; 62264
 l_62266:
-        move.w  (dat_1BD30).l,d3                ; 62266
+        move.w  (SpeedForward).l,d3                ; 62266
         bpl.w   l_62272                         ; 6226C
         neg.w   d3                              ; 62270
 l_62272:
@@ -14767,23 +15336,28 @@ l_6227A:
         bcc.w   l_622A4                         ; 6229C
         move.w  #$0,d0                          ; 622A0
 l_622A4:
-        move.w  (dat_1BCEA).l,d3                ; 622A4
+        move.w  (VelocityX).l,d3                ; 622A4
         muls.w  d0,d3                           ; 622AA
         swap    d3                              ; 622AC
         asr.w   d7,d3                           ; 622AE
-        sub.w   d3,(dat_1BCF6).l                ; 622B0
-        move.w  (dat_1BCEC).l,d3                ; 622B6
+        sub.w   d3,(ForceX).l                ; 622B0
+        move.w  (VelocityY).l,d3                ; 622B6
         muls.w  d0,d3                           ; 622BC
         swap    d3                              ; 622BE
         asr.w   d7,d3                           ; 622C0
-        sub.w   d3,(dat_1BCF8).l                ; 622C2
-        move.w  (dat_1BCEE).l,d3                ; 622C8
+        sub.w   d3,(ForceY).l                ; 622C2
+        move.w  (VelocityZ).l,d3                ; 622C8
         muls.w  d0,d3                           ; 622CE
         swap    d3                              ; 622D0
         asr.w   d7,d3                           ; 622D2
-        sub.w   d3,(dat_1BCFA).l                ; 622D4
+        sub.w   d3,(ForceZ).l                ; 622D4
         rts                                     ; 622DA
-sub_622DC:
+
+;-------------------------------------------------------------------------------
+; SuspensionForces - WheelsOnTrack: each wheel's spring (SpringStates-dat_1BD52) from its compression
+; (dat_1BCB0-dat_1BCB8; SpringStiffness), summed into SpringForceSide-SpringForceForward (probably)
+;-------------------------------------------------------------------------------
+SuspensionForces:
         move.w  #$0,(dat_1BD4A).l               ; 622DC
         move.l  (dat_1BCB0).l,d0                ; 622E4
         add.l   (dat_1BCB4).l,d0                ; 622EA
@@ -14793,27 +15367,27 @@ sub_622DC:
         move.w  d0,d3                           ; 622FA
         eori.w  #$8000,d3                       ; 622FC
         move.w  d3,(dat_1BD4C).l                ; 62300
-        jsr     (sub_62424).l                   ; 62306
-        move.b  (dat_1BB2D).l,(dat_1BB2C).l     ; 6230C
-        move.b  (dat_1BB2B).l,(dat_1BD52).l     ; 62316
+        jsr     (SpringStiffness).l                   ; 62306
+        move.b  (SpringStiffnessValue).l,(dat_1BB2C).l     ; 6230C
+        move.b  (SpringCompression).l,(dat_1BD52).l     ; 62316
         move.l  (dat_1BCB0).l,d0                ; 62320
         sub.l   (dat_1BCB4).l,d0                ; 62326
         asr.l   #$3,d0                          ; 6232C
-        move.w  d0,(dat_1BD48).l                ; 6232E
-        jsr     (sub_62424).l                   ; 62334
-        move.b  (dat_1BB2C).l,(dat_1BB1A).l     ; 6233A
-        move.b  (dat_1BB2D).l,d0                ; 62344
+        move.w  d0,(SpringStates).l                ; 6232E
+        jsr     (SpringStiffness).l                   ; 62334
+        move.b  (dat_1BB2C).l,(WorkByte5).l     ; 6233A
+        move.b  (SpringStiffnessValue).l,d0                ; 62344
         jsr     (MulFraction).l                 ; 6234A
         move.b  d0,(dat_1BD50).l                ; 62350
-        move.b  (dat_1BB2B).l,d0                ; 62356
+        move.b  (SpringCompression).l,d0                ; 62356
         jsr     (MulFraction).l                 ; 6235C
         move.b  d0,(dat_1BD4E).l                ; 62362
-        move.b  (dat_1BD4E).l,(dat_1BB1A).l     ; 62368
-        move.b  (dat_1BD48).l,(dat_1BBBB).l     ; 62372
+        move.b  (dat_1BD4E).l,(WorkByte5).l     ; 62368
+        move.b  (SpringStates).l,(WorkSign).l     ; 62372
         move.w  (dat_1BD38).l,d0                ; 6237C
-        move.b  (dat_1BB1A).l,d3                ; 62382
+        move.b  (WorkByte5).l,d3                ; 62382
         andi.w  #$ff,d3                         ; 62388
-        tst.b   (dat_1BBBB).l                   ; 6238C
+        tst.b   (WorkSign).l                   ; 6238C
         bpl.w   l_62398                         ; 62392
         neg.w   d3                              ; 62396
 l_62398:
@@ -14821,13 +15395,13 @@ l_62398:
         muls.w  d3,d0                           ; 6239A
         asl.l   #$1,d0                          ; 6239C
         swap    d0                              ; 6239E
-        move.w  d0,(dat_1BD40).l                ; 623A0
-        move.b  (dat_1BD50).l,(dat_1BB1A).l     ; 623A6
-        move.b  (dat_1BD4A).l,(dat_1BBBB).l     ; 623B0
+        move.w  d0,(SpringForceSide).l                ; 623A0
+        move.b  (dat_1BD50).l,(WorkByte5).l     ; 623A6
+        move.b  (dat_1BD4A).l,(WorkSign).l     ; 623B0
         move.w  (dat_1BD38).l,d0                ; 623BA
-        move.b  (dat_1BB1A).l,d3                ; 623C0
+        move.b  (WorkByte5).l,d3                ; 623C0
         andi.w  #$ff,d3                         ; 623C6
-        tst.b   (dat_1BBBB).l                   ; 623CA
+        tst.b   (WorkSign).l                   ; 623CA
         bpl.w   l_623D6                         ; 623D0
         neg.w   d3                              ; 623D4
 l_623D6:
@@ -14835,13 +15409,13 @@ l_623D6:
         muls.w  d3,d0                           ; 623D8
         asl.l   #$1,d0                          ; 623DA
         swap    d0                              ; 623DC
-        move.w  d0,(dat_1BD42).l                ; 623DE
-        move.b  (dat_1BD52).l,(dat_1BB1A).l     ; 623E4
-        move.b  (dat_1BD4C).l,(dat_1BBBB).l     ; 623EE
+        move.w  d0,(SpringForceUp).l                ; 623DE
+        move.b  (dat_1BD52).l,(WorkByte5).l     ; 623E4
+        move.b  (dat_1BD4C).l,(WorkSign).l     ; 623EE
         move.w  (dat_1BD38).l,d0                ; 623F8
-        move.b  (dat_1BB1A).l,d3                ; 623FE
+        move.b  (WorkByte5).l,d3                ; 623FE
         andi.w  #$ff,d3                         ; 62404
-        tst.b   (dat_1BBBB).l                   ; 62408
+        tst.b   (WorkSign).l                   ; 62408
         bpl.w   l_62414                         ; 6240E
         neg.w   d3                              ; 62412
 l_62414:
@@ -14849,9 +15423,14 @@ l_62414:
         muls.w  d3,d0                           ; 62416
         asl.l   #$1,d0                          ; 62418
         swap    d0                              ; 6241A
-        move.w  d0,(dat_1BD44).l                ; 6241C
+        move.w  d0,(SpringForceForward).l                ; 6241C
         rts                                     ; 62422
-sub_62424:
+
+;-------------------------------------------------------------------------------
+; SpringStiffness - d0: a compression (its size, at most $FF, in SpringCompression) looked up in dat_1EECA
+; - SpringStiffnessValue (probably the springs' curve)
+;-------------------------------------------------------------------------------
+SpringStiffness:
         tst.w   d0                              ; 62424
         bpl.w   l_6242C                         ; 62426
         neg.w   d0                              ; 6242A
@@ -14861,11 +15440,11 @@ l_6242C:
         bge.w   l_6243A                         ; 62434
         move.b  d0,d1                           ; 62438
 l_6243A:
-        move.b  d1,(dat_1BB2B).l                ; 6243A
+        move.b  d1,(SpringCompression).l                ; 6243A
         lsr.b   #$1,d1                          ; 62440
         movea.l #dat_1EECA,a0                   ; 62442
         move.b  (a0,d1.w),d0                    ; 62448
-        move.b  d0,(dat_1BB2D).l                ; 6244C
+        move.b  d0,(SpringStiffnessValue).l                ; 6244C
         rts                                     ; 62452
 
 ;-------------------------------------------------------------------------------
@@ -14926,7 +15505,7 @@ ProjectPointY:
 ;-------------------------------------------------------------------------------
 ProjectPointYFar:
         jsr     (ArcTan).l                      ; 624F0
-        sub.w   (dat_1BC42).l,d0                ; 624F6
+        sub.w   (ViewPitch).l,d0                ; 624F6
         asr.w   #$3,d0                          ; 624FC
         movea.l #PointScreenY,a0                ; 624FE
         move.w  d0,(a0,d1.w)                    ; 62504
@@ -15090,7 +15669,12 @@ InsertGameDiscDrive:
 	dc.b	'0      '
 	dc.b	$FF,$00
 	even
-sub_62748:
+
+;-------------------------------------------------------------------------------
+; SaveMenu - MainMenu: the save disk's panel (ClearPanel, CopyPanel, PrintMessage), dat_1CA31,
+; then SaveSlotsScreen
+;-------------------------------------------------------------------------------
+SaveMenu:
         jsr     (ClearPanel).l                  ; 62748
         jsr     (CopyPanel).l                   ; 6274E
         move.w  #$12a,d1                        ; 62754
@@ -15127,7 +15711,7 @@ SaveSlotsScreen:
         rts                                     ; 627DA
 l_627DC:
         jsr     (ListSaveSlots).l               ; 627DC
-        move.b  #$0,(dat_1BBD3).l               ; 627E2
+        move.b  #$0,(TextNoBackground).l               ; 627E2
 l_627EA:
         move.b  #$f,(dat_62BB8).l               ; 627EA
         move.b  #$b,(dat_62BB9).l               ; 627F2
@@ -15147,7 +15731,7 @@ l_62810:
         jsr     (SetTextColour).l               ; 62842
         move.b  #$3e,d0                         ; 62848
         jsr     (PrintChar).l                   ; 6284C
-        jsr     (sub_62B22).l                   ; 62852
+        jsr     (SaveSlotsInput).l                   ; 62852
         move.b  (TextCursorX).l,(dat_62BBA).l   ; 62858
         tst.b   (dat_1CA31).l                   ; 62862
         bne.w   l_6289A                         ; 62868
@@ -15182,7 +15766,7 @@ l_6289A:
         bra.w   l_6289A                         ; 628F0
 l_628F4:
         bmi.w   l_62A66                         ; 628F4
-        jsr     (sub_62A70).l                   ; 628F8
+        jsr     (PrintSaveSlotLine).l                   ; 628F8
         btst    #$6,(MenuMove).l                ; 628FE
         bne.w   l_62940                         ; 62906
         btst    #$5,(MenuMove).l                ; 6290A
@@ -15208,9 +15792,9 @@ l_6294A:
         jsr     (SetTextBackground).l           ; 62958
         move.b  #$1,d0                          ; 6295E
         jsr     (SetTextColour).l               ; 62962
-        jsr     (sub_62D80).l                   ; 62968
+        jsr     (SaveSlotsLoad).l                   ; 62968
         move.b  #$1,d0                          ; 6296E
-        jsr     (sub_5F374).l                   ; 62972
+        jsr     (LeagueTransfer).l                   ; 62972
         clr.w   d0                              ; 62978
         move.b  (dat_62BB4).l,d0                ; 6297A
         addi.w  #$17,d0                         ; 62980
@@ -15243,9 +15827,14 @@ l_629E2:
         move.b  (dat_62BB4).l,(dat_62BB6).l     ; 629E2
         jsr     (StoreSlotName).l               ; 629EC
         move.b  #$0,d0                          ; 629F2
-        jsr     (sub_5F374).l                   ; 629F6
+        jsr     (LeagueTransfer).l                   ; 629F6
         rts                                     ; 629FC
-sub_629FE:
+
+;-------------------------------------------------------------------------------
+; SaveDiskPrompt - WriteSaveSector: a message printed on both screens, a key waited for (probably
+; the save disk to be put in or its protection)
+;-------------------------------------------------------------------------------
+SaveDiskPrompt:
         move.b  #$0,(dat_1BB92).l               ; 629FE
         tst.b   d0                              ; 62A06
         bne.w   l_62A0E                         ; 62A08
@@ -15276,7 +15865,12 @@ l_62A2A:
 l_62A66:
         move.b  #$80,(dat_1BB92).l              ; 62A66
         rts                                     ; 62A6E
-sub_62A70:
+
+;-------------------------------------------------------------------------------
+; PrintSaveSlotLine - SaveSlotsScreen: a slot's line (PrintSaveSlot) with its mark, at dat_62BB8,
+; dat_62BB9
+;-------------------------------------------------------------------------------
+PrintSaveSlotLine:
         move.b  #$3,d0                          ; 62A70
         jsr     (SetTextBackground).l           ; 62A74
         move.b  (dat_62BBA).l,(TextCursorX).l   ; 62A7A
@@ -15337,24 +15931,29 @@ SlotUp10:
         subi.b  #$a,d0                          ; 62B18
         bpl.w   l_62ADE                         ; 62B1C
         rts                                     ; 62B20
-sub_62B22:
+
+;-------------------------------------------------------------------------------
+; SaveSlotsInput - SaveSlotsScreen: the joystick (ReadJoystick, JoystickBits) and the keys
+; (KeyDown)
+;-------------------------------------------------------------------------------
+SaveSlotsInput:
         jsr     (ReadJoystick).l                ; 62B22
         move.b  (JoystickBits).l,d0             ; 62B28
         andi.b  #$f,d0                          ; 62B2E
         eori.b  #$f,d0                          ; 62B32
-        bne.w   sub_62B22                       ; 62B36
+        bne.w   SaveSlotsInput                       ; 62B36
         move.b  #$4c,d1                         ; 62B3A
         jsr     (KeyDown).l                     ; 62B3E
-        beq.w   sub_62B22                       ; 62B44
+        beq.w   SaveSlotsInput                       ; 62B44
         move.b  #$4d,d1                         ; 62B48
         jsr     (KeyDown).l                     ; 62B4C
-        beq.w   sub_62B22                       ; 62B52
+        beq.w   SaveSlotsInput                       ; 62B52
         move.b  #$4f,d1                         ; 62B56
         jsr     (KeyDown).l                     ; 62B5A
-        beq.w   sub_62B22                       ; 62B60
+        beq.w   SaveSlotsInput                       ; 62B60
         move.b  #$4e,d1                         ; 62B64
         jsr     (KeyDown).l                     ; 62B68
-        beq.w   sub_62B22                       ; 62B6E
+        beq.w   SaveSlotsInput                       ; 62B6E
         rts                                     ; 62B72
 
 ;-------------------------------------------------------------------------------
@@ -15386,7 +15985,7 @@ l_62B80:
         clr.w   d1                              ; 62B9E
         clr.w   d2                              ; 62BA0
 l_62BA2:
-        jsr     (sub_629FE).l                   ; 62BA2
+        jsr     (SaveDiskPrompt).l                   ; 62BA2
         rts                                     ; 62BA8
 l_62BAA:
         move.b  #$80,d0                         ; 62BAA
@@ -15475,14 +16074,14 @@ l_62C5C:
         bra.w   l_62CF2                         ; 62CBC
 l_62CC0:
         jsr     (ClearPanel).l                  ; 62CC0
-        move.b  #$1,(dat_1BB6E).l               ; 62CC6
+        move.b  #$1,(TextLineOffset).l               ; 62CC6
         move.w  #$0,d1                          ; 62CCE
         tst.b   (dat_1CA31).l                   ; 62CD2
         beq.w   l_62CE0                         ; 62CD8
         move.w  #$16,d1                         ; 62CDC
 l_62CE0:
         jsr     (PrintMessage).l                ; 62CE0
-        move.b  #$0,(dat_1BB6E).l               ; 62CE6
+        move.b  #$0,(TextLineOffset).l               ; 62CE6
         bra.w   l_62C30                         ; 62CEE
 l_62CF2:
         move.b  #$0,d0                          ; 62CF2
@@ -15516,7 +16115,7 @@ dat_62D32:
 ; ListSaveSlots - the 30 slots' names printed
 ;-------------------------------------------------------------------------------
 ListSaveSlots:
-        move.b  #$0,(dat_1BBD3).l               ; 62D34
+        move.b  #$0,(TextNoBackground).l               ; 62D34
         move.b  #$3,d0                          ; 62D3C
         jsr     (SetTextBackground).l           ; 62D40
         move.b  #$f,(dat_62BB8).l               ; 62D46
@@ -15527,9 +16126,14 @@ l_62D5E:
         addq.b  #$1,(dat_62BB4).l               ; 62D64
         cmpi.b  #$1e,(dat_62BB4).l              ; 62D6A
         bne.w   l_62D5E                         ; 62D72
-        move.b  #$80,(dat_1BBD3).l              ; 62D76
+        move.b  #$80,(TextNoBackground).l              ; 62D76
         rts                                     ; 62D7E
-sub_62D80:
+
+;-------------------------------------------------------------------------------
+; SaveSlotsLoad - SaveSlotsScreen: dat_62BBC set ($80), on at l_62D92 (probably loading, not
+; saving)
+;-------------------------------------------------------------------------------
+SaveSlotsLoad:
         move.b  #$80,(dat_62BBC).l              ; 62D80
         bra.w   l_62D92                         ; 62D88
 
@@ -16439,13 +17043,19 @@ dat_636B8:
 	dc.b	$3B
 dat_636B9:
 	dc.b	$3B,$1E,$49,$3B,$3B,$35,$62
-sub_636C0:
-        move.b  (dat_1CA29).l,d1                ; 636C0
+
+;-------------------------------------------------------------------------------
+; OpponentDrive - the opponent's driving for a step (LinkReceiveCarState, ...): its pace
+; (OpponentPace) by the gap to the player (dat_1BBF6, dat_1BBF7), the pieces ahead (TrackPieceFlags),
+; its driver's skill (dat_1ED8A by OpponentSkill); OpponentCollide; NextPiece (probably)
+;-------------------------------------------------------------------------------
+OpponentDrive:
+        move.b  (OpponentSkill).l,d1                ; 636C0
         move.b  #$0,d2                          ; 636C6
         move.b  d2,(dat_1BBC7).l                ; 636CA
         move.b  (dat_1BBED).l,d0                ; 636D0
-        move.b  d0,(dat_1BBA7).l                ; 636D6
-        sub.b   (dat_1BBA1).l,d0                ; 636DC
+        move.b  d0,(OpponentPace).l                ; 636D6
+        sub.b   (OpponentNormalPace).l,d0                ; 636DC
         bcc.w   l_636EA                         ; 636E2
         neg.b   d0                              ; 636E6
         subq.b  #$1,d2                          ; 636E8
@@ -16476,7 +17086,7 @@ l_6374C:
         move.b  (dat_1BBF7).l,d0                ; 6374C
         cmpi.b  #$32,d0                         ; 63752
         bcc.w   l_63786                         ; 63756
-        move.b  (dat_1BC5E).l,d0                ; 6375A
+        move.b  (CarAcrossTrack).l,d0                ; 6375A
         cmpi.b  #$1,d0                          ; 63760
         bcs.w   l_6377A                         ; 63764
         bne.w   l_63786                         ; 63768
@@ -16484,7 +17094,7 @@ l_6374C:
         cmpi.b  #$80,d0                         ; 63772
         bcc.w   l_63786                         ; 63776
 l_6377A:
-        jsr     (sub_63CE4).l                   ; 6377A
+        jsr     (OpponentCollide).l                   ; 6377A
         jmp     (l_637A6).l                     ; 63780
 l_63786:
         move.b  #$0,d0                          ; 63786
@@ -16504,7 +17114,7 @@ l_637A6:
         cmpi.b  #$e,d0                          ; 637C8
         bcc.w   l_6383E                         ; 637CC
 l_637D0:
-        jsr     (sub_63926).l                   ; 637D0
+        jsr     (OpponentPaceClose).l                   ; 637D0
         jmp     (l_638B6).l                     ; 637D6
 l_637DC:
         tst.b   (dat_1BBB8).l                   ; 637DC
@@ -16515,7 +17125,7 @@ l_637DC:
         move.b  (a1,d1.w),d0                    ; 637F4
         andi.b  #$2,d0                          ; 637F8
         beq.w   l_63826                         ; 637FC
-        jsr     (sub_63988).l                   ; 63800
+        jsr     (OpponentPaceNormal).l                   ; 63800
         jmp     (l_6386A).l                     ; 63806
 l_6380C:
         cmpi.b  #$c8,d0                         ; 6380C
@@ -16525,10 +17135,10 @@ l_6380C:
         andi.b  #$20,d0                         ; 6381E
         beq.w   l_6383E                         ; 63822
 l_63826:
-        jsr     (sub_63942).l                   ; 63826
+        jsr     (OpponentPaceCloseFast).l                   ; 63826
         jmp     (l_6386A).l                     ; 6382C
 l_63832:
-        jsr     (sub_63942).l                   ; 63832
+        jsr     (OpponentPaceCloseFast).l                   ; 63832
         jmp     (l_638B6).l                     ; 63838
 l_6383E:
         move.b  #$40,d2                         ; 6383E
@@ -16543,10 +17153,10 @@ l_63858:
         beq.w   l_63864                         ; 6385E
         not.b   d2                              ; 63862
 l_63864:
-        move.b  d2,(dat_1BBA7).l                ; 63864
+        move.b  d2,(OpponentPace).l                ; 63864
 l_6386A:
         move.b  #$2,d0                          ; 6386A
-        move.b  d0,(dat_1BB19).l                ; 6386E
+        move.b  d0,(WorkByte4).l                ; 6386E
         move.b  (OpponentPiece).l,d1            ; 63874
         move.b  d1,(PieceIndex).l               ; 6387A
 l_63880:
@@ -16557,16 +17167,16 @@ l_63880:
         movea.l #dat_1F0C2,a2                   ; 63890
         move.b  (a2,d2.w),d0                    ; 63896
         bpl.w   l_638A6                         ; 6389A
-        move.b  #$80,(dat_1BBA7).l              ; 6389E
+        move.b  #$80,(OpponentPace).l              ; 6389E
 l_638A6:
         jsr     (NextPiece).l                   ; 638A6
-        subq.b  #$1,(dat_1BB19).l               ; 638AC
+        subq.b  #$1,(WorkByte4).l               ; 638AC
         bne.w   l_63880                         ; 638B2
 l_638B6:
-        move.b  (dat_1BBBD).l,d0                ; 638B6
+        move.b  (SwerveExtra).l,d0                ; 638B6
         bmi.w   l_638D8                         ; 638BC
         bne.w   l_638E8                         ; 638C0
-        move.b  (dat_1BBA7).l,d0                ; 638C4
+        move.b  (OpponentPace).l,d0                ; 638C4
         sub.b   (dat_1BBED).l,d0                ; 638CA
         beq.w   l_63924                         ; 638D0
         bcc.w   l_638E8                         ; 638D4
@@ -16581,7 +17191,7 @@ l_638E8:
         move.b  #$9,d0                          ; 638F0
 l_638F4:
         add.b   (dat_1BBED).l,d0                ; 638F4
-        move.b  (dat_1BB44).l,d2                ; 638FA
+        move.b  (OpponentRacing).l,d2                ; 638FA
         beq.w   l_63924                         ; 63900
         cmpi.b  #$e1,d0                         ; 63904
         bcc.w   l_63924                         ; 63908
@@ -16592,37 +17202,51 @@ l_638F4:
         move.b  d0,(dat_1BBED).l                ; 6391E
 l_63924:
         rts                                     ; 63924
-sub_63926:
+
+;-------------------------------------------------------------------------------
+; OpponentPaceClose - OpponentDrive: within $38 of the player (dat_1BBF7), its pace (OpponentPace) by
+; which car is ahead (dat_1BBF6) (probably)
+;-------------------------------------------------------------------------------
+OpponentPaceClose:
         move.b  (dat_1BBF7).l,d0                ; 63926
         cmpi.b  #$38,d0                         ; 6392C
         bcc.w   l_63986                         ; 63930
         tst.b   (dat_1BBF6).l                   ; 63934
         bmi.w   l_6397C                         ; 6393A
         bpl.w   l_63968                         ; 6393E
-sub_63942:
+
+;-------------------------------------------------------------------------------
+; OpponentPaceCloseFast - OpponentDrive: within $38 of the player, its pace from its normal one
+; (OpponentNormalPace) by which car is ahead (probably)
+;-------------------------------------------------------------------------------
+OpponentPaceCloseFast:
         move.b  (dat_1BBF7).l,d0                ; 63942
         cmpi.b  #$38,d0                         ; 63948
         bcc.w   l_63986                         ; 6394C
-        move.b  (dat_1BBA1).l,d0                ; 63950
+        move.b  (OpponentNormalPace).l,d0                ; 63950
         tst.b   (dat_1BBF6).l                   ; 63956
         bmi.w   l_63974                         ; 6395C
         cmpi.b  #$a0,d0                         ; 63960
         bcc.w   l_6397C                         ; 63964
 l_63968:
         move.b  #$e0,d0                         ; 63968
-        move.b  d0,(dat_1BBA7).l                ; 6396C
+        move.b  d0,(OpponentPace).l                ; 6396C
         rts                                     ; 63972
 l_63974:
         cmpi.b  #$60,d0                         ; 63974
         bcs.w   l_63968                         ; 63978
 l_6397C:
         move.b  #$20,d0                         ; 6397C
-        move.b  d0,(dat_1BBA7).l                ; 63980
+        move.b  d0,(OpponentPace).l                ; 63980
 l_63986:
         rts                                     ; 63986
-sub_63988:
-        move.b  (dat_1BBA1).l,d0                ; 63988
-        move.b  d0,(dat_1BBA7).l                ; 6398E
+
+;-------------------------------------------------------------------------------
+; OpponentPaceNormal - OpponentDrive: its pace (OpponentPace) its normal one (OpponentNormalPace)
+;-------------------------------------------------------------------------------
+OpponentPaceNormal:
+        move.b  (OpponentNormalPace).l,d0                ; 63988
+        move.b  d0,(OpponentPace).l                ; 6398E
         rts                                     ; 63994
 
 ;-------------------------------------------------------------------------------
@@ -16636,15 +17260,15 @@ MoveOpponent:
         bne.w   l_63A56                         ; 639A6
         move.b  (OpponentPiece).l,d1            ; 639AA
         jsr     (LoadPiece).l                   ; 639B0
-        jsr     (sub_63EE2).l                   ; 639B6
-        jsr     (sub_5BD1E).l                   ; 639BC
-        jsr     (sub_63C04).l                   ; 639C2
-        jsr     (sub_63C3C).l                   ; 639C8
-        jsr     (sub_63B08).l                   ; 639CE
+        jsr     (OpponentPhysics).l                   ; 639B6
+        jsr     (OpponentSwerve).l                   ; 639BC
+        jsr     (OpponentControls).l                   ; 639C2
+        jsr     (OpponentTargetLine).l                   ; 639C8
+        jsr     (OpponentOnPiece).l                   ; 639CE
         move.b  (dat_1BBD9).l,d0                ; 639D4
-        move.b  d0,(dat_1BB1A).l                ; 639DA
+        move.b  d0,(WorkByte5).l                ; 639DA
         move.w  (dat_1BBEE).l,d0                ; 639E0
-        move.b  (dat_1BB1A).l,d3                ; 639E6
+        move.b  (WorkByte5).l,d3                ; 639E6
         asl.w   #$7,d3                          ; 639EC
         bclr    #$f,d3                          ; 639EE
         muls.w  d3,d0                           ; 639F2
@@ -16665,9 +17289,9 @@ l_63A04:
 l_63A18:
         add.w   d0,(OpponentPiecePos).l         ; 63A18
         move.b  (OpponentPiecePos).l,d0         ; 63A1E
-        cmp.b   (dat_1BB6A).l,d0                ; 63A24
+        cmp.b   (PieceSections).l,d0                ; 63A24
         bcs.w   l_63A56                         ; 63A2A
-        sub.b   (dat_1BB6A).l,d0                ; 63A2E
+        sub.b   (PieceSections).l,d0                ; 63A2E
         move.b  d0,(OpponentPiecePos).l         ; 63A34
         move.b  (OpponentPiece).l,d1            ; 63A3A
         addq.b  #$1,d1                          ; 63A40
@@ -16678,13 +17302,18 @@ l_63A50:
         move.b  d1,(OpponentPiece).l            ; 63A50
 l_63A56:
         rts                                     ; 63A56
-sub_63A58:
+
+;-------------------------------------------------------------------------------
+; PlaceOpponentStart - Race: PlaceCarOnTrack, then the opponent's corners (OpponentCorners: 4 words)
+; from PiecePoints + a random $68-$E7 (probably its place at the start)
+;-------------------------------------------------------------------------------
+PlaceOpponentStart:
         jsr     (PlaceCarOnTrack).l             ; 63A58
         jsr     (Random).l                      ; 63A5E
         andi.w  #$7f,d0                         ; 63A64
         addi.b  #$68,d0                         ; 63A68
         movea.l #PiecePoints,a0                 ; 63A6C
-        movea.l #dat_1BD66,a1                   ; 63A72
+        movea.l #OpponentCorners,a1                   ; 63A72
         move.b  #$6,d1                          ; 63A78
 l_63A7C:
         move.w  (a0,d1.w),d3                    ; 63A7C
@@ -16693,10 +17322,16 @@ l_63A7C:
         subq.b  #$2,d1                          ; 63A86
         bpl.w   l_63A7C                         ; 63A88
         rts                                     ; 63A8C
-sub_63A8E:
+
+;-------------------------------------------------------------------------------
+; SetOpponentSkill - BuildTrack: Random run 256 times, then the opponent's settings for the track
+; (dat_63CE0-dat_63CE2, from dat_1FE2C by CurrentTrack and dat_1CA2A; the super league: SuperLeague)
+; (probably)
+;-------------------------------------------------------------------------------
+SetOpponentSkill:
         tst.b   (dat_5EB76).l                   ; 63A8E
         beq.w   l_63AA2                         ; 63A94
-        tst.b   (dat_1CA35).l                   ; 63A98
+        tst.b   (RaceInSeason).l                   ; 63A98
         bne.w   l_63B06                         ; 63A9E
 l_63AA2:
         move.w  #$ff,d4                         ; 63AA2
@@ -16706,7 +17341,7 @@ l_63AA6:
         clr.w   d1                              ; 63AB0
         move.b  (CurrentTrack).l,d1             ; 63AB2
         move.b  (dat_1CA2A).l,d2                ; 63AB8
-        tst.b   (dat_1C9D0).l                   ; 63ABE
+        tst.b   (SuperLeague).l                   ; 63ABE
         beq.w   l_63AD2                         ; 63AC4
         addi.b  #$20,d1                         ; 63AC8
         move.b  (dat_1CA2B).l,d2                ; 63ACC
@@ -16723,8 +17358,13 @@ l_63AD2:
         move.b  d0,(dat_63CE1).l                ; 63B00
 l_63B06:
         rts                                     ; 63B06
-sub_63B08:
-        move.w  #$0,(dat_1BB18).l               ; 63B08
+
+;-------------------------------------------------------------------------------
+; OpponentOnPiece - MoveOpponent: the opponent's place along its piece (PiecePoints, MulFraction
+; by dat_1BBEE) and across it (dat_1BBF0), dat_1BD88, dat_1BD8A (probably)
+;-------------------------------------------------------------------------------
+OpponentOnPiece:
+        move.w  #$0,(WorkByte3).l               ; 63B08
         move.b  (dat_1BBEF).l,d0                ; 63B10
         asl.b   #$1,d0                          ; 63B16
         move.b  (dat_1BBEE).l,d0                ; 63B18
@@ -16738,19 +17378,19 @@ sub_63B08:
         bcc.w   l_63B44                         ; 63B3C
         move.b  #$0,d0                          ; 63B40
 l_63B44:
-        move.b  d0,(dat_1BB1A).l                ; 63B44
+        move.b  d0,(WorkByte5).l                ; 63B44
         move.b  (dat_1BBEE).l,d0                ; 63B4A
         jsr     (MulFraction).l                 ; 63B50
         asr.w   #$6,d3                          ; 63B56
-        move.w  d3,(dat_1BB18).l                ; 63B58
-        move.b  (dat_1BB44).l,d0                ; 63B5E
+        move.w  d3,(WorkByte3).l                ; 63B58
+        move.b  (OpponentRacing).l,d0                ; 63B5E
         beq.w   l_63B94                         ; 63B64
         move.w  (dat_1BBF0).l,d0                ; 63B68
         bmi.w   l_63B94                         ; 63B6E
         move.w  #$0,d3                          ; 63B72
         move.b  (dat_1BBEE).l,d3                ; 63B76
         sub.w   d3,d0                           ; 63B7C
-        tst.b   (dat_1BB4D).l                   ; 63B7E
+        tst.b   (PieceDirection).l                   ; 63B7E
         bpl.w   l_63B8E                         ; 63B84
         sub.w   d3,d0                           ; 63B88
         subi.w  #$23,d0                         ; 63B8A
@@ -16758,8 +17398,8 @@ l_63B8E:
         move.w  d0,(dat_1BBF0).l                ; 63B8E
 l_63B94:
         move.w  (dat_1BBF0).l,d0                ; 63B94
-        sub.w   (dat_1BB18).l,d0                ; 63B9A
-        tst.b   (dat_1BB44).l                   ; 63BA0
+        sub.w   (WorkByte3).l,d0                ; 63B9A
+        tst.b   (OpponentRacing).l                   ; 63BA0
         beq.w   l_63BE4                         ; 63BA6
         move.w  (PiecePoints).l,d3              ; 63BAA
         add.w   (dat_1BD88).l,d3                ; 63BB0
@@ -16793,14 +17433,19 @@ l_63BF0:
         move.w  #$0,(dat_1BBEE).l               ; 63BFA
 l_63C02:
         rts                                     ; 63C02
-sub_63C04:
-        move.b  (dat_1BAFC).l,d0                ; 63C04
-        move.b  (dat_1BAFD).l,d2                ; 63C0A
-        move.b  (dat_1BBC0).l,d1                ; 63C10
+
+;-------------------------------------------------------------------------------
+; OpponentControls - MoveOpponent: dat_1BBF1, dat_1BBF0 from OpponentSteerIn, OpponentThrottleIn ($19 less while
+; swerving: SwerveCountdown; none without OpponentRacing) (probably its steering)
+;-------------------------------------------------------------------------------
+OpponentControls:
+        move.b  (OpponentSteerIn).l,d0                ; 63C04
+        move.b  (OpponentThrottleIn).l,d2                ; 63C0A
+        move.b  (SwerveCountdown).l,d1                ; 63C10
         beq.w   l_63C1E                         ; 63C16
         subi.b  #$19,d0                         ; 63C1A
 l_63C1E:
-        move.b  (dat_1BB44).l,d1                ; 63C1E
+        move.b  (OpponentRacing).l,d1                ; 63C1E
         bne.w   l_63C2E                         ; 63C24
         move.b  #$0,d0                          ; 63C28
         move.b  d0,d2                           ; 63C2C
@@ -16808,13 +17453,18 @@ l_63C2E:
         move.b  d0,(dat_1BBF1).l                ; 63C2E
         move.b  d2,(dat_1BBF0).l                ; 63C34
         rts                                     ; 63C3A
-sub_63C3C:
-        tst.b   (dat_1BB44).l                   ; 63C3C
+
+;-------------------------------------------------------------------------------
+; OpponentTargetLine - MoveOpponent: OpponentLineA, OpponentLineB from the piece's entry in PieceOpponentLines,
+; dat_63CE0, dat_1BBEE, dat_1BBF0 (probably the line it aims for)
+;-------------------------------------------------------------------------------
+OpponentTargetLine:
+        tst.b   (OpponentRacing).l                   ; 63C3C
         bne.w   l_63C48                         ; 63C42
         rts                                     ; 63C46
 l_63C48:
         move.b  (OpponentPiece).l,d1            ; 63C48
-        movea.l #dat_1C952,a0                   ; 63C4E
+        movea.l #PieceOpponentLines,a0                   ; 63C4E
         move.b  (a0,d1.w),d0                    ; 63C54
         bmi.w   l_63C6C                         ; 63C58
         cmp.b   (dat_63CE0).l,d0                ; 63C5C
@@ -16822,32 +17472,32 @@ l_63C48:
         move.b  (dat_63CE0).l,d0                ; 63C66
 l_63C6C:
         andi.b  #$7f,d0                         ; 63C6C
-        move.b  d0,(dat_1BB4A).l                ; 63C70
+        move.b  d0,(OpponentLineA).l                ; 63C70
         move.b  (dat_1BBEE).l,d0                ; 63C76
-        sub.b   (dat_1BB4A).l,d0                ; 63C7C
+        sub.b   (OpponentLineA).l,d0                ; 63C7C
         bcs.w   l_63CA0                         ; 63C82
         beq.w   l_63CD6                         ; 63C86
-        move.b  #$80,(dat_1BB45).l              ; 63C8A
+        move.b  #$80,(OpponentLineB).l              ; 63C8A
         neg.w   (dat_1BBF0).l                   ; 63C92
         cmpi.b  #$e,d0                          ; 63C98
         bcs.w   l_63CD4                         ; 63C9C
 l_63CA0:
-        movea.l #dat_1C952,a1                   ; 63CA0
+        movea.l #PieceOpponentLines,a1                   ; 63CA0
         tst.b   (a1,d1.w)                       ; 63CA6
         bmi.w   l_63CCE                         ; 63CAA
         tst.b   d0                              ; 63CAE
         bpl.w   l_63CCE                         ; 63CB0
-        move.b  (dat_1BB45).l,d2                ; 63CB4
+        move.b  (OpponentLineB).l,d2                ; 63CB4
         beq.w   l_63CCE                         ; 63CBA
         cmpi.b  #$fe,d0                         ; 63CBE
         bcc.w   l_63CD4                         ; 63CC2
-        bclr    #$7,(dat_1BB45).l               ; 63CC6
+        bclr    #$7,(OpponentLineB).l               ; 63CC6
 l_63CCE:
         asl.w   (dat_1BBF0).l                   ; 63CCE
 l_63CD4:
         rts                                     ; 63CD4
 l_63CD6:
-        move.b  #$80,(dat_1BB45).l              ; 63CD6
+        move.b  #$80,(OpponentLineB).l              ; 63CD6
         rts                                     ; 63CDE
 dat_63CE0:
 	dc.b	$00
@@ -16855,7 +17505,12 @@ dat_63CE1:
 	dc.b	$00
 dat_63CE2:
 	dc.b	$00,$00
-sub_63CE4:
+
+;-------------------------------------------------------------------------------
+; OpponentCollide - OpponentDrive: the cars touching (their gap dat_1BBF6, dat_1BBF7) - the
+; knock's forces KnockForceX-KnockForceZ, KnockPending, the knock KnockHappened, KnockStrength1 (probably)
+;-------------------------------------------------------------------------------
+OpponentCollide:
         move.b  (dat_1BBC4).l,d0                ; 63CE4
         bne.w   l_63CFA                         ; 63CEA
         rts                                     ; 63CEE
@@ -16863,13 +17518,13 @@ l_63CF0:
         move.b  #$3,(dat_1BBC3).l               ; 63CF0
         rts                                     ; 63CF8
 l_63CFA:
-        move.b  (dat_1BB44).l,d0                ; 63CFA
+        move.b  (OpponentRacing).l,d0                ; 63CFA
         beq.w   l_63D0E                         ; 63D00
-        move.b  (dat_1BB7E).l,d0                ; 63D04
+        move.b  (WheelsDown).l,d0                ; 63D04
         bne.w   l_63D54                         ; 63D0A
 l_63D0E:
         move.w  (dat_1BCD0).l,d0                ; 63D0E
-        sub.w   (dat_1BD66).l,d0                ; 63D14
+        sub.w   (OpponentCorners).l,d0                ; 63D14
         move.w  d0,d4                           ; 63D1A
         addi.w  #$28,d0                         ; 63D1C
         bpl.w   l_63D26                         ; 63D20
@@ -16887,7 +17542,7 @@ l_63D26:
         neg.w   d3                              ; 63D4A
 l_63D4C:
         asl.w   #$4,d3                          ; 63D4C
-        move.w  d3,(dat_1BD56).l                ; 63D4E
+        move.w  d3,(KnockForceY).l                ; 63D4E
 l_63D54:
         move.b  (dat_1BBF7).l,d0                ; 63D54
         cmpi.b  #$2d,d0                         ; 63D5A
@@ -16900,7 +17555,7 @@ l_63D54:
         bmi.w   l_63D82                         ; 63D7A
         move.b  #$f8,d0                         ; 63D7E
 l_63D82:
-        move.b  d0,(dat_1BD54).l                ; 63D82
+        move.b  d0,(KnockForceX).l                ; 63D82
 l_63D88:
         tst.b   (dat_1BBEB).l                   ; 63D88
         bmi.w   l_63DC2                         ; 63D8E
@@ -16910,34 +17565,34 @@ l_63D88:
         bne.w   l_63DAA                         ; 63DA0
         move.w  (dat_1BBEE).l,d0                ; 63DA4
 l_63DAA:
-        sub.w   (dat_1BD30).l,d0                ; 63DAA
+        sub.w   (SpeedForward).l,d0                ; 63DAA
         bpl.w   l_63DB8                         ; 63DB0
         move.w  #$fffd,d3                       ; 63DB4
 l_63DB8:
         asr.w   #$1,d0                          ; 63DB8
         add.w   d3,d0                           ; 63DBA
-        move.w  d0,(dat_1BD58).l                ; 63DBC
+        move.w  d0,(KnockForceZ).l                ; 63DBC
 l_63DC2:
-        move.b  #$80,(dat_1BB46).l              ; 63DC2
+        move.b  #$80,(KnockPending).l              ; 63DC2
         move.b  #$80,(dat_1BBEB).l              ; 63DCA
         move.w  #$200,d3                        ; 63DD2
-        move.w  (dat_1BD54).l,d0                ; 63DD6
+        move.w  (KnockForceX).l,d0                ; 63DD6
         bpl.w   l_63DE2                         ; 63DDC
         neg.w   d0                              ; 63DE0
 l_63DE2:
         add.w   d0,d3                           ; 63DE2
-        move.w  (dat_1BD56).l,d0                ; 63DE4
+        move.w  (KnockForceY).l,d0                ; 63DE4
         bpl.w   l_63DF0                         ; 63DEA
         neg.w   d0                              ; 63DEE
 l_63DF0:
         add.w   d0,d3                           ; 63DF0
-        move.w  (dat_1BD58).l,d0                ; 63DF2
+        move.w  (KnockForceZ).l,d0                ; 63DF2
         bpl.w   l_63DFE                         ; 63DF8
         neg.w   d0                              ; 63DFC
 l_63DFE:
         add.w   d0,d3                           ; 63DFE
         lsr.w   #$8,d3                          ; 63E00
-        movea.l #dat_1BB4F,a0                   ; 63E02
+        movea.l #KnockStrength1,a0                   ; 63E02
         move.w  #$2,d2                          ; 63E08
 l_63E0C:
         move.b  (a0,d2.w),d0                    ; 63E0C
@@ -16948,36 +17603,41 @@ l_63E1A:
         move.b  d0,(a0,d2.w)                    ; 63E1A
         subq.b  #$1,d2                          ; 63E1E
         bpl.w   l_63E0C                         ; 63E20
-        move.b  #$80,(dat_1BB54).l              ; 63E24
+        move.b  #$80,(KnockHappened).l              ; 63E24
         rts                                     ; 63E2C
-sub_63E2E:
+
+;-------------------------------------------------------------------------------
+; ApplyCollision - WheelsOnTrack: a knock from the opponent (KnockPending) added to the player's
+; forces (SpringForceSide-SpringForceForward from KnockForceX-KnockForceZ), dat_1BBEE slowed, its sound (probably)
+;-------------------------------------------------------------------------------
+ApplyCollision:
         tst.b   (dat_63EE0).l                   ; 63E2E
         beq.w   l_63E3E                         ; 63E34
         subq.b  #$1,(dat_63EE0).l               ; 63E38
 l_63E3E:
-        tst.b   (dat_1BB46).l                   ; 63E3E
+        tst.b   (KnockPending).l                   ; 63E3E
         beq.w   l_63EDC                         ; 63E44
-        move.b  #$0,(dat_1BB46).l               ; 63E48
+        move.b  #$0,(KnockPending).l               ; 63E48
         move.w  (dat_1BBEE).l,d0                ; 63E50
-        sub.w   (dat_1BD58).l,d0                ; 63E56
+        sub.w   (KnockForceZ).l,d0                ; 63E56
         bpl.w   l_63E64                         ; 63E5C
         move.w  #$0,d0                          ; 63E60
 l_63E64:
         move.w  d0,(dat_1BBEE).l                ; 63E64
-        move.w  (dat_1BD56).l,d0                ; 63E6A
+        move.w  (KnockForceY).l,d0                ; 63E6A
         asr.w   #$4,d0                          ; 63E70
-        sub.w   d0,(dat_1BD76).l                ; 63E72
+        sub.w   d0,(OpponentCornerSpeeds).l                ; 63E72
         sub.w   d0,(dat_1BD78).l                ; 63E78
         sub.w   d0,(dat_1BD7A).l                ; 63E7E
-        move.w  (dat_1BD54).l,d0                ; 63E84
-        add.w   d0,(dat_1BD40).l                ; 63E8A
-        move.w  (dat_1BD56).l,d0                ; 63E90
-        add.w   d0,(dat_1BD42).l                ; 63E96
-        move.w  (dat_1BD58).l,d0                ; 63E9C
-        add.w   d0,(dat_1BD44).l                ; 63EA2
-        move.w  #$0,(dat_1BD54).l               ; 63EA8
-        move.w  #$0,(dat_1BD56).l               ; 63EB0
-        move.w  #$0,(dat_1BD58).l               ; 63EB8
+        move.w  (KnockForceX).l,d0                ; 63E84
+        add.w   d0,(SpringForceSide).l                ; 63E8A
+        move.w  (KnockForceY).l,d0                ; 63E90
+        add.w   d0,(SpringForceUp).l                ; 63E96
+        move.w  (KnockForceZ).l,d0                ; 63E9C
+        add.w   d0,(SpringForceForward).l                ; 63EA2
+        move.w  #$0,(KnockForceX).l               ; 63EA8
+        move.w  #$0,(KnockForceY).l               ; 63EB0
+        move.w  #$0,(KnockForceZ).l               ; 63EB8
         tst.b   (dat_63EE0).l                   ; 63EC0
         bne.w   l_63EDC                         ; 63EC6
         move.b  #$2,d0                          ; 63ECA
@@ -16989,17 +17649,23 @@ dat_63EDE:
 	dc.b	$00,$00
 dat_63EE0:
 	dc.b	$00,$00
-sub_63EE2:
+
+;-------------------------------------------------------------------------------
+; OpponentPhysics - MoveOpponent: the opponent car's corners (OpponentCorners-dat_1BD72,
+; OpponentCornerSpeeds-dat_1BD82) moved and kept on the track (PiecePoints, OpponentEvenCorners), its bounce
+; (Random) (probably)
+;-------------------------------------------------------------------------------
+OpponentPhysics:
         move.w  #$8000,(dat_63EDE).l            ; 63EE2
         move.w  #$28,d0                         ; 63EEA
-        tst.b   (dat_1BB4D).l                   ; 63EEE
+        tst.b   (PieceDirection).l                   ; 63EEE
         bpl.w   l_63EFC                         ; 63EF4
         move.w  #$7c,d0                         ; 63EF8
 l_63EFC:
         move.w  d0,(dat_1BBF8).l                ; 63EFC
         move.w  #$0,d7                          ; 63F02
         move.w  (PiecePoints).l,d0              ; 63F06
-        sub.w   (dat_1BD66).l,d0                ; 63F0C
+        sub.w   (OpponentCorners).l,d0                ; 63F0C
         cmp.w   (dat_63EDE).l,d0                ; 63F12
         blt.w   l_63F22                         ; 63F18
         move.w  d0,(dat_63EDE).l                ; 63F1C
@@ -17012,7 +17678,7 @@ l_63F22:
 l_63F38:
         move.w  d0,d6                           ; 63F38
         sub.w   (dat_1BD6E).l,d0                ; 63F3A
-        jsr     (sub_6180E).l                   ; 63F40
+        jsr     (ScaleAdd114).l                   ; 63F40
         bpl.w   l_63F4E                         ; 63F46
         move.w  #$0,d0                          ; 63F4A
 l_63F4E:
@@ -17038,7 +17704,7 @@ l_63F8A:
 l_63FA0:
         move.w  d0,d6                           ; 63FA0
         sub.w   (dat_1BD70).l,d0                ; 63FA2
-        jsr     (sub_6180E).l                   ; 63FA8
+        jsr     (ScaleAdd114).l                   ; 63FA8
         bpl.w   l_63FB6                         ; 63FAE
         move.w  #$0,d0                          ; 63FB2
 l_63FB6:
@@ -17064,7 +17730,7 @@ l_63FF2:
 l_64008:
         move.w  d0,d6                           ; 64008
         sub.w   (dat_1BD72).l,d0                ; 6400A
-        jsr     (sub_6180E).l                   ; 64010
+        jsr     (ScaleAdd114).l                   ; 64010
         bpl.w   l_6401E                         ; 64016
         move.w  #$0,d0                          ; 6401A
 l_6401E:
@@ -17079,7 +17745,7 @@ l_6402A:
         move.w  d7,d0                           ; 6403E
         asr.w   #$8,d0                          ; 64040
         or.b    d7,d0                           ; 64042
-        move.b  d0,(dat_1BB44).l                ; 64044
+        move.b  d0,(OpponentRacing).l                ; 64044
         move.w  (dat_1BD5E).l,d4                ; 6404A
         add.w   (dat_1BD60).l,d4                ; 64050
         add.w   (dat_1BD62).l,d4                ; 64056
@@ -17104,7 +17770,7 @@ l_6402A:
         add.w   d7,d0                           ; 640A0
         asr.w   #$3,d0                          ; 640A2
         move.w  d0,(dat_1BD82).l                ; 640A4
-        move.b  (dat_1CA29).l,d1                ; 640AA
+        move.b  (OpponentSkill).l,d1                ; 640AA
         movea.l #dat_1ED8A,a0                   ; 640B0
         move.b  (a0,d1.w),d0                    ; 640B6
         andi.b  #$4,d0                          ; 640BA
@@ -17124,15 +17790,15 @@ l_640EC:
         muls.w  d2,d0                           ; 640FA
         asr.l   #$8,d0                          ; 640FC
 l_640FE:
-        add.w   (dat_1BD76).l,d0                ; 640FE
-        move.w  d0,(dat_1BD76).l                ; 64104
+        add.w   (OpponentCornerSpeeds).l,d0                ; 640FE
+        move.w  d0,(OpponentCornerSpeeds).l                ; 64104
         move.b  #$ee,d2                         ; 6410A
         beq.w   l_64116                         ; 6410E
         muls.w  d2,d0                           ; 64112
         asr.l   #$8,d0                          ; 64114
 l_64116:
         asr.w   #$1,d0                          ; 64116
-        add.w   d0,(dat_1BD66).l                ; 64118
+        add.w   d0,(OpponentCorners).l                ; 64118
         move.w  (dat_1BD80).l,d0                ; 6411E
         move.b  #$ee,d2                         ; 64124
         beq.w   l_64130                         ; 64128
@@ -17166,7 +17832,7 @@ l_6417A:
         move.w  #$128,(dat_1BBF6).l             ; 64182
         move.b  #$0,d1                          ; 6418A
         move.b  #$2,d2                          ; 6418E
-        jsr     (sub_64232).l                   ; 64192
+        jsr     (OpponentEvenCorners).l                   ; 64192
         move.w  #$170,(dat_1BBF6).l             ; 64198
         move.b  #$0,d1                          ; 641A0
         tst.w   d4                              ; 641A4
@@ -17174,16 +17840,21 @@ l_6417A:
         addq.b  #$2,d1                          ; 641AA
 l_641AC:
         move.b  #$4,d2                          ; 641AC
-        jsr     (sub_64232).l                   ; 641B0
-sub_641B6:
-        move.w  (dat_1BD66).l,(dat_1BF64).l     ; 641B6
-        addi.w  #$50,(dat_1BF64).l              ; 641C0
+        jsr     (OpponentEvenCorners).l                   ; 641B0
+
+;-------------------------------------------------------------------------------
+; LinkOpponentCorners - LinkReceiveCarState: the linked car's corners for drawing
+; (LinkCarCorners-dat_1BF6A) from OpponentCorners-dat_1BD6A + $50 (probably)
+;-------------------------------------------------------------------------------
+LinkOpponentCorners:
+        move.w  (OpponentCorners).l,(LinkCarCorners).l     ; 641B6
+        addi.w  #$50,(LinkCarCorners).l              ; 641C0
         move.w  (dat_1BD68).l,(dat_1BF68).l     ; 641C8
         addi.w  #$50,(dat_1BF68).l              ; 641D2
         move.w  (dat_1BD6A).l,(dat_1BF66).l     ; 641DA
         addi.w  #$50,(dat_1BF66).l              ; 641E4
         move.w  (dat_1BF68).l,d0                ; 641EC
-        sub.w   (dat_1BF64).l,d0                ; 641F2
+        sub.w   (LinkCarCorners).l,d0                ; 641F2
         asr.w   #$1,d0                          ; 641F8
         move.w  (dat_1BF66).l,d3                ; 641FA
         add.w   d0,d3                           ; 64200
@@ -17192,8 +17863,12 @@ sub_641B6:
         sub.w   d0,d3                           ; 6420E
         move.w  d3,(dat_1BF66).l                ; 64210
         rts                                     ; 64216
-sub_64218:
-        movea.l #dat_1BD66,a0                   ; 64218
+
+;-------------------------------------------------------------------------------
+; OpponentCornerDiff - d0 = |corner d1 - corner d2| (OpponentCorners's words), d4 the difference signed
+;-------------------------------------------------------------------------------
+OpponentCornerDiff:
+        movea.l #OpponentCorners,a0                   ; 64218
         move.w  (a0,d1.w),d0                    ; 6421E
         sub.w   (a0,d2.w),d0                    ; 64222
         move.w  d0,d4                           ; 64226
@@ -17202,10 +17877,15 @@ sub_64218:
         neg.w   d0                              ; 6422E
 l_64230:
         rts                                     ; 64230
-sub_64232:
-        movea.l #dat_1BD76,a4                   ; 64232
+
+;-------------------------------------------------------------------------------
+; OpponentEvenCorners - OpponentPhysics: corners too far apart (OpponentCornerDiff) brought
+; together (AveragePair), dat_1BBF9 (probably)
+;-------------------------------------------------------------------------------
+OpponentEvenCorners:
+        movea.l #OpponentCornerSpeeds,a4                   ; 64232
         move.b  d1,(dat_1BBF9).l                ; 64238
-        jsr     (sub_64218).l                   ; 6423E
+        jsr     (OpponentCornerDiff).l                   ; 6423E
         move.w  (dat_1BBF6).l,d3                ; 64244
         sub.w   d0,d3                           ; 6424A
         bpl.w   l_642A0                         ; 6424C
@@ -17213,28 +17893,28 @@ sub_64232:
         bpl.w   l_64258                         ; 64252
         move.b  d2,d1                           ; 64256
 l_64258:
-        movea.l #dat_1BD66,a0                   ; 64258
+        movea.l #OpponentCorners,a0                   ; 64258
         add.w   d3,(a0,d1.w)                    ; 6425E
         cmpi.b  #$4,d2                          ; 64262
         beq.w   l_64274                         ; 64266
         move.b  #$0,d1                          ; 6426A
-        jmp     (sub_642F0).l                   ; 6426E
+        jmp     (AveragePair).l                   ; 6426E
 l_64274:
         move.b  #$0,d1                          ; 64274
         move.b  #$2,d2                          ; 64278
-        jsr     (sub_642F0).l                   ; 6427C
+        jsr     (AveragePair).l                   ; 6427C
         move.b  #$4,d1                          ; 64282
-        jsr     (sub_642F0).l                   ; 64286
+        jsr     (AveragePair).l                   ; 64286
         move.b  #$0,d1                          ; 6428C
-        jsr     (sub_642F0).l                   ; 64290
+        jsr     (AveragePair).l                   ; 64290
         move.b  #$4,d2                          ; 64296
         move.b  (dat_1BBF9).l,d1                ; 6429A
 l_642A0:
         cmpi.b  #$4,d2                          ; 642A0
         bne.w   l_642E8                         ; 642A4
-        move.b  (dat_1BB44).l,d0                ; 642A8
+        move.b  (OpponentRacing).l,d0                ; 642A8
         bne.w   l_642E8                         ; 642AE
-        tst.b   (dat_1BB18).l                   ; 642B2
+        tst.b   (WorkByte3).l                   ; 642B2
         bmi.w   l_642BC                         ; 642B8
 l_642BC:
         move.w  (a4,d1.w),d0                    ; 642BC
@@ -17254,16 +17934,25 @@ l_642E8:
         rts                                     ; 642E8
 dat_642EA:
 	dc.b	$00,$04,$00,$04,$FF,$FC
-sub_642F0:
+
+;-------------------------------------------------------------------------------
+; AveragePair - the words at (a4, d1) and (a4, d2) both set to their mean
+;-------------------------------------------------------------------------------
+AveragePair:
         move.w  (a4,d1.w),d0                    ; 642F0
         add.w   (a4,d2.w),d0                    ; 642F4
         asr.w   #$1,d0                          ; 642F8
         move.w  d0,(a4,d1.w)                    ; 642FA
         move.w  d0,(a4,d2.w)                    ; 642FE
         rts                                     ; 64302
-sub_64304:
+
+;-------------------------------------------------------------------------------
+; BuildTrackGrid - TrackPreview: the track's grid (TrackGrid: 16 x 16 squares, $FF where none)
+; filled with each piece's number at its square (TrackPieceGrid)
+;-------------------------------------------------------------------------------
+BuildTrackGrid:
         move.b  #$ff,d0                         ; 64304
-        movea.l #dat_1C280,a0                   ; 64308
+        movea.l #TrackGrid,a0                   ; 64308
         move.w  #$0,d1                          ; 6430E
 l_64312:
         move.b  d0,(a0,d1.w)                    ; 64312
@@ -17418,7 +18107,7 @@ dat_64530:
 ShowTitleBackground:
         move.w  (dat_23C32).l,d0                ; 64532
         jsr     (FadeOutTo).l                   ; 64538
-        move.b  #$80,(dat_1BBBC).l              ; 6453E
+        move.b  #$80,(TextOneScreen).l              ; 6453E
         move.l  (ScreenFront).l,d0              ; 64546
         move.l  d0,(ScreenDraw).l               ; 6454C
         addi.l  #$7d00,d0                       ; 64552
@@ -17443,12 +18132,17 @@ l_6458A:
         cmpa.l  a3,a0                           ; 645A6
         bne.w   l_6458A                         ; 645A8
         move.b  #$41,(dat_5D724).l              ; 645AC
-        jsr     (sub_645C6).l                   ; 645B4
+        jsr     (PrintSeasonPanel).l                   ; 645B4
         jsr     (CopyPanel).l                   ; 645BA
         jmp     (FadeStep).l                    ; 645C0
-sub_645C6:
-        move.b  (dat_1C9CE).l,d0                ; 645C6
-        move.b  d0,(dat_1BB5F).l                ; 645CC
+
+;-------------------------------------------------------------------------------
+; PrintSeasonPanel - the panel under the menus cleared and the division and race printed
+; (PlayerDivision, dat_5EB76, the super league SuperLeague), unless dat_64530 or dat_5EB75 (probably)
+;-------------------------------------------------------------------------------
+PrintSeasonPanel:
+        move.b  (PlayerDivision).l,d0                ; 645C6
+        move.b  d0,(DivisionShown).l                ; 645CC
         jsr     (ClearPanel).l                  ; 645D2
         move.b  #$f,d0                          ; 645D8
         jsr     (SetTextColour).l               ; 645DC
@@ -17462,7 +18156,7 @@ l_645F8:
         tst.b   (dat_5EB76).l                   ; 645F8
         bne.w   l_64652                         ; 645FE
         move.b  #$9,d2                          ; 64602
-        move.b  (dat_1C9D0).l,d0                ; 64606
+        move.b  (SuperLeague).l,d0                ; 64606
         beq.w   l_64626                         ; 6460C
         move.b  d2,(dat_5A757).l                ; 64610
         move.b  #$bb,d1                         ; 64616
@@ -17474,7 +18168,7 @@ l_64626:
         jsr     (PrintMenuText).l               ; 64630
 l_64636:
         move.b  #$4,d0                          ; 64636
-        sub.b   (dat_1BB5F).l,d0                ; 6463A
+        sub.b   (DivisionShown).l,d0                ; 6463A
         jsr     (PrintDigit).l                  ; 64640
         move.b  #$1,d0                          ; 64646
         jsr     (SetTextColour).l               ; 6464A
@@ -17482,60 +18176,84 @@ l_64636:
 l_64652:
         move.b  #$a0,d1                         ; 64652
         jmp     (PrintResultText).l             ; 64656
-sub_6465C:
+
+;-------------------------------------------------------------------------------
+; ChooseTrackMarked - ChooseTrack with dat_1BBAA set ($80)
+;-------------------------------------------------------------------------------
+ChooseTrackMarked:
         move.b  #$80,d0                         ; 6465C
         bra.w   l_64668                         ; 64660
-sub_64664:
+
+;-------------------------------------------------------------------------------
+; ChooseTrack - GameLoop: PrintSeasonPanel, the race's track chosen (SetTrackChoice) from the
+; division (DivisionShown) and the race (RaceInSeason, dat_5EB77); its name and results printed
+; (PrintTrackNameAt, PrintRaceResults) (probably)
+;-------------------------------------------------------------------------------
+ChooseTrack:
         move.b  #$0,d0                          ; 64664
 l_64668:
         move.b  d0,(dat_1BBAA).l                ; 64668
-        jsr     (sub_645C6).l                   ; 6466E
-        move.b  (dat_1BB5F).l,d0                ; 64674
+        jsr     (PrintSeasonPanel).l                   ; 6466E
+        move.b  (DivisionShown).l,d0                ; 64674
         asl.b   #$1,d0                          ; 6467A
-        move.b  d0,(dat_1BB1B).l                ; 6467C
-        move.b  (dat_1CA35).l,d0                ; 64682
+        move.b  d0,(WorkByte6).l                ; 6467C
+        move.b  (RaceInSeason).l,d0                ; 64682
         tst.b   (dat_5EB76).l                   ; 64688
         beq.w   l_6469C                         ; 6468E
         move.b  (dat_5EB77).l,d0                ; 64692
         eori.b  #$1,d0                          ; 64698
 l_6469C:
         andi.b  #$1,d0                          ; 6469C
-        add.b   (dat_1BB1B).l,d0                ; 646A0
+        add.b   (WorkByte6).l,d0                ; 646A0
         move.b  d0,d1                           ; 646A6
         jsr     (SetTrackChoice).l              ; 646A8
-        btst    #$0,(dat_1BBB1).l               ; 646AE
+        btst    #$0,(RaceResultFlags).l               ; 646AE
         bne.w   l_646C0                         ; 646B6
         jmp     (l_58E7A).l                     ; 646BA
 l_646C0:
         move.b  #$b,d2                          ; 646C0
-        jsr     (sub_5EAE0).l                   ; 646C4
-        jsr     (sub_5F074).l                   ; 646CA
+        jsr     (PrintTrackNameAt).l                   ; 646C4
+        jsr     (PrintRaceResults).l                   ; 646CA
         jmp     (l_64828).l                     ; 646D0
-sub_646D6:
-        jsr     (sub_645C6).l                   ; 646D6
-        jsr     (sub_64916).l                   ; 646DC
+
+;-------------------------------------------------------------------------------
+; ShowSeasonEnd - GameLoop: PrintSeasonPanel, then SeasonEnd
+;-------------------------------------------------------------------------------
+ShowSeasonEnd:
+        jsr     (PrintSeasonPanel).l                   ; 646D6
+        jsr     (SeasonEnd).l                   ; 646DC
         jmp     (l_64828).l                     ; 646E2
-sub_646E8:
+
+;-------------------------------------------------------------------------------
+; ShowDivisionTable - the division's drivers (SetDivisionDrivers) and its table (ShowLeagueTable),
+; then PrintSeasonPanel
+;-------------------------------------------------------------------------------
+ShowDivisionTable:
         jsr     (SetDivisionDrivers).l          ; 646E8
-        move.b  (dat_1BC5B).l,(dat_1BBE8).l     ; 646EE
+        move.b  (DivisionOfDriver).l,(TextColourChoice).l     ; 646EE
         tst.b   (dat_5EB76).l                   ; 646F8
         beq.w   l_6470C                         ; 646FE
         jsr     (ShowLeagueTable).l             ; 64702
         bra.w   l_64828                         ; 64708
 l_6470C:
-        jsr     (sub_645C6).l                   ; 6470C
+        jsr     (PrintSeasonPanel).l                   ; 6470C
         jmp     (l_58F44).l                     ; 64712
-sub_64718:
+
+;-------------------------------------------------------------------------------
+; PrintLeagueLine - ShowLeagueTable: a driver's line - the name, the best time, the races won and
+; the points (DriverBestTimes, DriverWins, DriverPoints, DriverLapRecords) (probably)
+;-------------------------------------------------------------------------------
+PrintLeagueLine:
         move.b  #$0,d0                          ; 64718
         jsr     (SetTextColour).l               ; 6471C
-        move.b  (dat_1BBE8).l,d2                ; 64722
-        movea.l #dat_1CA0E,a2                   ; 64728
+        move.b  (TextColourChoice).l,d2                ; 64722
+        movea.l #DriverOrder,a2                   ; 64728
         move.b  (a2,d2.w),d1                    ; 6472E
         move.b  d1,(dat_1BBE4).l                ; 64732
         jsr     (PrintDriverName).l             ; 64738
         jsr     (PrintSpace).l                  ; 6473E
         move.b  (dat_1BBE4).l,d1                ; 64744
-        tst.b   (dat_1BBCB).l                   ; 6474A
+        tst.b   (TableMarked).l                   ; 6474A
         bpl.w   l_6476E                         ; 64750
         jsr     (PrintTime).l                   ; 64754
         jsr     (PrintSpaces2).l                ; 6475A
@@ -17543,37 +18261,42 @@ sub_64718:
         jsr     (PrintTime).l                   ; 64764
         bra.w   l_647B4                         ; 6476A
 l_6476E:
-        movea.l #dat_1C9F6,a1                   ; 6476E
+        movea.l #DriverBestTimes,a1                   ; 6476E
         move.b  (a1,d1.w),d0                    ; 64774
-        jsr     (sub_5EDD2).l                   ; 64778
-        movea.l #dat_1C9DE,a1                   ; 6477E
+        jsr     (PrintNumber2).l                   ; 64778
+        movea.l #DriverWins,a1                   ; 6477E
         move.b  (a1,d1.w),d0                    ; 64784
-        jsr     (sub_5EDBA).l                   ; 64788
-        movea.l #dat_1C9EA,a1                   ; 6478E
+        jsr     (PrintNumberSpaced).l                   ; 64788
+        movea.l #DriverPoints,a1                   ; 6478E
         move.b  (a1,d1.w),d0                    ; 64794
-        jsr     (sub_5EDBA).l                   ; 64798
+        jsr     (PrintNumberSpaced).l                   ; 64798
         jsr     (PrintSpaces3).l                ; 6479E
-        movea.l #dat_1CA02,a1                   ; 647A4
+        movea.l #DriverLapRecords,a1                   ; 647A4
         move.b  (a1,d1.w),d0                    ; 647AA
-        jsr     (sub_5EDD2).l                   ; 647AE
+        jsr     (PrintNumber2).l                   ; 647AE
 l_647B4:
-        addq.b  #$1,(dat_1BBE8).l               ; 647B4
-        move.b  (dat_1BBE8).l,d0                ; 647BA
+        addq.b  #$1,(TextColourChoice).l               ; 647B4
+        move.b  (TextColourChoice).l,d0                ; 647BA
         cmp.b   (dat_1BC59).l,d0                ; 647C0
         rts                                     ; 647C6
-sub_647C8:		; (no references found: found by the code sweep)
+
+;-------------------------------------------------------------------------------
+; ShowOpponentScreen - (no references) the opponent's screen (PrintOpponentName), its texts and
+; drivers' names (dat_1CA25, dat_1CA26), WaitFire
+;-------------------------------------------------------------------------------
+ShowOpponentScreen:		; (no references found: found by the code sweep)
         move.b  #$7,d0                          ; 647C8
-        jsr     (sub_648D2).l                   ; 647CC
+        jsr     (PrintOpponentName).l                   ; 647CC
         move.b  #$60,d1                         ; 647D2
         jsr     (PrintMenuText).l               ; 647D6
-        jsr     (sub_64B0E).l                   ; 647DC
+        jsr     (TextAtListLineTwo).l                   ; 647DC
         move.b  #$6a,d1                         ; 647E2
         jsr     (PrintMenuText).l               ; 647E6
         move.b  (dat_1CA25).l,d1                ; 647EC
         jsr     (PrintDriverName).l             ; 647F2
         move.b  #$e9,d1                         ; 647F8
         jsr     (PrintMenuText).l               ; 647FC
-        jsr     (sub_64B0E).l                   ; 64802
+        jsr     (TextAtListLineTwo).l                   ; 64802
         move.b  #$78,d1                         ; 64808
         jsr     (PrintMenuText).l               ; 6480C
         move.b  (dat_1CA26).l,d1                ; 64812
@@ -17583,8 +18306,12 @@ sub_647C8:		; (no references found: found by the code sweep)
 l_64828:
         jsr     (CopyPanel).l                   ; 64828
         jsr     (WaitFire).l                    ; 6482E
-sub_64834:
-        move.b  #$0,(dat_1BB6E).l               ; 64834
+
+;-------------------------------------------------------------------------------
+; TextOffsetNone - the text's extra lines down (TextLineOffset) none
+;-------------------------------------------------------------------------------
+TextOffsetNone:
+        move.b  #$0,(TextLineOffset).l               ; 64834
         rts                                     ; 6483C
 
 ;-------------------------------------------------------------------------------
@@ -17624,19 +18351,28 @@ l_648A2:
         andi.b  #$10,d0                         ; 648A8
         beq.w   l_648A2                         ; 648AC
         rts                                     ; 648B0
-sub_648B2:
+
+;-------------------------------------------------------------------------------
+; ShowDivisionsOrTable - ShowDivisions, or in the season (dat_5EB76) ShowDivisionTable
+;-------------------------------------------------------------------------------
+ShowDivisionsOrTable:
         tst.b   (dat_5EB76).l                   ; 648B2
-        bne.w   sub_646E8                       ; 648B8
+        bne.w   ShowDivisionTable                       ; 648B8
         jmp     (ShowDivisions).l               ; 648BC
 DivisionTracks:				; the tracks of each division, two each
 	dc.b	$00,$02,$01,$03,$06,$07,$04,$05
 dat_648CA:
 	dc.b	$08,$05,$0C,$05,$05,$08,$0C,$08
-sub_648D2:
-        move.b  d0,(dat_1BB16).l                ; 648D2
+
+;-------------------------------------------------------------------------------
+; PrintOpponentName - ShowRaceScreen: the opponent picked (PickOpponent) and its name printed
+; (OpponentDriver, dat_1CA28)
+;-------------------------------------------------------------------------------
+PrintOpponentName:
+        move.b  d0,(WorkByte1).l                ; 648D2
         jsr     (PickOpponent).l                ; 648D8
-        jsr     (sub_64B0E).l                   ; 648DE
-        move.b  (dat_1CA27).l,d1                ; 648E4
+        jsr     (TextAtListLineTwo).l                   ; 648DE
+        move.b  (OpponentDriver).l,d1                ; 648E4
         jsr     (PrintDriverName).l             ; 648EA
         move.b  #$28,d1                         ; 648F0
         jsr     (PrintMenuText).l               ; 648F4
@@ -17644,12 +18380,18 @@ sub_648D2:
         jsr     (PrintDriverName).l             ; 64900
         move.b  #$1,d0                          ; 64906
         jsr     (SetTextColour).l               ; 6490A
-        jmp     (sub_64834).l                   ; 64910
-sub_64916:
+        jmp     (TextOffsetNone).l                   ; 64910
+
+;-------------------------------------------------------------------------------
+; SeasonEnd - the season's end: the drivers' places kept (DriverPlaces from DriverOrder), the drivers
+; moved between divisions (SetDivisionDrivers), the player's new division (PlayerDivision, DamageMarks,
+; SuperLeague) printed (probably)
+;-------------------------------------------------------------------------------
+SeasonEnd:
         move.b  #$80,(dat_593F6).l              ; 64916
         move.b  #$b,d1                          ; 6491E
-        movea.l #dat_1C9C2,a0                   ; 64922
-        movea.l #dat_1CA0E,a1                   ; 64928
+        movea.l #DriverPlaces,a0                   ; 64922
+        movea.l #DriverOrder,a1                   ; 64928
 l_6492E:
         move.b  (a1,d1.w),(a0,d1.w)             ; 6492E
         subq.b  #$1,d1                          ; 64934
@@ -17661,33 +18403,33 @@ l_6492E:
         move.b  #$d7,d1                         ; 6494E
         jsr     (PrintMenuText).l               ; 64952
         move.b  #$1,d0                          ; 64958
-        move.b  d0,(dat_1BB16).l                ; 6495C
-        move.b  (dat_1BC5B).l,d2                ; 64962
+        move.b  d0,(WorkByte1).l                ; 6495C
+        move.b  (DivisionOfDriver).l,d2                ; 64962
         bne.w   l_6499C                         ; 64968
-        move.b  (dat_1CA0E).l,d0                ; 6496C
+        move.b  (DriverOrder).l,d0                ; 6496C
         cmp.b   (dat_5EB79).l,d0                ; 64972
         bne.w   l_649F2                         ; 64978
-        move.b  (dat_1C9D0).l,d0                ; 6497C
+        move.b  (SuperLeague).l,d0                ; 6497C
         beq.w   l_6499C                         ; 64982
-        jsr     (sub_64B0E).l                   ; 64986
+        jsr     (TextAtListLineTwo).l                   ; 64986
         move.b  #$ce,d1                         ; 6498C
         jsr     (PrintOptionText).l             ; 64990
         jmp     (l_64A2A).l                     ; 64996
 l_6499C:
-        jsr     (sub_64B0E).l                   ; 6499C
+        jsr     (TextAtListLineTwo).l                   ; 6499C
         move.b  #$b7,d1                         ; 649A2
         jsr     (PrintMenuText).l               ; 649A6
-        move.b  (dat_1BC5B).l,d2                ; 649AC
-        movea.l #dat_1CA0E,a2                   ; 649B2
+        move.b  (DivisionOfDriver).l,d2                ; 649AC
+        movea.l #DriverOrder,a2                   ; 649B2
         move.b  (a2,d2.w),d1                    ; 649B8
         cmp.b   (dat_5EB79).l,d1                ; 649BC
         bne.w   l_649CC                         ; 649C2
         move.b  d1,(dat_593F6).l                ; 649C6
 l_649CC:
         jsr     (PrintDriverName).l             ; 649CC
-        move.b  (dat_1BC5B).l,d2                ; 649D2
+        move.b  (DivisionOfDriver).l,d2                ; 649D2
         bne.w   l_649F2                         ; 649D8
-        jsr     (sub_64B0E).l                   ; 649DC
+        jsr     (TextAtListLineTwo).l                   ; 649DC
         move.b  #$a7,d1                         ; 649E2
         jsr     (PrintOptionText).l             ; 649E6
         jmp     (l_64A2A).l                     ; 649EC
@@ -17696,33 +18438,33 @@ l_649F2:
         subq.b  #$1,d2                          ; 649F8
         cmpi.b  #$b,d2                          ; 649FA
         beq.w   l_64A2A                         ; 649FE
-        jsr     (sub_64B0E).l                   ; 64A02
+        jsr     (TextAtListLineTwo).l                   ; 64A02
         move.b  #$c7,d1                         ; 64A08
         jsr     (PrintMenuText).l               ; 64A0C
         move.b  (dat_1BC59).l,d2                ; 64A12
         subq.b  #$1,d2                          ; 64A18
-        movea.l #dat_1CA0E,a2                   ; 64A1A
+        movea.l #DriverOrder,a2                   ; 64A1A
         move.b  (a2,d2.w),d1                    ; 64A20
         jsr     (PrintDriverName).l             ; 64A24
 l_64A2A:
         move.b  #$2,d0                          ; 64A2A
-        move.b  d0,(dat_1BB5F).l                ; 64A2E
+        move.b  d0,(DivisionShown).l                ; 64A2E
 l_64A34:
         jsr     (SetDivisionDrivers).l          ; 64A34
-        move.b  (dat_1BC5B).l,d2                ; 64A3A
-        movea.l #dat_1C9C2,a0                   ; 64A40
+        move.b  (DivisionOfDriver).l,d2                ; 64A3A
+        movea.l #DriverPlaces,a0                   ; 64A40
         move.b  (a0,d2.w),d1                    ; 64A46
         move.b  -$1(a0,d2.w),(a0,d2.w)          ; 64A4A
         move.b  d1,-$1(a0,d2.w)                 ; 64A50
-        subq.b  #$1,(dat_1BB5F).l               ; 64A54
+        subq.b  #$1,(DivisionShown).l               ; 64A54
         bpl.w   l_64A34                         ; 64A5A
         move.b  (dat_5EB79).l,d0                ; 64A5E
-        cmp.b   (dat_1CA0E).l,d0                ; 64A64
+        cmp.b   (DriverOrder).l,d0                ; 64A64
         bne.w   l_64A9A                         ; 64A6A
-        move.b  (dat_1C9D0).l,d1                ; 64A6E
+        move.b  (SuperLeague).l,d1                ; 64A6E
         bne.w   l_64AB6                         ; 64A74
-        move.b  d0,(dat_1C9D0).l                ; 64A78
-        movea.l #dat_1C9C2,a0                   ; 64A7E
+        move.b  d0,(SuperLeague).l                ; 64A78
+        movea.l #DriverPlaces,a0                   ; 64A7E
         move.b  #$b,d1                          ; 64A84
 l_64A88:
         move.b  d1,(a0,d1.w)                    ; 64A88
@@ -17731,25 +18473,29 @@ l_64A88:
         move.b  #$0,d0                          ; 64A92
         bra.w   l_64AAA                         ; 64A96
 l_64A9A:
-        jsr     (sub_64AD2).l                   ; 64A9A
+        jsr     (FindDriverPlace).l                   ; 64A9A
         movea.l #dat_64AC6,a1                   ; 64AA0
         move.b  (a1,d1.w),d0                    ; 64AA6
 l_64AAA:
-        move.b  d0,(dat_1C9CE).l                ; 64AAA
+        move.b  d0,(PlayerDivision).l                ; 64AAA
         beq.w   l_64AB6                         ; 64AB0
         rts                                     ; 64AB4
 l_64AB6:
         move.b  #$6,d0                          ; 64AB6
         asl.b   #$1,d0                          ; 64ABA
         subq.b  #$2,d0                          ; 64ABC
-        move.b  d0,(dat_1C9CF).l                ; 64ABE
+        move.b  d0,(DamageMarks).l                ; 64ABE
         rts                                     ; 64AC4
 dat_64AC6:
 	dc.b	$03,$03,$03,$02,$02,$02,$01,$01,$01,$00,$00,$00
-sub_64AD2:
+
+;-------------------------------------------------------------------------------
+; FindDriverPlace - d0: a driver - d1 its place in DriverPlaces (11 down; -1 if not there)
+;-------------------------------------------------------------------------------
+FindDriverPlace:
         move.b  #$b,d1                          ; 64AD2
 l_64AD6:
-        movea.l #dat_1C9C2,a1                   ; 64AD6
+        movea.l #DriverPlaces,a1                   ; 64AD6
         cmp.b   (a1,d1.w),d0                    ; 64ADC
         beq.w   l_64AEA                         ; 64AE0
         subq.b  #$1,d1                          ; 64AE4
@@ -17766,19 +18512,28 @@ dat_64B02:
 	dc.b	$0E,$0B,$11,$0C
 l_64B06:		; (no references found: an instruction no code reaches)
         move.b  #$3,(dat_64C18).l               ; 64B06
-sub_64B0E:
+
+;-------------------------------------------------------------------------------
+; TextAtListLineTwo - TextAtListLine with d0 = 2
+;-------------------------------------------------------------------------------
+TextAtListLineTwo:
         move.b  #$2,d0                          ; 64B0E
-sub_64B12:
+
+;-------------------------------------------------------------------------------
+; TextAtListLine - d0: the text cursor moved to list line WorkByte1's place (dat_64AF4:
+; ListLineRow), its colours from dat_23C52 by dat_64C18; dat_1BC54 = d0 - 2 (probably)
+;-------------------------------------------------------------------------------
+TextAtListLine:
         subq.b  #$2,d0                          ; 64B12
         move.b  d0,(dat_1BC54).l                ; 64B14
         move.b  #$1f,d0                         ; 64B1A
         jsr     (PrintChar).l                   ; 64B1E
         move.b  #$5,d0                          ; 64B24
         jsr     (PrintChar).l                   ; 64B28
-        move.b  (dat_1BB16).l,d1                ; 64B2E
+        move.b  (WorkByte1).l,d1                ; 64B2E
         movea.l #dat_64AF4,a0                   ; 64B34
         move.b  (a0,d1.w),d0                    ; 64B3A
-        move.b  d0,(dat_1BB5E).l                ; 64B3E
+        move.b  d0,(ListLineRow).l                ; 64B3E
         jsr     (PrintChar).l                   ; 64B44
         clr.w   d4                              ; 64B4A
         move.b  (dat_64C18).l,d4                ; 64B4C
@@ -17826,9 +18581,13 @@ l_64BF6:
         move.b  #$2,(dat_64C18).l               ; 64BF6
         move.b  #$0,d0                          ; 64BFE
         jsr     (SetTextColour).l               ; 64C02
-        addq.b  #$1,(dat_1BB16).l               ; 64C08
-sub_64C0E:
-        move.b  #$4,(dat_1BB6E).l               ; 64C0E
+        addq.b  #$1,(WorkByte1).l               ; 64C08
+
+;-------------------------------------------------------------------------------
+; TextOffsetFour - the text's extra lines down (TextLineOffset) 4
+;-------------------------------------------------------------------------------
+TextOffsetFour:
+        move.b  #$4,(TextLineOffset).l               ; 64C0E
         rts                                     ; 64C16
 dat_64C18:
 	dc.b	$02,$00
@@ -17851,7 +18610,7 @@ PrintTrackName:
         movea.l #TrackNames,a0                  ; 64C3E
         move.b  #$f,d2                          ; 64C44
 l_64C48:
-        move.b  d2,(dat_1BB1B).l                ; 64C48
+        move.b  d2,(WorkByte6).l                ; 64C48
         asl.b   #$4,d1                          ; 64C4E
         move.b  #$0,d2                          ; 64C50
 l_64C54:
@@ -17859,7 +18618,7 @@ l_64C54:
         jsr     (PrintChar).l                   ; 64C58
         addq.b  #$1,d1                          ; 64C5E
         addq.b  #$1,d2                          ; 64C60
-        cmp.b   (dat_1BB1B).l,d2                ; 64C62
+        cmp.b   (WorkByte6).l,d2                ; 64C62
         bne.w   l_64C54                         ; 64C68
         rts                                     ; 64C6C
 
@@ -17871,7 +18630,7 @@ ClearPanel:
         jsr     (SetTextColour).l               ; 64C72
         move.b  #$3,d0                          ; 64C78
         jsr     (SetTextBackground).l           ; 64C7C
-        move.b  #$80,(dat_1BBD3).l              ; 64C82
+        move.b  #$80,(TextNoBackground).l              ; 64C82
         movea.l (ScreenDraw).l,a0               ; 64C8A
         adda.l  #$fffffec0,a0                   ; 64C90
         adda.l  #$b6c,a0                        ; 64C96
@@ -18040,8 +18799,14 @@ l_64E06:
         swap    d0                              ; 64E12
         add.w   d5,d0                           ; 64E14
         rts                                     ; 64E16
-sub_64E18:
-        jsr     (sub_60190).l                   ; 64E18
+
+;-------------------------------------------------------------------------------
+; StartView - RaceView, SetPreviewCamera: CarToPieceCoords, the polygon list cleared
+; (ClearPolygonList), the view's flags reset (dat_1BBAE, dat_1BB5C, dat_1BB7F, OpponentRow,
+; dat_1BBBA)
+;-------------------------------------------------------------------------------
+StartView:
+        jsr     (CarToPieceCoords).l                   ; 64E18
         move.b  #$0,d0                          ; 64E1E
         move.b  d0,(dat_1BBAE).l                ; 64E22
         move.b  d0,(dat_1BB5C).l                ; 64E28
@@ -18072,17 +18837,17 @@ HelperCockpitOff	equ	$172		; (helper_c0.s: its flags) non-zero: the cockpit's pa
 RaceView:
         jsr     (HalfLatch).l                   ; (enhanced) F9: this view at full or half height (halfres.i)
         jsr     (InterpViewStart).l             ; (enhanced) in a step to the clock: the variables kept, nothing drawn (interp.i)
-        jsr     (sub_64E18).l                   ; 64E4C
+        jsr     (StartView).l                   ; 64E4C
         move.b  #$0,d0                          ; 64E52
-        move.b  d0,(dat_1BBD5).l                ; 64E56
-        move.b  d0,(dat_1BBD6).l                ; 64E5C
-        jsr     (sub_5FE04).l                   ; 64E62
+        move.b  d0,(GridOffsetX).l                ; 64E56
+        move.b  d0,(GridOffsetY).l                ; 64E5C
+        jsr     (GridSquarePiece).l                   ; 64E62
         bcs.w   l_64E8E                         ; 64E68
         cmpi.b  #$ff,d0                         ; 64E6C
         bne.w   l_64EF6                         ; 64E70
         move.b  (dat_1BB07).l,d0                ; 64E74
         move.b  (dat_1BB09).l,d2                ; 64E7A
-        jsr     (sub_6001C).l                   ; 64E80
+        jsr     (NextGridSquare).l                   ; 64E80
         cmpi.b  #$ff,d0                         ; 64E86
         bne.w   l_64EF6                         ; 64E8A
 l_64E8E:
@@ -18096,7 +18861,7 @@ l_64EA6:
         jsr     (InterpMoveOpponent).l          ; 64EB0  (enhanced) MoveOpponent: not in a picture (interp.i)
         jsr     (PlaceCarOnTrack).l             ; 64EB6
 l_64EBC:
-        move.b  (dat_1BB9F).l,(dat_1BB0E).l     ; 64EBC
+        move.b  (dat_1BB9F).l,(PlayerPosAhead).l     ; 64EBC
         move.w  (dat_1BC28).l,(dat_1BC26).l     ; 64EC6
         move.b  (dat_1BB9E).l,(dat_1BB58).l     ; 64ED0
         bra.w   l_64F80                         ; 64EDA
@@ -18112,16 +18877,16 @@ RaceViewUnused:		; (no references found: found by the code sweep)
         jmp     (l_650E2).l                     ; 64EF0
 l_64EF6:
         move.b  d0,(PieceIndex).l               ; 64EF6
-        jsr     (sub_5BE44).l                   ; 64EFC
-        jsr     (sub_60246).l                   ; 64F02
+        jsr     (CarPiecePosition).l                   ; 64EFC
+        jsr     (SetDrivingDirection).l                   ; 64F02
         move.b  (PieceIndex).l,d0               ; 64F08
         move.b  d0,(PlayerPiece).l              ; 64F0E
         btst    #$6,(dat_1BB9C).l               ; 64F14
         bne.w   l_64F26                         ; 64F1C
         move.b  d0,(dat_1BB9B).l                ; 64F20
 l_64F26:
-        jsr     (sub_5C138).l                   ; 64F26
-        move.b  (dat_1BB0E).l,(dat_1BB9F).l     ; 64F2C
+        jsr     (SetPlayerPiecePos).l                   ; 64F26
+        move.b  (PlayerPosAhead).l,(dat_1BB9F).l     ; 64F2C
         move.w  (dat_1BC26).l,(dat_1BC28).l     ; 64F36
         move.b  (dat_1BB58).l,(dat_1BB9E).l     ; 64F40
         tst.b   (LinkMode).l                    ; 64F4A
@@ -18132,8 +18897,8 @@ l_64F5E:
         tst.b   (dat_1CA22).l                   ; 64F5E
         bpl.w   l_64F80                         ; 64F64
         jsr     (InterpMoveOpponent).l          ; 64F68  (enhanced) MoveOpponent: not in a picture (interp.i)
-        jsr     (sub_6076C).l                   ; 64F6E
-        jsr     (sub_636C0).l                   ; 64F74
+        jsr     (UpdateOpponentDistance).l                   ; 64F6E
+        jsr     (OpponentDrive).l                   ; 64F74
         jsr     (PlaceCarOnTrack).l             ; 64F7A
 l_64F80:
         tst.b   (InterpSkipDraw).l              ; (enhanced) a step to the clock: the cars placed, the drawing left
@@ -18145,12 +18910,12 @@ l_64F80:
         move.b  d0,(dat_1BC16).l                ; 64F8A
         move.b  (PlayerPiece).l,(PieceIndex).l  ; 64F90
         move.b  #$0,(dat_1BBC5).l               ; 64F9A
-        move.b  (dat_1BB0E).l,d0                ; 64FA2
+        move.b  (PlayerPosAhead).l,d0                ; 64FA2
         bpl.w   l_64FBA                         ; 64FA8
         jsr     (NextPiece).l                   ; 64FAC
-        move.b  #$0,(dat_1BB0E).l               ; 64FB2
+        move.b  #$0,(PlayerPosAhead).l               ; 64FB2
 l_64FBA:
-        tst.b   (dat_1BB0E).l                   ; 64FBA
+        tst.b   (PlayerPosAhead).l                   ; 64FBA
         bne.w   l_64FE2                         ; 64FC0
         jsr     (PreviousPiece).l               ; 64FC4
         cmp.b   (dat_1BBA6).l,d1                ; 64FCA
@@ -18164,24 +18929,24 @@ l_64FE2:
 	else
         jsr     (ProjectNearPiece).l                   ; 64FE2
 	endc
-        jsr     (sub_655EA).l                   ; 64FE8
-        jsr     (sub_65A18).l                   ; 64FEE
+        jsr     (ScanPieceSections).l                   ; 64FE8
+        jsr     (ScanCarSections).l                   ; 64FEE
         jsr     (EdgesFirstPiece).l                   ; 64FF4
         move.b  #$0,(dat_1BBE5).l               ; 64FFA
         move.b  #$0,(dat_1BB60).l               ; 65002
         move.b  #$4,(dat_1BBC5).l               ; 6500A
-        jsr     (sub_65564).l                   ; 65012
+        jsr     (NearPieceSides).l                   ; 65012
         jsr     (NextPiece).l                   ; 65018
         jsr     (ProjectNearPiece).l                   ; 6501E
-        jsr     (sub_655EA).l                   ; 65024
+        jsr     (ScanPieceSections).l                   ; 65024
         jsr     (EdgesNextPiece).l                   ; 6502A
-        jsr     (sub_65564).l                   ; 65030
+        jsr     (NearPieceSides).l                   ; 65030
         move.b  #$1,(dat_1BB7F).l               ; 65036
         jsr     (NextPiece).l                   ; 6503E
         jsr     (ProjectNearPiece).l                   ; 65044
-        jsr     (sub_655EA).l                   ; 6504A
+        jsr     (ScanPieceSections).l                   ; 6504A
         jsr     (EdgesNextPiece).l                   ; 65050
-        jsr     (sub_65564).l                   ; 65056
+        jsr     (NearPieceSides).l                   ; 65056
         jsr     (NextPiece).l                   ; 6505C
         move.w  (RowOffset).l,(FarRowsEnd).l     ; 65062
         move.w  (dat_1C0A0).l,(dat_660FC).l     ; 6506C
@@ -18215,23 +18980,23 @@ l_650E2:
         bne.w   l_650FC                         ; 650E8
         tst.b   (dat_1BB9C).l                   ; 650EC
         bpl.w   l_650FC                         ; 650F2
-        jsr     (sub_60C92).l                   ; 650F6
+        jsr     (StartScrapeSparks).l                   ; 650F6
 l_650FC:
 	ifd	TELEMETRY
-        jsr     (TelCockpit).l                  ; 650FC  telemetry: TelCockpit, then sub_60CF8
+        jsr     (TelCockpit).l                  ; 650FC  telemetry: TelCockpit, then StartKnockSparks
 	else
-        jsr     (sub_60CF8).l                   ; 650FC
+        jsr     (StartKnockSparks).l                   ; 650FC
 	endc
         jsr     (DropCar).l                     ; 65102
         move.b  #$d,d0                          ; 65108
         jsr     (DrawCockpitPart).l             ; 6510C  (F6: the cockpit on or off)
         move.b  #$e,d0                          ; 65112
         jsr     (DrawCockpitPart).l             ; 65116  (F6: the cockpit on or off)
-        jsr     (sub_5E778).l                   ; 6511C
-        move.b  (dat_1BBDB).l,d0                ; 65122
+        jsr     (PlaceWheelCutouts).l                   ; 6511C
+        move.b  (WheelFrame).l,d0                ; 65122
         jsr     (DrawCockpitPart).l             ; 65128  (F6: the cockpit on or off)
         move.b  #$5,d0                          ; 6512E
-        sub.b   (dat_1BBDB).l,d0                ; 65132
+        sub.b   (WheelFrame).l,d0                ; 65132
         jsr     (DrawCockpitPart).l             ; 65138  (F6: the cockpit on or off)
         move.b  #$a,d0                          ; 6513E
         jsr     (DrawCockpitPart).l             ; 65142  (F6: the cockpit on or off)
@@ -18263,15 +19028,21 @@ l_65192:
 l_651AA:
         jsr     (DrawCockpitPart).l             ; 651AA  (F6: the cockpit on or off)
 l_651B0:
-        jsr     (sub_5E508).l                   ; 651B0
+        jsr     (ShowMessage).l                   ; 651B0
         rts                                     ; 651B6
-sub_651B8:
+
+;-------------------------------------------------------------------------------
+; UpdateWheelSprites - VBlankTick: the wheels turned with the speed (WheelTurn += Speed;
+; WheelSpinFrame when it carries) and their sprites pointed at the frame's cut-outs
+; (SpriteFromCutout)
+;-------------------------------------------------------------------------------
+UpdateWheelSprites:
         move.b  (Speed).l,d0                    ; 651B8
-        add.b   d0,(dat_1BBE3).l                ; 651BE
+        add.b   d0,(WheelTurn).l                ; 651BE
         bcc.w   l_651CE                         ; 651C4
-        jsr     (sub_5E744).l                   ; 651C8
+        jsr     (WheelSpinFrame).l                   ; 651C8
 l_651CE:
-        move.b  (dat_1BBDB).l,d0                ; 651CE
+        move.b  (WheelFrame).l,d0                ; 651CE
         addi.b  #$25,d0                         ; 651D4
         cmpi.w  #$7e,(dat_6A176).l              ; 651D8
         bge.w   l_651E8                         ; 651E0
@@ -18280,7 +19051,7 @@ l_651E8:
         move.w  #$0,d1                          ; 651E8
         jsr     (SpriteFromCutout).l            ; 651EC
         move.b  #$5,d0                          ; 651F2
-        sub.b   (dat_1BBDB).l,d0                ; 651F6
+        sub.b   (WheelFrame).l,d0                ; 651F6
         addi.b  #$25,d0                         ; 651FC
         cmpi.w  #$7e,(dat_6A1A6).l              ; 65200
         bge.w   l_65210                         ; 65208
@@ -18303,8 +19074,8 @@ ProjectNearPiece:
         jsr     (PieceGridOffset).l             ; 65234
         move.b  (dat_1BC30).l,d0                ; 6523A
         sub.b   (dat_1BC4A).l,d0                ; 65240
-        move.b  d0,(dat_1BBF2).l                ; 65246
-        jsr     (sub_65756).l                   ; 6524C
+        move.b  d0,(PieceAxes).l                ; 65246
+        jsr     (PieceModelSections).l                   ; 6524C
         move.b  (dat_1BB60).l,d1                ; 65252
         beq.w   l_65272                         ; 65258
         movea.l #dat_1BE6C,a0                   ; 6525C
@@ -18313,14 +19084,14 @@ ProjectNearPiece:
 l_65272:
         tst.b   (dat_5D724).l                   ; 65272
         bmi.w   l_652FE                         ; 65278
-        move.b  (dat_1BBF2).l,d0                ; 6527C
-        move.b  (dat_1BC32).l,d3                ; 65282
+        move.b  (PieceAxes).l,d0                ; 6527C
+        move.b  (PieceReversed).l,d3                ; 65282
         eor.b   d3,d0                           ; 65288
         tst.b   (dat_1BB93).l                   ; 6528A
         bpl.w   l_652AA                         ; 65290
-        tst.b   (dat_1BB4D).l                   ; 65294
+        tst.b   (PieceDirection).l                   ; 65294
         bmi.w   l_652B4                         ; 6529A
-        btst    #$6,(dat_1BB4D).l               ; 6529E
+        btst    #$6,(PieceDirection).l               ; 6529E
         beq.w   l_652B4                         ; 652A6
 l_652AA:
         tst.b   (dat_1BC44).l                   ; 652AA
@@ -18332,20 +19103,20 @@ l_652B8:
         bpl.w   l_652FE                         ; 652C0
         move.b  d0,(dat_1BBAE).l                ; 652C4
         move.b  #$0,(dat_1BBC5).l               ; 652CA
-        jsr     (sub_6055E).l                   ; 652D2
+        jsr     (ReversePieceHeights).l                   ; 652D2
         move.b  (dat_1BBDC).l,d0                ; 652D8
         add.b   (dat_1BB98).l,d0                ; 652DE
         andi.b  #$2,d0                          ; 652E4
         move.b  d0,(dat_1BBDC).l                ; 652E8
-        tst.b   (dat_1BC32).l                   ; 652EE
+        tst.b   (PieceReversed).l                   ; 652EE
         bne.w   l_6530E                         ; 652F4
         jmp     (l_653BC).l                     ; 652F8
 l_652FE:
-        tst.b   (dat_1BC32).l                   ; 652FE
+        tst.b   (PieceReversed).l                   ; 652FE
         beq.w   l_6530E                         ; 65304
         jmp     (l_653BC).l                     ; 65308
 l_6530E:
-        move.w  (dat_1BCBC).l,d0                ; 6530E
+        move.w  (PieceDataPointer).l,d0                ; 6530E
         rol.w   #$8,d0                          ; 65314
         subi.w  #$b100,d0                       ; 65316
         andi.l  #$ffff,d0                       ; 6531A
@@ -18353,7 +19124,7 @@ l_6530E:
         movea.l d0,a0                           ; 65326
         move.b  (a0),d0                         ; 65328
         addq.b  #$7,d0                          ; 6532A
-        move.b  d0,(dat_1BB91).l                ; 6532C
+        move.b  d0,(SectionDataStart).l                ; 6532C
         move.b  (dat_1BBC5).l,d1                ; 65332
         movea.l #PointHeights,a6                ; 65338
 l_6533E:
@@ -18367,16 +19138,16 @@ l_6533E:
 l_65362:
         move.w  d1,d2                           ; 65362
         asl.w   #$1,d2                          ; 65364
-        add.b   (dat_1BB91).l,d2                ; 65366
+        add.b   (SectionDataStart).l,d2                ; 65366
         jsr     (ReadPiecePoints).l             ; 6536C
         jsr     (ProjectPointX).l               ; 65372
         jsr     (ProjectPointY).l               ; 65378
         btst    #$6,(dat_1BB9C).l               ; 6537E
         beq.w   l_65394                         ; 65386
-        jsr     (sub_6847C).l                   ; 6538A
+        jsr     (PointTooFar).l                   ; 6538A
         bcs.w   l_6539A                         ; 65390
 l_65394:
-        jsr     (sub_654C2).l                   ; 65394
+        jsr     (ProjectNearPoint).l                   ; 65394
 l_6539A:
         move.b  d1,d2                           ; 6539A
         andi.b  #$2,d2                          ; 6539C
@@ -18388,7 +19159,7 @@ l_653AA:
         bne.w   l_6533E                         ; 653B2
         jmp     (l_65472).l                     ; 653B6
 l_653BC:
-        move.w  (dat_1BCBC).l,d0                ; 653BC
+        move.w  (PieceDataPointer).l,d0                ; 653BC
         rol.w   #$8,d0                          ; 653C2
         subi.w  #$b100,d0                       ; 653C4
         andi.l  #$ffff,d0                       ; 653C8
@@ -18400,7 +19171,7 @@ l_653BC:
         subq.b  #$1,d3                          ; 653E0
         asl.b   #$2,d3                          ; 653E2
         add.b   d3,d0                           ; 653E4
-        move.b  d0,(dat_1BB91).l                ; 653E6
+        move.b  d0,(SectionDataStart).l                ; 653E6
         move.b  (dat_1BBC5).l,d1                ; 653EC
         movea.l #PointHeights,a6                ; 653F2
 l_653F8:
@@ -18414,17 +19185,17 @@ l_653F8:
 l_6541C:
         move.b  d1,d3                           ; 6541C
         asl.b   #$1,d3                          ; 6541E
-        move.b  (dat_1BB91).l,d2                ; 65420
+        move.b  (SectionDataStart).l,d2                ; 65420
         sub.b   d3,d2                           ; 65426
         jsr     (ReadPiecePoints).l             ; 65428
         jsr     (ProjectPointX).l               ; 6542E
         jsr     (ProjectPointY).l               ; 65434
         btst    #$6,(dat_1BB9C).l               ; 6543A
         beq.w   l_65450                         ; 65442
-        jsr     (sub_6847C).l                   ; 65446
+        jsr     (PointTooFar).l                   ; 65446
         bcs.w   l_65456                         ; 6544C
 l_65450:
-        jsr     (sub_654C2).l                   ; 65450
+        jsr     (ProjectNearPoint).l                   ; 65450
 l_65456:
         move.b  d1,d2                           ; 65456
         andi.b  #$2,d2                          ; 65458
@@ -18453,7 +19224,12 @@ l_654A8:
         rts                                     ; 654BE
 dat_654C0:
 	dc.b	$00,$00
-sub_654C2:
+
+;-------------------------------------------------------------------------------
+; ProjectNearPoint - ProjectNearPiece: point d1 projected (ProjectPointY, RollPoint) by its side's
+; flag (dat_1BC14), dat_1BB68, dat_1BBD1 (probably)
+;-------------------------------------------------------------------------------
+ProjectNearPoint:
         movea.l #PointScreenX,a4                ; 654C2
         movea.l #PointScreenY,a5                ; 654C8
         move.b  d1,d2                           ; 654CE
@@ -18496,7 +19272,12 @@ l_65542:
         subi.b  #$78,d1                         ; 6555E
 l_65562:
         rts                                     ; 65562
-sub_65564:
+
+;-------------------------------------------------------------------------------
+; NearPieceSides - which of the near piece's sides face the camera (PointScreenX, PointScreenY at
+; dat_1BB59): dat_1BC14, dat_1BC16, dat_1BBC5 (probably)
+;-------------------------------------------------------------------------------
+NearPieceSides:
         movea.l #PointScreenX,a4                ; 65564
         movea.l #PointScreenY,a5                ; 6556A
         move.b  (dat_1BB59).l,d1                ; 65570
@@ -18528,20 +19309,30 @@ l_655D8:
         subq.b  #$4,d1                          ; 655E0
         cmpi.w  #$100,(a4,d1.w)                 ; 655E2
         rts                                     ; 655E8
-sub_655EA:
+
+;-------------------------------------------------------------------------------
+; ScanPieceSections - the current piece's model ($7AA1A by PieceIndex): its sections' edges
+; stepped (ScanSectionEdges), dat_66100 its count (probably)
+;-------------------------------------------------------------------------------
+ScanPieceSections:
         clr.w   d0                              ; 655EA
         move.b  (PieceIndex).l,d0               ; 655EC
         movea.l #$7aa1a,a0                      ; 655F2
         asl.w   #$2,d0                          ; 655F8
         movea.l (a0,d0.w),a0                    ; 655FA
         move.w  (a0),(dat_66100).l              ; 655FE
-        movea.l #dat_1BDD0,a3                   ; 65604
+        movea.l #SectionFlags,a3                   ; 65604
         movea.l #PointHeights,a6                ; 6560A
         move.b  (dat_1BB59).l,d1                ; 65610
-        jsr     (sub_65624).l                   ; 65616
+        jsr     (ScanSectionEdges).l                   ; 65616
         move.b  (dat_1BB59).l,d1                ; 6561C
         addq.b  #$2,d1                          ; 65622
-sub_65624:
+
+;-------------------------------------------------------------------------------
+; ScanSectionEdges - ScanPieceSections: a section's points made (ProjectSectionPoint) and its
+; edges stepped (ScanEdge, RowOffset) (probably)
+;-------------------------------------------------------------------------------
+ScanSectionEdges:
         subq.b  #$4,d1                          ; 65624
         tst.w   (a6,d1.w)                       ; 65626
         bmi.w   l_6568E                         ; 6562A
@@ -18590,7 +19381,7 @@ l_656B0:
         cmp.b   (dat_1BB60).l,d1                ; 656C6
         blt.w   l_6571E                         ; 656CC
 l_656D0:
-        jsr     (sub_65720).l                   ; 656D0
+        jsr     (ProjectSectionPoint).l                   ; 656D0
         move.w  d1,d3                           ; 656D6
         bclr    #$1,d3                          ; 656D8
         ori.b   #$40,(a3,d3.w)                  ; 656DC
@@ -18613,13 +19404,17 @@ l_65706:
         move.w  (a7)+,(RowOffset).l             ; 65718
 l_6571E:
         rts                                     ; 6571E
-sub_65720:
+
+;-------------------------------------------------------------------------------
+; ProjectSectionPoint - point d1 of a cross-section: StoreSectionPoints, then ProjectStoredPoint
+;-------------------------------------------------------------------------------
+ProjectSectionPoint:
         movem.l d1-d7/a3-a6,-(a7)               ; 65720
         move.b  d1,(dat_1BBE4).l                ; 65724
         move.w  #$200,$78(a6,d1.w)              ; 6572A
         move.w  d1,d0                           ; 65730
         lsr.w   #$2,d0                          ; 65732
-        jsr     (sub_5A5B6).l                   ; 65734
+        jsr     (StoreSectionPoints).l                   ; 65734
         move.b  (dat_1BBE4).l,d1                ; 6573A
         move.w  d1,d2                           ; 65740
         andi.w  #$2,d2                          ; 65742
@@ -18627,27 +19422,32 @@ sub_65720:
         jsr     (ProjectStoredPoint).l          ; 6574A
         movem.l (a7)+,d1-d7/a3-a6               ; 65750
         rts                                     ; 65754
-sub_65756:
-        move.w  (dat_1BC8C).l,d0                ; 65756
+
+;-------------------------------------------------------------------------------
+; PieceModelSections - BuildPieceModels, ProjectNearPiece: a piece's cross-sections from its 6502
+; data (TrackDataPointer, TrackDataStart) into SectionFlags, dat_1BC26 (probably)
+;-------------------------------------------------------------------------------
+PieceModelSections:
+        move.w  (TrackDataPointer).l,d0                ; 65756
         rol.w   #$8,d0                          ; 6575C
         subi.w  #$b100,d0                       ; 6575E
         andi.l  #$ffff,d0                       ; 65762
         addi.l  #Data6502,d0                    ; 65768
         movea.l d0,a4                           ; 6576E
-        move.w  (dat_1BC90).l,d0                ; 65770
+        move.w  (TrackDataStart).l,d0                ; 65770
         rol.w   #$8,d0                          ; 65776
         subi.w  #$b100,d0                       ; 65778
         andi.l  #$ffff,d0                       ; 6577C
         addi.l  #Data6502,d0                    ; 65782
         movea.l d0,a5                           ; 65788
-        movea.l #dat_1BDD0,a3                   ; 6578A
+        movea.l #SectionFlags,a3                   ; 6578A
         move.w  #$2e,d7                         ; 65790
         sub.w   (dat_1BC26).l,d7                ; 65794
         bpl.w   l_657A2                         ; 6579A
         move.b  #$0,d7                          ; 6579E
 l_657A2:
         clr.w   d0                              ; 657A2
-        move.b  (dat_1BB6A).l,d0                ; 657A4
+        move.b  (PieceSections).l,d0                ; 657A4
         add.w   d0,(dat_1BC26).l                ; 657AA
         move.b  #$0,d0                          ; 657B0
         move.b  (dat_1BB98).l,d1                ; 657B4
@@ -18819,35 +19619,45 @@ l_659F0:
         move.b  (a4,d2.w),d0                    ; 659F0
         bpl.w   l_65A16                         ; 659F4
         move.b  #$80,-$4(a3,d1.w)               ; 659F8
-        move.b  (dat_1BB6A).l,d2                ; 659FE
+        move.b  (PieceSections).l,d2                ; 659FE
         cmp.b   d7,d2                           ; 65A04
         bcs.w   l_65A16                         ; 65A06
         move.w  #$8000,-$4(a6,d1.w)             ; 65A0A
         move.w  #$8000,-$2(a6,d1.w)             ; 65A10
 l_65A16:
         rts                                     ; 65A16
-sub_65A18:
+
+;-------------------------------------------------------------------------------
+; ScanCarSections - (RaceViewUnused) the sections near the car stepped (ScanCarSectionEdges) from
+; row dat_1BB60, RowOffset (probably)
+;-------------------------------------------------------------------------------
+ScanCarSections:
         move.b  (dat_1BB60).l,d1                ; 65A18
         bne.w   l_65A24                         ; 65A1E
         rts                                     ; 65A22
 l_65A24:
         move.w  #$8,d3                          ; 65A24
-        jsr     (sub_65A72).l                   ; 65A28
+        jsr     (ScanCarSectionEdges).l                   ; 65A28
         move.b  (dat_1BB60).l,d1                ; 65A2E
         addq.b  #$2,d1                          ; 65A34
         move.w  #$9,d3                          ; 65A36
-        jsr     (sub_65A72).l                   ; 65A3A
+        jsr     (ScanCarSectionEdges).l                   ; 65A3A
         move.b  (dat_1BB60).l,d1                ; 65A40
         addi.b  #$78,d1                         ; 65A46
         move.w  #$a,d3                          ; 65A4A
-        jsr     (sub_65A72).l                   ; 65A4E
+        jsr     (ScanCarSectionEdges).l                   ; 65A4E
         move.b  (dat_1BB60).l,d1                ; 65A54
         addi.b  #$7a,d1                         ; 65A5A
         move.w  #$b,d3                          ; 65A5E
-        jsr     (sub_65A72).l                   ; 65A62
+        jsr     (ScanCarSectionEdges).l                   ; 65A62
         move.w  #$20,(RowOffset).l              ; 65A68
         rts                                     ; 65A70
-sub_65A72:
+
+;-------------------------------------------------------------------------------
+; ScanCarSectionEdges - a section's edges stepped (ScanEdge) after its points are made
+; (CarSectionPoints) (probably)
+;-------------------------------------------------------------------------------
+ScanCarSectionEdges:
         asl.w   #$2,d3                          ; 65A72
         move.w  d3,(RowOffset).l                ; 65A74
         movea.l #PointScreenX,a4                ; 65A7A
@@ -18864,7 +19674,7 @@ l_65A9C:
         move.w  (a5,d1.w),d0                    ; 65AA8
         cmpi.w  #$80,d0                         ; 65AAC
         bcc.w   l_65ACC                         ; 65AB0
-        jsr     (sub_65AE2).l                   ; 65AB4
+        jsr     (CarSectionPoints).l                   ; 65AB4
         move.b  (dat_1BBE4).l,d1                ; 65ABA
         move.w  d1,d2                           ; 65AC0
         subq.b  #$4,d2                          ; 65AC2
@@ -18875,11 +19685,16 @@ l_65ACC:
         move.w  (RowOffset).l,d3                ; 65AD2
         move.l  #$80000000,(a1,d3.w)            ; 65AD8
         rts                                     ; 65AE0
-sub_65AE2:
+
+;-------------------------------------------------------------------------------
+; CarSectionPoints - a cross-section's points at the car's place on its piece (StoreSectionPoints,
+; PiecePointsBetween by PlayerPosAhead, dat_1BB0F) projected (ProjectStoredPoint) (probably)
+;-------------------------------------------------------------------------------
+CarSectionPoints:
         move.b  d1,(dat_1BBE4).l                ; 65AE2
         move.b  d1,d0                           ; 65AE8
         andi.b  #$2,d0                          ; 65AEA
-        move.b  d0,(dat_1BBE8).l                ; 65AEE
+        move.b  d0,(TextColourChoice).l                ; 65AEE
         move.b  d0,d2                           ; 65AF4
         cmpi.w  #$78,d1                         ; 65AF6
         blt.w   l_65B08                         ; 65AFA
@@ -18889,21 +19704,21 @@ l_65B08:
         movea.l #dat_1BB34,a2                   ; 65B08
         move.w  (a2,d2.w),-$4(a6,d1.w)          ; 65B0E
 l_65B14:
-        move.b  (dat_1BB0E).l,d0                ; 65B14
-        jsr     (sub_5A5B6).l                   ; 65B1A
-        move.b  (dat_1BBE8).l,d1                ; 65B20
+        move.b  (PlayerPosAhead).l,d0                ; 65B14
+        jsr     (StoreSectionPoints).l                   ; 65B1A
+        move.b  (TextColourChoice).l,d1                ; 65B20
         move.b  #$8,d2                          ; 65B26
         move.b  (dat_1BB0F).l,d0                ; 65B2A
         andi.w  #$ff,d0                         ; 65B30
-        jsr     (sub_5A576).l                   ; 65B34
+        jsr     (PiecePointsBetween).l                   ; 65B34
         move.b  (dat_1BBE4).l,d1                ; 65B3A
         cmpi.w  #$78,d1                         ; 65B40
         bge.w   l_65B74                         ; 65B44
         move.b  #$0,d0                          ; 65B48
-        move.b  (dat_1BB0F).l,(dat_1BB1A).l     ; 65B4C
+        move.b  (dat_1BB0F).l,(WorkByte5).l     ; 65B4C
         move.w  (a6,d1.w),d0                    ; 65B56
         sub.w   -$4(a6,d1.w),d0                 ; 65B5A
-        move.b  (dat_1BB1A).l,d3                ; 65B5E
+        move.b  (WorkByte5).l,d3                ; 65B5E
         asl.w   #$7,d3                          ; 65B64
         bclr    #$f,d3                          ; 65B66
         muls.w  d3,d0                           ; 65B6A
@@ -18953,7 +19768,7 @@ l_65BE2:
 ; BuildPieceModels - at the start of a race: each piece's model made (pointers at $7AA1A)
 ;-------------------------------------------------------------------------------
 BuildPieceModels:
-        jsr     (sub_65DEA).l                   ; 65BEC
+        jsr     (SetPieceSpecials).l                   ; 65BEC
         move.l  #$7abda,(dat_66102).l           ; 65BF2
         move.b  #$0,(dat_1BBC5).l               ; 65BFC
         movea.l #PointHeights,a6                ; 65C04
@@ -18967,11 +19782,11 @@ l_65C0E:
         move.w  #$0,(dat_66100).l               ; 65C26
         jsr     (NextPiece).l                   ; 65C2E
         jsr     (LoadPiece).l                   ; 65C34
-        tst.b   (dat_1BB4D).l                   ; 65C3A
+        tst.b   (PieceDirection).l                   ; 65C3A
         bpl.w   l_65C66                         ; 65C40
         move.b  #$40,(dat_66100).l              ; 65C44
         move.b  (dat_1BC44).l,d3                ; 65C4C
-        move.b  (dat_1BC32).l,d0                ; 65C52
+        move.b  (PieceReversed).l,d0                ; 65C52
         eor.b   d0,d3                           ; 65C58
         bpl.w   l_65C66                         ; 65C5A
         move.b  #$80,(dat_66100).l              ; 65C5E
@@ -18979,13 +19794,13 @@ l_65C66:
         jsr     (PreviousPiece).l               ; 65C66
         jsr     (LoadPiece).l                   ; 65C6C
         move.w  #$0,(dat_1BC26).l               ; 65C72
-        move.b  (dat_1BC4A).l,(dat_1BBF2).l     ; 65C7A
-        neg.b   (dat_1BBF2).l                   ; 65C84
-        jsr     (sub_65756).l                   ; 65C8A
+        move.b  (dat_1BC4A).l,(PieceAxes).l     ; 65C7A
+        neg.b   (PieceAxes).l                   ; 65C84
+        jsr     (PieceModelSections).l                   ; 65C8A
         move.b  (dat_1BBC5).l,d1                ; 65C90
-        movea.l #dat_1BDD0,a3                   ; 65C96
+        movea.l #SectionFlags,a3                   ; 65C96
         movea.l (dat_66102).l,a4                ; 65C9C
-        move.w  (dat_1BCBC).l,d0                ; 65CA2
+        move.w  (PieceDataPointer).l,d0                ; 65CA2
         rol.w   #$8,d0                          ; 65CA8
         subi.w  #$b100,d0                       ; 65CAA
         andi.l  #$ffff,d0                       ; 65CAE
@@ -18993,14 +19808,14 @@ l_65C66:
         movea.l d0,a0                           ; 65CBA
         move.b  (a0),d0                         ; 65CBC
         addq.b  #$7,d0                          ; 65CBE
-        tst.b   (dat_1BC32).l                   ; 65CC0
+        tst.b   (PieceReversed).l                   ; 65CC0
         bpl.w   l_65CD6                         ; 65CC6
         move.b  (dat_1BB97).l,d3                ; 65CCA
         subq.b  #$1,d3                          ; 65CD0
         asl.b   #$2,d3                          ; 65CD2
         add.b   d3,d0                           ; 65CD4
 l_65CD6:
-        move.b  d0,(dat_1BB91).l                ; 65CD6
+        move.b  d0,(SectionDataStart).l                ; 65CD6
 l_65CDC:
         move.b  (a3,d1.w),d0                    ; 65CDC
         bmi.w   l_65DE4                         ; 65CE0
@@ -19017,7 +19832,7 @@ l_65CDC:
         cmp.b   d3,d1                           ; 65D0E
         beq.w   l_65D5E                         ; 65D10
 l_65D14:
-        tst.b   (dat_1BB4D).l                   ; 65D14
+        tst.b   (PieceDirection).l                   ; 65D14
         bmi.w   l_65D5E                         ; 65D1A
         move.b  (PieceIndex).l,d3               ; 65D1E
         movea.l #TrackPieceKinds,a2             ; 65D24
@@ -19041,24 +19856,24 @@ l_65D56:
 l_65D5E:
         andi.b  #$3f,d0                         ; 65D5E
         asl.w   #$8,d0                          ; 65D62
-        tst.b   (dat_1BB4D).l                   ; 65D64
+        tst.b   (PieceDirection).l                   ; 65D64
         bmi.w   l_65D74                         ; 65D6A
         or.w    (dat_66100).l,d0                ; 65D6E
 l_65D74:
         move.b  (PieceIndex).l,d0               ; 65D74
         move.w  d0,(a4)+                        ; 65D7A
 l_65D7C:
-        tst.b   (dat_1BC32).l                   ; 65D7C
+        tst.b   (PieceReversed).l                   ; 65D7C
         bpl.w   l_65D96                         ; 65D82
         move.b  d1,d3                           ; 65D86
         asl.b   #$1,d3                          ; 65D88
-        move.b  (dat_1BB91).l,d2                ; 65D8A
+        move.b  (SectionDataStart).l,d2                ; 65D8A
         sub.b   d3,d2                           ; 65D90
         bra.w   l_65DA0                         ; 65D92
 l_65D96:
         move.b  d1,d2                           ; 65D96
         asl.b   #$1,d2                          ; 65D98
-        add.b   (dat_1BB91).l,d2                ; 65D9A
+        add.b   (SectionDataStart).l,d2                ; 65D9A
 l_65DA0:
         jsr     (ReadPiecePoints).l             ; 65DA0
         move.w  (dat_1BBF6).l,(a4)+             ; 65DA6
@@ -19079,7 +19894,12 @@ l_65DC0:
 l_65DE4:
         addq.b  #$4,d1                          ; 65DE4
         bra.w   l_65DC0                         ; 65DE6
-sub_65DEA:
+
+;-------------------------------------------------------------------------------
+; SetPieceSpecials - BuildPieceModels: each piece's entry in dat_65E70 set to $78, then up to 4
+; pieces of the track (CurrentTrack) set from dat_65E30 (probably)
+;-------------------------------------------------------------------------------
+SetPieceSpecials:
         clr.w   d3                              ; 65DEA
         movea.l #dat_65E70,a0                   ; 65DEC
         move.b  (TrackPieceCount).l,d3          ; 65DF2
@@ -19286,17 +20106,22 @@ dat_66100:
 	dc.b	$00,$00
 dat_66102:
 	dc.b	$00,$00,$00,$00
-sub_66106:
-        move.b  (dat_1BBB6).l,d0                ; 66106
-        cmp.b   (dat_1BB55).l,d0                ; 6610C
+
+;-------------------------------------------------------------------------------
+; GrowCrack - CarKnocks: the knock's crack in the cockpit drawn a pixel at a time (PlotPixel on
+; ScreenFront, its path random), by the knock's strength (KnockStrength) (probably)
+;-------------------------------------------------------------------------------
+GrowCrack:
+        move.b  (KnockStrength).l,d0                ; 66106
+        cmp.b   (CrackState).l,d0                ; 6610C
         beq.w   l_6611A                         ; 66112
         bcc.w   l_6611C                         ; 66116
 l_6611A:
         rts                                     ; 6611A
 l_6611C:
-        addq.b  #$1,(dat_1BB55).l               ; 6611C
+        addq.b  #$1,(CrackState).l               ; 6611C
         move.b  (dat_662AA).l,d2                ; 66122
-        btst    #$0,(dat_1BB55).l               ; 66128
+        btst    #$0,(CrackState).l               ; 66128
         bne.w   l_66170                         ; 66130
         jsr     (Random).l                      ; 66134
         lsr.b   #$1,d0                          ; 6613A
@@ -19326,16 +20151,16 @@ l_66170:
         move.b  #$c,(dat_662AB).l               ; 66182
 l_6618A:
         move.b  d2,(dat_662AA).l                ; 6618A
-        move.b  (dat_1BB55).l,d0                ; 66190
+        move.b  (CrackState).l,d0                ; 66190
         cmpi.b  #$f0,d0                         ; 66196
         bcs.w   l_661AA                         ; 6619A
-        subq.b  #$1,(dat_1BB55).l               ; 6619E
+        subq.b  #$1,(CrackState).l               ; 6619E
 l_661A4:
         jmp     (l_5E848).l                     ; 661A4
 l_661AA:
         movea.l (ScreenFront).l,a0              ; 661AA
         adda.l  #$4,a0                          ; 661B0
-        move.b  (dat_1BB55).l,d4                ; 661B6
+        move.b  (CrackState).l,d4                ; 661B6
         andi.w  #$ff,d4                         ; 661BC
         addi.b  #$8,d4                          ; 661C0
         move.w  d4,d0                           ; 661C4
@@ -19351,7 +20176,7 @@ l_661AA:
         add.l   d5,d0                           ; 661E0
         asl.l   #$3,d0                          ; 661E2
         adda.l  d0,a0                           ; 661E4
-        jsr     (sub_66286).l                   ; 661E6
+        jsr     (PixelPlanes).l                   ; 661E6
         beq.w   l_66254                         ; 661EC
         move.b  #$0,d0                          ; 661F0
         jsr     (SetPolygonColour).l            ; 661F4
@@ -19369,22 +20194,31 @@ l_661AA:
         jsr     (PlotPixel).l                   ; 6623C
         suba.l  #$7d00,a0                       ; 66242
         jsr     (PlotPixel).l                   ; 66248
-        jmp     (sub_66106).l                   ; 6624E
+        jmp     (GrowCrack).l                   ; 6624E
 l_66254:
-        addq.b  #$1,(dat_1BBB6).l               ; 66254
+        addq.b  #$1,(KnockStrength).l               ; 66254
         beq.w   l_661A4                         ; 6625A
-        jsr     (sub_6626A).l                   ; 6625E
-        jmp     (sub_66106).l                   ; 66264
-sub_6626A:
+        jsr     (SetKnockHistory).l                   ; 6625E
+        jmp     (GrowCrack).l                   ; 66264
+
+;-------------------------------------------------------------------------------
+; SetKnockHistory - KnockStrength1-dat_1BB51 all set to the knock's strength (KnockStrength)
+;-------------------------------------------------------------------------------
+SetKnockHistory:
         move.b  #$2,d2                          ; 6626A
 l_6626E:
-        move.b  (dat_1BBB6).l,d0                ; 6626E
-        movea.l #dat_1BB4F,a2                   ; 66274
+        move.b  (KnockStrength).l,d0                ; 6626E
+        movea.l #KnockStrength1,a2                   ; 66274
         move.b  d0,(a2,d2.w)                    ; 6627A
         subq.b  #$1,d2                          ; 6627E
         bpl.w   l_6626E                         ; 66280
         rts                                     ; 66284
-sub_66286:
+
+;-------------------------------------------------------------------------------
+; PixelPlanes - d0: the bit of x d4 (its mask from dat_66860) in the 4 planes at (a0) - set where
+; the pixel is not colour 0
+;-------------------------------------------------------------------------------
+PixelPlanes:
         move.w  d4,d3                           ; 66286
         andi.w  #$f,d3                          ; 66288
         asl.w   #$2,d3                          ; 6628C
@@ -19652,7 +20486,12 @@ SetColourWord:
 	rts
 ColourWordTarget:			; where ClearWordPlanes goes on (ColourWordJump): PlotWord<colour>
 	dc.l	l_66476
-sub_66576:
+
+;-------------------------------------------------------------------------------
+; FillSpan - d4, d5: a run of a line (from a6) filled - its partial words through (a5)'s masks
+; (ClearWordPlanes) (UpdateSpeedometer's bar, probably)
+;-------------------------------------------------------------------------------
+FillSpan:
         cmp.w   d4,d5                           ; 66576
         bgt.w   l_6658E                         ; 66578
         beq.w   l_66612                         ; 6657C
@@ -19771,7 +20610,7 @@ l_66666:
         bne.w   l_667DA                         ; 66672
         addq.l  #$6,a0                          ; 66676
         addq.l  #$6,a3                          ; 66678
-        move.w  d1,(dat_1BC5A).l                ; 6667A
+        move.w  d1,(FillLines).l                ; 6667A
         subq.w  #$1,d1                          ; 66680
         bmi.w   l_667DA                         ; 66682
         movea.l (ScreenDrawTop).l,a6            ; 66686
@@ -19789,7 +20628,7 @@ l_66698:
         movea.l a1,a0                           ; 666A8
         movea.l a2,a1                           ; 666AA
         move.w  (a0)+,d0                        ; 666AC
-        cmp.w   (dat_1BC5A).l,d0                ; 666AE
+        cmp.w   (FillLines).l,d0                ; 666AE
         bne.w   l_667DA                         ; 666B4
         addq.l  #$6,a0                          ; 666B8
         move.w  (a0)+,d4                        ; 666BA
@@ -19798,7 +20637,7 @@ l_66698:
         bmi.w   l_667DA                         ; 666C6
         movea.l a1,a0                           ; 666CA
         move.w  (a0)+,d0                        ; 666CC
-        cmp.w   (dat_1BC5A).l,d0                ; 666CE
+        cmp.w   (FillLines).l,d0                ; 666CE
         bne.w   l_667DA                         ; 666D4
         addq.l  #$6,a0                          ; 666D8
         move.w  (a0)+,d4                        ; 666DA
@@ -19811,7 +20650,7 @@ l_666E0:
         movea.l a2,a3                           ; 666F0
         movea.l a1,a2                           ; 666F2
         move.w  (a3)+,d0                        ; 666F4
-        cmp.w   (dat_1BC5A).l,d0                ; 666F6
+        cmp.w   (FillLines).l,d0                ; 666F6
         bne.w   l_667DA                         ; 666FC
         addq.l  #$6,a3                          ; 66700
         move.w  (a3)+,d5                        ; 66702
@@ -19820,7 +20659,7 @@ l_666E0:
         bmi.w   l_667DA                         ; 6670E
         movea.l a2,a3                           ; 66712
         move.w  (a3)+,d0                        ; 66714
-        cmp.w   (dat_1BC5A).l,d0                ; 66716
+        cmp.w   (FillLines).l,d0                ; 66716
         bne.w   l_667DA                         ; 6671C
         addq.l  #$6,a3                          ; 66720
         move.w  (a3)+,d5                        ; 66722
@@ -19909,7 +20748,7 @@ l_667B0:
         jsr     (a5)                            ; PlotWord<colour> (667BE)
 l_667C4:
         lea.l   -$28(a6),a6                     ; 667CA (enhanced: lea, not suba.l #)
-        subq.w  #$1,(dat_1BC5A).l               ; 667C4 (enhanced: the line, a6's line + 1, is above 0 - the
+        subq.w  #$1,(FillLines).l               ; 667C4 (enhanced: the line, a6's line + 1, is above 0 - the
         bgt.w   l_66698                         ; 667D6  release compared a6 with ScreenDrawTop)
 l_667DA:
         clr.l   d1                              ; 667DA
@@ -19952,7 +20791,7 @@ ScanEdge:
         movea.l (EdgeBufferNext).l,a0                ; 668C4
         cmpa.l  #$60a8,a0                       ; 668CA
         blt.w   l_668EC                         ; 668D0
-        tst.b   (dat_1BB77).l                   ; 668D4
+        tst.b   (ScanEdgeHorizon).l                   ; 668D4
         bmi.w   l_668EC                         ; 668DA
         move.l  #$80000000,(a1,d0.w)            ; 668DE
         clr.w   d1                              ; 668E6
@@ -20329,7 +21168,7 @@ l_66C5C:
         add.w   d4,d5                           ; 66C5C
         move.w  #$0,d4                          ; 66C5E
         move.w  (a7)+,d3                        ; 66C62
-        tst.b   (dat_1BB77).l                   ; 66C64
+        tst.b   (ScanEdgeHorizon).l                   ; 66C64
         bpl.w   l_66C72                         ; 66C6A
         move.w  d5,d3                           ; 66C6E
         move.w  d5,(a2)                         ; 66C70
@@ -20389,7 +21228,7 @@ l_66CEC:
         add.w   d4,d5                           ; 66CEC
         move.w  #$100,d4                        ; 66CEE
         move.w  (a7)+,d3                        ; 66CF2
-        tst.b   (dat_1BB77).l                   ; 66CF4
+        tst.b   (ScanEdgeHorizon).l                   ; 66CF4
         bpl.w   l_66D02                         ; 66CFA
         move.w  d5,d3                           ; 66CFE
         move.w  d5,(a2)                         ; 66D00
@@ -20449,7 +21288,7 @@ l_66D76:
         move.w  d7,d3                           ; 66D7C
         sub.w   (a7)+,d3                        ; 66D7E
         subq.w  #$1,d3                          ; 66D80
-        tst.b   (dat_1BB77).l                   ; 66D82
+        tst.b   (ScanEdgeHorizon).l                   ; 66D82
         bpl.w   l_66D94                         ; 66D88
         move.w  d7,$2(a2)                       ; 66D8C
         bra.w   l_66DA2                         ; 66D90
@@ -20506,7 +21345,7 @@ l_66E0A:
         move.w  d7,d3                           ; 66E10
         sub.w   (a7)+,d3                        ; 66E12
         subq.w  #$1,d3                          ; 66E14
-        tst.b   (dat_1BB77).l                   ; 66E16
+        tst.b   (ScanEdgeHorizon).l                   ; 66E16
         bpl.w   l_66E28                         ; 66E1C
         move.w  d7,$2(a2)                       ; 66E20
         bra.w   l_66E36                         ; 66E24
@@ -20832,10 +21671,19 @@ ClearPolygonList:
         move.l  a0,(EdgeBufferNext).l                ; 66FE0
         move.w  #$20,(RowOffset).l              ; 66FE6
         rts                                     ; 66FEE
-sub_66FF0:
+
+;-------------------------------------------------------------------------------
+; MarkNextPieceRow - EdgesNextPiece: dat_1BB7C set, d0 = RowOffset, then SetOpponentRow
+;-------------------------------------------------------------------------------
+MarkNextPieceRow:
         move.b  #$ff,(dat_1BB7C).l              ; 66FF0
         move.w  (RowOffset).l,d0                ; 66FF8
-sub_66FFE:
+
+;-------------------------------------------------------------------------------
+; SetOpponentRow - EdgesFarPieces: OpponentRow, the row the opponent's car is drawn in - d0 back a
+; row ($20), or two by dat_63EDE and the row's flag (bit 5 of $1E)
+;-------------------------------------------------------------------------------
+SetOpponentRow:
         movea.l #$7b08a,a0                      ; 66FFE
         subi.w  #$20,d0                         ; 67004
         cmpi.w  #$ff00,(dat_63EDE).l            ; 67008
@@ -20865,7 +21713,7 @@ l_6704A:
         move.w  #$30,(RowOffset).l              ; 67058
         move.b  (dat_1BB60).l,d1                ; 67060
         beq.w   l_67114                         ; 67066
-        movea.l #dat_1BDD0,a3                   ; 6706A
+        movea.l #SectionFlags,a3                   ; 6706A
         move.w  d1,d0                           ; 67070
         bra.w   l_6707C                         ; 67072
 l_67076:
@@ -20884,7 +21732,7 @@ l_6707C:
 ; each cross-section
 ;-------------------------------------------------------------------------------
 EdgesNextPiece:
-        movea.l #dat_1BDD0,a3                   ; 67092
+        movea.l #SectionFlags,a3                   ; 67092
         cmpi.w  #$5e0,(RowOffset).l             ; 67098
         bcc.w   l_6745E                         ; 670A0
         move.b  #$ff,d4                         ; 670A4
@@ -20897,7 +21745,7 @@ l_670C0:
         move.b  d4,(dat_1BB7C).l                ; 670C0
         tst.b   (dat_1BB7C).l                   ; 670C6
         bne.w   l_670D6                         ; 670CC
-        jsr     (sub_66FF0).l                   ; 670D0
+        jsr     (MarkNextPieceRow).l                   ; 670D0
 l_670D6:
         move.b  #$0,(dat_1BC14).l               ; 670D6
         move.w  #$4,d1                          ; 670DE
@@ -20908,7 +21756,7 @@ l_670EA:
         move.b  #$80,(a3,d1.w)                  ; 670EA
         cmp.b   (dat_1BB7C).l,d1                ; 670F0
         bcs.w   l_67100                         ; 670F6
-        jsr     (sub_66FF0).l                   ; 670FA
+        jsr     (MarkNextPieceRow).l                   ; 670FA
 l_67100:
         addq.b  #$4,d1                          ; 67100
         addq.b  #$1,(dat_1BB58).l               ; 67102
@@ -20923,9 +21771,9 @@ l_67114:
         eor.b   d1,d0                           ; 67128
         andi.b  #$4,d0                          ; 6712A
         move.b  d0,(dat_69AD8).l                ; 6712E
-        movea.l #dat_1BDD0,a3                   ; 67134
+        movea.l #SectionFlags,a3                   ; 67134
         move.b  (a3,d1.w),(dat_69ADA).l         ; 6713A
-        jsr     (sub_617D0).l                   ; 67142
+        jsr     (RaiseFarSides).l                   ; 67142
         cmpi.w  #$30,(RowOffset).l              ; 67148
         beq.w   l_67284                         ; 67150
         tst.w   (a6,d2.w)                       ; 67154
@@ -20998,18 +21846,24 @@ l_6727C:
         addi.w  #$4,(RowOffset).l               ; 6727C
 l_67284:
         tst.b   (dat_69AD8).l                   ; 67284
-        beq.w   sub_672CC                       ; 6728A
+        beq.w   ScanNextPieceEdges                       ; 6728A
         tst.b   (dat_69ADA).l                   ; 6728E
-        bpl.w   sub_672CC                       ; 67294
+        bpl.w   ScanNextPieceEdges                       ; 67294
         btst    #$6,(dat_69ADA).l               ; 67298
-        bne.w   sub_672CC                       ; 672A0
+        bne.w   ScanNextPieceEdges                       ; 672A0
         move.w  (RowOffset).l,d3                ; 672A4
         movea.l #$7b08a,a1                      ; 672AA
         move.l  #$80000000,(a1,d3.w)            ; 672B0
         move.l  #$80000000,$4(a1,d3.w)          ; 672B8
         addi.w  #$8,(RowOffset).l               ; 672C0
         bra.w   l_67364                         ; 672C8
-sub_672CC:
+
+;-------------------------------------------------------------------------------
+; ScanNextPieceEdges - EdgesNextPiece, PreviewPieces: a piece's (PieceIndex) edges stepped
+; (ScanEdge) into the row table from RowOffset - its sections and sides by dat_1BC14, PieceDirection,
+; dat_1BB58, dat_69AD8 (probably)
+;-------------------------------------------------------------------------------
+ScanNextPieceEdges:
         tst.w   $78(a6,d1.w)                    ; 672CC
         bmi.w   l_672FC                         ; 672D0
         tst.w   (a6,d1.w)                       ; 672D4
@@ -21073,7 +21927,7 @@ l_673D0:
 l_673D8:
         move.w  (RowOffset).l,d3                ; 673D8
         move.b  (PieceIndex).l,(a1,d3.w)        ; 673DE
-        move.b  (dat_1BB4D).l,$3(a1,d3.w)       ; 673E6
+        move.b  (PieceDirection).l,$3(a1,d3.w)       ; 673E6
         move.b  #$9,d0                          ; 673EE
         cmpi.b  #$26,(dat_1BB58).l              ; 673F2
         blt.w   l_67426                         ; 673FA
@@ -21093,7 +21947,7 @@ l_67434:
         move.b  d0,$1(a1,d3.w)                  ; 67434
         move.b  (dat_69ADA).l,$2(a1,d3.w)       ; 67438
         addq.w  #$4,(RowOffset).l               ; 67440
-        movea.l #dat_1BDD0,a3                   ; 67446
+        movea.l #SectionFlags,a3                   ; 67446
         move.b  d1,(dat_1BC14).l                ; 6744C
         cmpi.w  #$5e0,(RowOffset).l             ; 67452
         bcs.w   l_670EA                         ; 6745A
@@ -21236,17 +22090,17 @@ l_6769A:
         movea.l #$7b08a,a0                      ; 676A2
         move.w  (RowOffset).l,d3                ; 676A8
         movea.l #$7ab5a,a3                      ; 676AE
-        move.w  (a3,d1.w),(dat_1BB1A).l         ; 676B4
-        move.b  (dat_1BB1B).l,d0                ; 676BC
+        move.w  (a3,d1.w),(WorkByte5).l         ; 676B4
+        move.b  (WorkByte6).l,d0                ; 676BC
         move.b  d0,(a0,d3.w)                    ; 676C2
-        move.b  (dat_1BB1A).l,$2(a0,d3.w)       ; 676C6
+        move.b  (WorkByte5).l,$2(a0,d3.w)       ; 676C6
         tst.b   (dat_1BB67).l                   ; 676CE
         bne.w   l_676F4                         ; 676D4
         cmp.b   (dat_1BBA6).l,d0                ; 676D8
         bne.w   l_676F4                         ; 676DE
         move.w  d3,d0                           ; 676E2
         addq.w  #$4,d0                          ; 676E4
-        jsr     (sub_66FFE).l                   ; 676E6
+        jsr     (SetOpponentRow).l                   ; 676E6
         move.b  #$80,(dat_1BB67).l              ; 676EC
 l_676F4:
         addq.w  #$4,(RowOffset).l               ; 676F4
@@ -21416,7 +22270,7 @@ DrawHorizon:
         move.w  d0,(dat_1BFB6).l                ; 6788C
         neg.w   d0                              ; 67892
         move.w  d0,(dat_1BFB4).l                ; 67894
-        move.w  (dat_1BC42).l,d0                ; 6789A
+        move.w  (ViewPitch).l,d0                ; 6789A
         asr.w   #$3,d0                          ; 678A0
         neg.w   d0                              ; 678A2
         tst.b   (dat_1BB68).l                   ; 678A4
@@ -21432,9 +22286,9 @@ l_678B0:
         move.w  #$0,(RowOffset).l               ; 678D0
         move.w  #$4,d1                          ; 678D8
         move.w  #$6,d2                          ; 678DC
-        move.b  #$80,(dat_1BB77).l              ; 678E0
+        move.b  #$80,(ScanEdgeHorizon).l              ; 678E0
         jsr     (ScanEdge).l                  ; 678E8
-        move.b  #$0,(dat_1BB77).l               ; 678EE
+        move.b  #$0,(ScanEdgeHorizon).l               ; 678EE
         movea.l (EdgeBufferNext).l,a3                ; 678F6
         movea.l a3,a4                           ; 678FC
         move.l  (a1),d0                         ; 678FE
@@ -21444,7 +22298,7 @@ l_678B0:
         movea.l a0,a2                           ; 6790C
         move.w  (a2)+,d0                        ; 6790E
         move.w  d0,(a4)+                        ; 67910
-        move.w  d0,(dat_1BC5A).l                ; 67912
+        move.w  d0,(FillLines).l                ; 67912
         cmpi.w  #$81,d0                         ; 67918
         bcc.w   l_67A8A                         ; 6791C
         move.w  (a2)+,d3                        ; 67920
@@ -21545,7 +22399,11 @@ HorizonFill:
         dbra    d2,.plane
         rts
 
-sub_67A8C:
+;-------------------------------------------------------------------------------
+; ColourLongsToWords - DrawHorizon: the colour's plane masks in d6 and d7 spread into d0-d2, d6,
+; d7 as words (probably)
+;-------------------------------------------------------------------------------
+ColourLongsToWords:
         move.l  d6,d0                           ; 67A8C
         move.l  d6,d1                           ; 67A8E
         swap    d1                              ; 67A90
@@ -22105,7 +22963,12 @@ EdgeBufferNext:				; where ScanEdge writes the next edge buffer (in the race wor
 	dc.b	$00,$00,$00,$00
 RowOffset:				; the row table's current row ($7B08A + this: 32 bytes a row - 7 edge pointers, then flags at +$1C and +$1E)
 	dc.b	$00,$00
-sub_6814A:
+
+;-------------------------------------------------------------------------------
+; MakeSideEdge - a new edge in the edge buffers (EdgeBufferNext) for a side's straight part, from
+; dat_684A6 (probably)
+;-------------------------------------------------------------------------------
+MakeSideEdge:
         cmp.w   d2,d1                           ; 6814A
         bge.w   l_68152                         ; 6814C
         exg.l   d1,d2                           ; 68150
@@ -22143,7 +23006,12 @@ l_681B2:
         move.w  #$1,d1                          ; 681B2
         move.w  d1,d2                           ; 681B6
         rts                                     ; 681B8
-sub_681BA:
+
+;-------------------------------------------------------------------------------
+; EdgeEndsByDirection - d0 bit 6 (the edge's direction): d7, d6 its two ends from (a5) - +0 and
+; +4, or +2 and +6
+;-------------------------------------------------------------------------------
+EdgeEndsByDirection:
         btst    #$6,d0                          ; 681BA
         beq.w   l_681CA                         ; 681BE
         move.w  (a5),d7                         ; 681C2
@@ -22155,10 +23023,16 @@ l_681CA:
         rts                                     ; 681D2
 dat_681D4:
 	dc.b	$00,$00
-sub_681D6:
+
+;-------------------------------------------------------------------------------
+; PrepareSideEdges - FillRowSurface and the sides: a surface's side edges checked (SideAngleCheck)
+; and where needed new ones made (MakeLeftSideEdge, MakeRightSideEdge) by the car's place
+; (dat_1BBD1, dat_1BC5C) (probably)
+;-------------------------------------------------------------------------------
+PrepareSideEdges:
         move.b  #$0,(dat_69ADC).l               ; 681D6
         move.b  #$0,(dat_684A6).l               ; 681DE
-        jsr     (sub_683EC).l                   ; 681E6
+        jsr     (SideAngleCheck).l                   ; 681E6
         tst.b   (dat_684A7).l                   ; 681EC
         bpl.w   l_6829A                         ; 681F2
         tst.b   (dat_684A9).l                   ; 681F6
@@ -22225,16 +23099,16 @@ l_6829E:
 l_682D0:
         addq.b  #$1,(dat_684A8).l               ; 682D0
 l_682D6:
-        jsr     (sub_68314).l                   ; 682D6
+        jsr     (MakeLeftSideEdge).l                   ; 682D6
         bcc.w   l_68312                         ; 682DC
 l_682E0:
-        jsr     (sub_6839C).l                   ; 682E0
+        jsr     (SideBottomCheck).l                   ; 682E0
         bcc.w   l_68312                         ; 682E6
 l_682EA:
-        jsr     (sub_68358).l                   ; 682EA
+        jsr     (MakeRightSideEdge).l                   ; 682EA
         bcc.w   l_68312                         ; 682F0
 l_682F4:
-        jsr     (sub_683C4).l                   ; 682F4
+        jsr     (SideTopCheck).l                   ; 682F4
         bcc.w   l_68312                         ; 682FA
         cmpi.b  #$2,(dat_684A8).l               ; 682FE
         blt.w   l_682D0                         ; 68306
@@ -22242,14 +23116,18 @@ l_6830A:
         move.b  #$80,(dat_69ADC).l              ; 6830A
 l_68312:
         rts                                     ; 68312
-sub_68314:
+
+;-------------------------------------------------------------------------------
+; MakeLeftSideEdge - PrepareSideEdges: MakeSideEdge for one side (probably)
+;-------------------------------------------------------------------------------
+MakeLeftSideEdge:
         cmpi.w  #$100,d6                        ; 68314
         beq.w   l_6833A                         ; 68318
 l_6831C:
         move.w  #$100,d0                        ; 6831C
         move.w  d5,d1                           ; 68320
         move.w  #$80,d2                         ; 68322
-        jsr     (sub_6814A).l                   ; 68326
+        jsr     (MakeSideEdge).l                   ; 68326
         bne.w   l_6830A                         ; 6832C
         move.w  #$80,d5                         ; 68330
         ori.b   #$1,ccr                         ; 68334
@@ -22260,18 +23138,22 @@ l_6833A:
         move.w  #$100,d0                        ; 68340
         move.w  d5,d1                           ; 68344
         move.w  d7,d2                           ; 68346
-        jsr     (sub_6814A).l                   ; 68348
+        jsr     (MakeSideEdge).l                   ; 68348
         bne.w   l_6830A                         ; 6834E
         andi.b  #$1e,ccr                        ; 68352
         rts                                     ; 68356
-sub_68358:
+
+;-------------------------------------------------------------------------------
+; MakeRightSideEdge - PrepareSideEdges: MakeSideEdge for the other side (probably)
+;-------------------------------------------------------------------------------
+MakeRightSideEdge:
         cmpi.w  #$0,d6                          ; 68358
         beq.w   l_6837E                         ; 6835C
 l_68360:
         move.w  #$0,d0                          ; 68360
         move.w  d5,d1                           ; 68364
         move.w  #$0,d2                          ; 68366
-        jsr     (sub_6814A).l                   ; 6836A
+        jsr     (MakeSideEdge).l                   ; 6836A
         bne.w   l_6830A                         ; 68370
         move.w  #$0,d5                          ; 68374
         ori.b   #$1,ccr                         ; 68378
@@ -22282,11 +23164,16 @@ l_6837E:
         move.w  #$0,d0                          ; 68384
         move.w  d5,d1                           ; 68388
         move.w  d7,d2                           ; 6838A
-        jsr     (sub_6814A).l                   ; 6838C
+        jsr     (MakeSideEdge).l                   ; 6838C
         bne.w   l_6830A                         ; 68392
         andi.b  #$1e,ccr                        ; 68396
         rts                                     ; 6839A
-sub_6839C:
+
+;-------------------------------------------------------------------------------
+; SideBottomCheck - PrepareSideEdges: C set unless d7 is $80 and dat_681D4 is at least d6 (then
+; dat_681D4 kept) (probably)
+;-------------------------------------------------------------------------------
+SideBottomCheck:
         cmpi.w  #$80,d7                         ; 6839C
         beq.w   l_683B2                         ; 683A0
 l_683A4:
@@ -22299,7 +23186,11 @@ l_683B2:
         blt.w   l_683A4                         ; 683BA
         andi.b  #$1e,ccr                        ; 683BE
         rts                                     ; 683C2
-sub_683C4:
+
+;-------------------------------------------------------------------------------
+; SideTopCheck - PrepareSideEdges: the like test for the other end (dat_681D4) (probably)
+;-------------------------------------------------------------------------------
+SideTopCheck:
         cmpi.w  #$0,d7                          ; 683C4
         beq.w   l_683DA                         ; 683C8
 l_683CC:
@@ -22312,14 +23203,19 @@ l_683DA:
         bgt.w   l_683CC                         ; 683E2
         andi.b  #$1e,ccr                        ; 683E6
         rts                                     ; 683EA
-sub_683EC:
+
+;-------------------------------------------------------------------------------
+; SideAngleCheck - PrepareSideEdges: SideAngle for both edges' ends; dat_684A7 set ($80) when they
+; differ by $180 or more (probably)
+;-------------------------------------------------------------------------------
+SideAngleCheck:
         move.w  d0,d1                           ; 683EC
         move.w  d5,d2                           ; 683EE
-        jsr     (sub_68432).l                   ; 683F0
+        jsr     (SideAngle).l                   ; 683F0
         move.w  d3,-(a7)                        ; 683F6
         move.w  d6,d1                           ; 683F8
         move.w  d7,d2                           ; 683FA
-        jsr     (sub_68432).l                   ; 683FC
+        jsr     (SideAngle).l                   ; 683FC
         sub.w   (a7)+,d3                        ; 68402
         bpl.w   l_68416                         ; 68404
         neg.w   d3                              ; 68408
@@ -22335,7 +23231,11 @@ l_6841E:
 l_68428:
         move.b  #$0,(dat_684A7).l               ; 68428
         rts                                     ; 68430
-sub_68432:
+
+;-------------------------------------------------------------------------------
+; SideAngle - d1, d2: a direction or slope worked out into d3 (probably)
+;-------------------------------------------------------------------------------
+SideAngle:
         move.w  #$0,d3                          ; 68432
         cmpi.w  #$0,d2                          ; 68436
         bne.w   l_68444                         ; 6843A
@@ -22362,7 +23262,11 @@ l_68476:
         clr.w   d1                              ; 68476
         clr.w   d2                              ; 68478
         rts                                     ; 6847A
-sub_6847C:
+
+;-------------------------------------------------------------------------------
+; PointTooFar - point d1's x beyond $C00 either side: its height entry (a6) marked $8000 and C set
+;-------------------------------------------------------------------------------
+PointTooFar:
         movea.l #PointScreenX,a0                ; 6847C
         move.w  (a0,d1.w),d0                    ; 68482
         bpl.w   l_6848C                         ; 68486
@@ -22384,7 +23288,12 @@ dat_684A8:
 	dc.b	$00
 dat_684A9:
 	dc.b	$00
-sub_684AA:
+
+;-------------------------------------------------------------------------------
+; FindEdgeInList - FillBetweenEdges: the edge list (dat_69BFC, 10-byte entries from dat_69ACC
+; down) searched for one between a1 and a2; d0 $8000 if none (probably)
+;-------------------------------------------------------------------------------
+FindEdgeInList:
         move.w  (dat_69ACC).l,d2                ; 684AA
         movea.l #dat_69BFC,a4                   ; 684B0
 l_684B6:
@@ -22521,7 +23430,7 @@ l_68652:
         move.w  #$8000,(a4,d1.w)                ; 6865A
         movea.l $6(a4,d1.w),a1                  ; 68660
         movea.l $2(a4,d1.w),a2                  ; 68664
-        jsr     (sub_684AA).l                   ; 68668
+        jsr     (FindEdgeInList).l                   ; 68668
         move.w  d0,(dat_69ACE).l                ; 6866E
         bmi.w   l_68688                         ; 68674
         move.l  $6(a4,d1.w),(dat_69AD0).l       ; 68678
@@ -22573,7 +23482,7 @@ l_686DA:
         bne.w   l_688D2                         ; 686E6
         addq.l  #$6,a0                          ; 686EA
         addq.l  #$6,a3                          ; 686EC
-        move.w  d1,(dat_1BC5A).l                ; 686EE
+        move.w  d1,(FillLines).l                ; 686EE
         subq.w  #$1,d1                          ; 686F4
         cmpi.w  #$80,d1                         ; 686F6
         bcc.w   l_688D2                         ; 686FA
@@ -22585,10 +23494,10 @@ l_686DA:
         asl.w   #$3,d0                          ; 6870C
         adda.l  d0,a6                           ; 6870E
 l_68710:
-        move.w  (dat_1BC5A).l,d0                ; 68710
+        move.w  (FillLines).l,d0                ; 68710
         cmp.w   (dat_69ACE).l,d0                ; 68716
         bne.w   l_6876A                         ; 6871C
-        move.w  (dat_1BC5A).l,-(a7)             ; 68720
+        move.w  (FillLines).l,-(a7)             ; 68720
         move.l  a6,-(a7)                        ; 68726
         move.l  a3,-(a7)                        ; 68728
         move.l  a2,-(a7)                        ; 6872A
@@ -22597,7 +23506,7 @@ l_68710:
         movea.l (dat_69AD4).l,a2                ; 68738
         movea.l (a2),a3                         ; 6873E
         adda.l  #$8,a3                          ; 68740
-        jsr     (sub_684AA).l                   ; 68746
+        jsr     (FindEdgeInList).l                   ; 68746
         move.w  d0,(dat_69ACE).l                ; 6874C
         bmi.w   l_68766                         ; 68752
         move.l  $6(a4,d1.w),(dat_69AD0).l       ; 68756
@@ -22617,7 +23526,7 @@ l_68782:
         beq.w   l_68882                         ; 68784
         movea.l (a1),a0                         ; 68788
         move.w  (a0)+,d4                        ; 6878A
-        cmp.w   (dat_1BC5A).l,d4                ; 6878C
+        cmp.w   (FillLines).l,d4                ; 6878C
         bne.w   l_688D2                         ; 68792
         addq.l  #$6,a0                          ; 68796
         move.w  (a0)+,d4                        ; 68798
@@ -22634,7 +23543,7 @@ l_687B4:
         cmpa.l  a1,a2                           ; 687B6
         beq.w   l_68882                         ; 687B8
         move.w  (a3)+,d5                        ; 687BC
-        cmp.w   (dat_1BC5A).l,d5                ; 687BE
+        cmp.w   (FillLines).l,d5                ; 687BE
         bne.w   l_688D2                         ; 687C4
         addq.l  #$6,a3                          ; 687C8
         move.w  (a3)+,d5                        ; 687CA
@@ -22723,7 +23632,7 @@ l_68858:
         jsr     (a5)                            ; PlotWord<colour> (68866)
 l_6886C:
         lea.l   -$28(a6),a6                     ; 68872 (enhanced: lea, not suba.l #)
-        subq.w  #$1,(dat_1BC5A).l               ; 6886C (enhanced: the line, a6's line + 1, is above 0 - the
+        subq.w  #$1,(FillLines).l               ; 6886C (enhanced: the line, a6's line + 1, is above 0 - the
         bgt.w   l_68710                         ; 6887E  release compared a6 with ScreenDrawTop)
 l_68882:
         tst.b   (dat_69ACA).l                   ; 68882
@@ -22732,11 +23641,11 @@ l_68882:
         movea.l (a7)+,a2                        ; 6888E
         movea.l (a7)+,a3                        ; 68890
         movea.l (a7)+,a6                        ; 68892
-        move.w  (a7)+,(dat_1BC5A).l             ; 68894
+        move.w  (a7)+,(FillLines).l             ; 68894
         subq.b  #$1,(dat_69ACA).l               ; 6889A
         movea.l (a1),a0                         ; 688A0
         adda.l  #$8,a0                          ; 688A2
-        jsr     (sub_684AA).l                   ; 688A8
+        jsr     (FindEdgeInList).l                   ; 688A8
         move.w  d0,(dat_69ACE).l                ; 688AE
         bmi.w   l_688C8                         ; 688B4
         move.l  $6(a4,d1.w),(dat_69AD0).l       ; 688B8
@@ -22754,7 +23663,7 @@ l_688D2:
         movea.l (a7)+,a2                        ; 688DE
         movea.l (a7)+,a3                        ; 688E0
         movea.l (a7)+,a6                        ; 688E2
-        move.w  (a7)+,(dat_1BC5A).l             ; 688E4
+        move.w  (a7)+,(FillLines).l             ; 688E4
         subq.b  #$1,(dat_69ACA).l               ; 688EA
         movea.l (a1),a0                         ; 688F0
         adda.l  #$8,a0                          ; 688F2
@@ -22780,7 +23689,12 @@ FillPolyLong:					; (enhanced) FillPolygon: a run of more than 16 words
         subq.w  #1,d1
         bne.s   .pair
         bra.w   l_667B0
-sub_688FC:
+
+;-------------------------------------------------------------------------------
+; DrawRowMidLine - FillRowSurface: the row's line at $18 (its row table entry) drawn in colour $F
+; (DrawEdgeLine) (probably a centre or kerb line)
+;-------------------------------------------------------------------------------
+DrawRowMidLine:
         movea.l #$7b08a,a4                      ; 688FC
         move.w  (RowOffset).l,d3                ; 68902
         move.b  #$f,d0                          ; 68908
@@ -22792,7 +23706,12 @@ sub_688FC:
         jsr     (DrawEdgeLine).l                   ; 68922
 l_68928:
         rts                                     ; 68928
-sub_6892A:
+
+;-------------------------------------------------------------------------------
+; DrawRowsLeftLines - DrawNearRows: the rows from RowOffset back to dat_69AE6 - each one's line at
+; +$10 drawn in colour dat_691B3, unless its flag (+$1D) is negative or 3 (probably the left kerb)
+;-------------------------------------------------------------------------------
+DrawRowsLeftLines:
         movea.l #$7b08a,a4                      ; 6892A
         move.w  (RowOffset).l,d3                ; 68930
         bra.w   l_68970                         ; 68936
@@ -22814,7 +23733,12 @@ l_68970:
         cmp.w   (dat_69AE6).l,d3                ; 68970
         bne.w   l_6893A                         ; 68976
         rts                                     ; 6897A
-sub_6897C:
+
+;-------------------------------------------------------------------------------
+; DrawRowsRightLines - DrawNearRows: the same for each row's line at +$14 (probably the right
+; kerb)
+;-------------------------------------------------------------------------------
+DrawRowsRightLines:
         movea.l #$7b08a,a4                      ; 6897C
         move.w  (RowOffset).l,d3                ; 68982
         bra.w   l_689C2                         ; 68988
@@ -22836,7 +23760,12 @@ l_689C2:
         cmp.w   (dat_69AE6).l,d3                ; 689C2
         bne.w   l_6898C                         ; 689C8
         rts                                     ; 689CC
-sub_689CE:
+
+;-------------------------------------------------------------------------------
+; DrawRowsLeftEdges - DrawNearRows: the rows from RowOffset back to dat_69AE6 - each one's edge at
+; +0 drawn in its colour (+$1D) (probably the track's left edge)
+;-------------------------------------------------------------------------------
+DrawRowsLeftEdges:
         movea.l #$7b08a,a4                      ; 689CE
         move.w  (RowOffset).l,d3                ; 689D4
         bra.w   l_68A06                         ; 689DA
@@ -22855,7 +23784,11 @@ l_68A06:
         cmp.w   (dat_69AE6).l,d3                ; 68A06
         bne.w   l_689DE                         ; 68A0C
         rts                                     ; 68A10
-sub_68A12:
+
+;-------------------------------------------------------------------------------
+; DrawRowsRightEdges - DrawNearRows: the same for each row's edge at +4 (probably the right edge)
+;-------------------------------------------------------------------------------
+DrawRowsRightEdges:
         movea.l #$7b08a,a4                      ; 68A12
         move.w  (RowOffset).l,d3                ; 68A18
         bra.w   l_68A4A                         ; 68A1E
@@ -22874,7 +23807,12 @@ l_68A4A:
         cmp.w   (dat_69AE6).l,d3                ; 68A4A
         bne.w   l_68A22                         ; 68A50
         rts                                     ; 68A54
-sub_68A56:
+
+;-------------------------------------------------------------------------------
+; FillRowsLeftSide - DrawNearRows: the rows' left side (the wall under the track's edge) gathered
+; (PrepareSideEdges, EdgeEndsByDirection) and filled (FillBetweenEdges) (probably)
+;-------------------------------------------------------------------------------
+FillRowsLeftSide:
         move.b  #$80,(dat_684A9).l              ; 68A56
         movea.l #$7b08a,a4                      ; 68A5E
         move.w  (RowOffset).l,d3                ; 68A64
@@ -22955,7 +23893,7 @@ l_68B72:
 l_68B8C:
         movea.l -$4(a1),a5                      ; 68B8C
         move.b  (dat_69AE2).l,d0                ; 68B90
-        jsr     (sub_681BA).l                   ; 68B96
+        jsr     (EdgeEndsByDirection).l                   ; 68B96
         move.w  d6,-(a7)                        ; 68B9C
         move.w  d7,d5                           ; 68B9E
         move.l  $8(a4,d3.w),d0                  ; 68BA0
@@ -22967,9 +23905,9 @@ l_68B8C:
 l_68BBA:
         movea.l (a2),a5                         ; 68BBA
         move.b  (dat_69ADE).l,d0                ; 68BBC
-        jsr     (sub_681BA).l                   ; 68BC2
+        jsr     (EdgeEndsByDirection).l                   ; 68BC2
         move.w  (a7)+,d0                        ; 68BC8
-        jsr     (sub_681D6).l                   ; 68BCA
+        jsr     (PrepareSideEdges).l                   ; 68BCA
         tst.b   (dat_69ADC).l                   ; 68BD0
         bmi.w   l_68BEA                         ; 68BD6
 l_68BDA:
@@ -22978,7 +23916,11 @@ l_68BDA:
         jsr     (FillBetweenEdges).l                   ; 68BE4
 l_68BEA:
         rts                                     ; 68BEA
-sub_68BEC:
+
+;-------------------------------------------------------------------------------
+; FillRowsRightSide - DrawNearRows: the same for the right side (probably)
+;-------------------------------------------------------------------------------
+FillRowsRightSide:
         move.b  #$2,(dat_684A9).l               ; 68BEC
         movea.l #$7b08a,a4                      ; 68BF4
         move.w  (RowOffset).l,d3                ; 68BFA
@@ -23059,7 +24001,7 @@ l_68D08:
 l_68D22:
         movea.l -$4(a1),a5                      ; 68D22
         move.b  (dat_69AE2).l,d0                ; 68D26
-        jsr     (sub_681BA).l                   ; 68D2C
+        jsr     (EdgeEndsByDirection).l                   ; 68D2C
         move.w  d6,-(a7)                        ; 68D32
         move.w  d7,d5                           ; 68D34
         move.l  $4(a4,d3.w),d0                  ; 68D36
@@ -23071,9 +24013,9 @@ l_68D22:
 l_68D50:
         movea.l (a2),a5                         ; 68D50
         move.b  (dat_69ADE).l,d0                ; 68D52
-        jsr     (sub_681BA).l                   ; 68D58
+        jsr     (EdgeEndsByDirection).l                   ; 68D58
         move.w  (a7)+,d0                        ; 68D5E
-        jsr     (sub_681D6).l                   ; 68D60
+        jsr     (PrepareSideEdges).l                   ; 68D60
         tst.b   (dat_69ADC).l                   ; 68D66
         bmi.w   l_68D80                         ; 68D6C
 l_68D70:
@@ -23161,7 +24103,7 @@ l_68E94:
 l_68EAE:
         movea.l -$4(a1),a5                      ; 68EAE
         move.b  (dat_69AE2).l,d0                ; 68EB2
-        jsr     (sub_681BA).l                   ; 68EB8
+        jsr     (EdgeEndsByDirection).l                   ; 68EB8
         move.w  d6,-(a7)                        ; 68EBE
         move.w  d7,d5                           ; 68EC0
         move.l  (a4,d3.w),d0                    ; 68EC2
@@ -23173,9 +24115,9 @@ l_68EAE:
 l_68EDC:
         movea.l (a2),a5                         ; 68EDC
         move.b  (dat_69ADE).l,d0                ; 68EDE
-        jsr     (sub_681BA).l                   ; 68EE4
+        jsr     (EdgeEndsByDirection).l                   ; 68EE4
         move.w  (a7)+,d0                        ; 68EEA
-        jsr     (sub_681D6).l                   ; 68EEC
+        jsr     (PrepareSideEdges).l                   ; 68EEC
         tst.b   (dat_69ADC).l                   ; 68EF2
         bmi.w   l_68F0C                         ; 68EF8
 l_68EFC:
@@ -23186,7 +24128,7 @@ l_68F0C:
         move.b  #$0,(dat_1BBD2).l               ; 68F0C
         btst    #$0,(dat_1BB61).l               ; 68F14
         beq.w   l_68F26                         ; 68F1C
-        jsr     (sub_688FC).l                   ; 68F20
+        jsr     (DrawRowMidLine).l                   ; 68F20
 l_68F26:
         rts                                     ; 68F26
 
@@ -23213,28 +24155,28 @@ l_68F58:
         blt.w   l_690BA                         ; 68F64
         tst.b   (dat_1BB9A).l                   ; 68F68
         bne.w   l_68FB2                         ; 68F6E
-        jsr     (sub_68A56).l                   ; 68F72
-        jsr     (sub_6892A).l                   ; 68F78
-        jsr     (sub_68BEC).l                   ; 68F7E
-        jsr     (sub_6897C).l                   ; 68F84
-        jsr     (sub_6916C).l                   ; 68F8A
-        jsr     (sub_6917C).l                   ; 68F90
+        jsr     (FillRowsLeftSide).l                   ; 68F72
+        jsr     (DrawRowsLeftLines).l                   ; 68F78
+        jsr     (FillRowsRightSide).l                   ; 68F7E
+        jsr     (DrawRowsRightLines).l                   ; 68F84
+        jsr     (DrawOpponentHereAfter).l                   ; 68F8A
+        jsr     (DrawOpponentHereBefore).l                   ; 68F90
         jsr     (FillRowSurface).l                   ; 68F96
-        jsr     (sub_689CE).l                   ; 68F9C
-        jsr     (sub_68A12).l                   ; 68FA2
+        jsr     (DrawRowsLeftEdges).l                   ; 68F9C
+        jsr     (DrawRowsRightEdges).l                   ; 68FA2
         jsr     (DrawCarAtRow).l                   ; 68FA8
         bra.w   l_690AC                         ; 68FAE
 l_68FB2:
         tst.b   (dat_1BC5C).l                   ; 68FB2
         bpl.w   l_69036                         ; 68FB8
-        jsr     (sub_6916C).l                   ; 68FBC
-        jsr     (sub_68BEC).l                   ; 68FC2
-        jsr     (sub_6897C).l                   ; 68FC8
+        jsr     (DrawOpponentHereAfter).l                   ; 68FBC
+        jsr     (FillRowsRightSide).l                   ; 68FC2
+        jsr     (DrawRowsRightLines).l                   ; 68FC8
         jsr     (FillRowSurface).l                   ; 68FCE
-        jsr     (sub_68A12).l                   ; 68FD4
+        jsr     (DrawRowsRightEdges).l                   ; 68FD4
         jsr     (DrawCarAtRow).l                   ; 68FDA
-        jsr     (sub_68A56).l                   ; 68FE0
-        jsr     (sub_6892A).l                   ; 68FE6
+        jsr     (FillRowsLeftSide).l                   ; 68FE0
+        jsr     (DrawRowsLeftLines).l                   ; 68FE6
         move.w  (RowOffset).l,d3                ; 68FEC
         cmp.w   (dat_69AE8).l,d3                ; 68FF2
         beq.w   l_69026                         ; 68FF8
@@ -23242,23 +24184,23 @@ l_68FB2:
         bne.w   l_69026                         ; 69002
         move.w  (RowOffset).l,-(a7)             ; 69006
         move.w  (dat_69AE8).l,(RowOffset).l     ; 6900C
-        jsr     (sub_689CE).l                   ; 69016
+        jsr     (DrawRowsLeftEdges).l                   ; 69016
         move.w  (a7)+,(RowOffset).l             ; 6901C
         bra.w   l_6902C                         ; 69022
 l_69026:
-        jsr     (sub_689CE).l                   ; 69026
+        jsr     (DrawRowsLeftEdges).l                   ; 69026
 l_6902C:
-        jsr     (sub_6917C).l                   ; 6902C
+        jsr     (DrawOpponentHereBefore).l                   ; 6902C
         bra.w   l_690AC                         ; 69032
 l_69036:
-        jsr     (sub_6917C).l                   ; 69036
-        jsr     (sub_68A56).l                   ; 6903C
-        jsr     (sub_6892A).l                   ; 69042
+        jsr     (DrawOpponentHereBefore).l                   ; 69036
+        jsr     (FillRowsLeftSide).l                   ; 6903C
+        jsr     (DrawRowsLeftLines).l                   ; 69042
         jsr     (FillRowSurface).l                   ; 69048
-        jsr     (sub_689CE).l                   ; 6904E
+        jsr     (DrawRowsLeftEdges).l                   ; 6904E
         jsr     (DrawCarAtRow).l                   ; 69054
-        jsr     (sub_68BEC).l                   ; 6905A
-        jsr     (sub_6897C).l                   ; 69060
+        jsr     (FillRowsRightSide).l                   ; 6905A
+        jsr     (DrawRowsRightLines).l                   ; 69060
         move.w  (RowOffset).l,d3                ; 69066
         cmp.w   (dat_69AE8).l,d3                ; 6906C
         beq.w   l_690A0                         ; 69072
@@ -23266,13 +24208,13 @@ l_69036:
         bne.w   l_690A0                         ; 6907C
         move.w  (RowOffset).l,-(a7)             ; 69080
         move.w  (dat_69AE8).l,(RowOffset).l     ; 69086
-        jsr     (sub_68A12).l                   ; 69090
+        jsr     (DrawRowsRightEdges).l                   ; 69090
         move.w  (a7)+,(RowOffset).l             ; 69096
         bra.w   l_690A6                         ; 6909C
 l_690A0:
-        jsr     (sub_68A12).l                   ; 690A0
+        jsr     (DrawRowsRightEdges).l                   ; 690A0
 l_690A6:
-        jsr     (sub_6916C).l                   ; 690A6
+        jsr     (DrawOpponentHereAfter).l                   ; 690A6
 l_690AC:
         move.w  (dat_69AE6).l,(RowOffset).l     ; 690AC
         bne.w   l_68F3C                         ; 690B6
@@ -23292,40 +24234,50 @@ DrawFarRows:
         move.w  d3,(dat_69AE6).l                ; 690D8
         tst.b   (dat_1BB9A).l                   ; 690DE
         bne.w   l_69110                         ; 690E4
-        jsr     (sub_69270).l                   ; 690E8
-        jsr     (sub_691B4).l                   ; 690EE
-        jsr     (sub_6916C).l                   ; 690F4
-        jsr     (sub_6917C).l                   ; 690FA
+        jsr     (FillFarRowRightSide).l                   ; 690E8
+        jsr     (FillFarRowLeftSide).l                   ; 690EE
+        jsr     (DrawOpponentHereAfter).l                   ; 690F4
+        jsr     (DrawOpponentHereBefore).l                   ; 690FA
         jsr     (FillRowSurface).l                   ; 69100
         jsr     (DrawCarAtRow).l                   ; 69106
         bra.w   l_69166                         ; 6910C
 l_69110:
         tst.b   (dat_1BC5C).l                   ; 69110
         bpl.w   l_69142                         ; 69116
-        jsr     (sub_6916C).l                   ; 6911A
-        jsr     (sub_691B4).l                   ; 69120
+        jsr     (DrawOpponentHereAfter).l                   ; 6911A
+        jsr     (FillFarRowLeftSide).l                   ; 69120
         jsr     (FillRowSurface).l                   ; 69126
         jsr     (DrawCarAtRow).l                   ; 6912C
-        jsr     (sub_69270).l                   ; 69132
-        jsr     (sub_6917C).l                   ; 69138
+        jsr     (FillFarRowRightSide).l                   ; 69132
+        jsr     (DrawOpponentHereBefore).l                   ; 69138
         bra.w   l_69166                         ; 6913E
 l_69142:
-        jsr     (sub_6917C).l                   ; 69142
-        jsr     (sub_69270).l                   ; 69148
+        jsr     (DrawOpponentHereBefore).l                   ; 69142
+        jsr     (FillFarRowRightSide).l                   ; 69148
         jsr     (FillRowSurface).l                   ; 6914E
         jsr     (DrawCarAtRow).l                   ; 69154
-        jsr     (sub_691B4).l                   ; 6915A
-        jsr     (sub_6916C).l                   ; 69160
+        jsr     (FillFarRowLeftSide).l                   ; 6915A
+        jsr     (DrawOpponentHereAfter).l                   ; 69160
 l_69166:
         bra.w   DrawFarRows                       ; 69166
 l_6916A:
         rts                                     ; 6916A
-sub_6916C:
+
+;-------------------------------------------------------------------------------
+; DrawOpponentHereAfter - DrawFarRows, DrawNearRows: the opponent's car drawn here
+; (DrawOpponentCar, once) if its row (OpponentRow) is reached and dat_57C69 is positive (or zero:
+; nothing)
+;-------------------------------------------------------------------------------
+DrawOpponentHereAfter:
         tst.b   (dat_57C69).l                   ; 6916C
         beq.w   l_691B0                         ; 69172
         bpl.w   l_69192                         ; 69176
         rts                                     ; 6917A
-sub_6917C:
+
+;-------------------------------------------------------------------------------
+; DrawOpponentHereBefore - DrawFarRows, DrawNearRows: the same when dat_57C69 is negative
+;-------------------------------------------------------------------------------
+DrawOpponentHereBefore:
         tst.b   (dat_57C69).l                   ; 6917C
         bmi.w   l_69192                         ; 69182
         rts                                     ; 69186
@@ -23349,7 +24301,12 @@ dat_691B2:
 	dc.b	$0A
 dat_691B3:
 	dc.b	$09
-sub_691B4:
+
+;-------------------------------------------------------------------------------
+; FillFarRowLeftSide - DrawFarRows: the row's left side filled as a polygon (FillPolygon) - its 4
+; edges from the row table, colour $F or dat_691B2 by the row's flag (probably)
+;-------------------------------------------------------------------------------
+FillFarRowLeftSide:
         movea.l #$7b08a,a4                      ; 691B4
         move.w  (RowOffset).l,d3                ; 691BA
         move.b  #$f,d7                          ; 691C0
@@ -23409,7 +24366,11 @@ l_69268:
         jsr     (FillPolygon).l                 ; 69268
 l_6926E:
         rts                                     ; 6926E
-sub_69270:
+
+;-------------------------------------------------------------------------------
+; FillFarRowRightSide - DrawFarRows: the same for the right side (probably)
+;-------------------------------------------------------------------------------
+FillFarRowRightSide:
         movea.l #$7b08a,a4                      ; 69270
         move.w  (RowOffset).l,d3                ; 69276
         move.b  #$f,d7                          ; 6927C
@@ -23733,7 +24694,12 @@ EdgeFlush:
         move.w  #$7fff,d1
         moveq   #-1,d7
 .none:  rts
-sub_6950C:
+
+;-------------------------------------------------------------------------------
+; FillTriangle - DrawMountains: a triangle's three edges (a0-a2) put in the order FillPolygon
+; needs, then filled (FillPolygon from l_66666, one edge change: dat_668A0 1)
+;-------------------------------------------------------------------------------
+FillTriangle:
         move.w  (a0),d0                         ; 6950C
         cmp.w   (a2),d0                         ; 6950E
         beq.w   l_6952E                         ; 69510
@@ -23768,12 +24734,12 @@ DrawMountains:
 	beq.s	.on
 	rts
 .on:
-        move.w  (dat_1BC42).l,d0                ; 6953E
+        move.w  (ViewPitch).l,d0                ; 6953E
         asr.w   #$3,d0                          ; 69544
         neg.w   d0                              ; 69546
         move.w  d0,(dat_6979C).l                ; 69548
         movea.l #dat_69736,a0                   ; 6954E
-        move.b  (dat_1BCE6).l,d6                ; 69554
+        move.b  (CarHeading).l,d6                ; 69554
         subi.b  #$1c,d6                         ; 6955A
         move.b  #$2c,d7                         ; 6955E
         move.b  (dat_69799).l,d1                ; 69562
@@ -23787,7 +24753,7 @@ l_6956A:
         subi.b  #$1c,d0                         ; 6957A
         asl.w   #$8,d0                          ; 6957E
         clr.w   d3                              ; 69580
-        move.b  (dat_1BCE7).l,d3                ; 69582
+        move.b  (CarHeadingLow).l,d3                ; 69582
         andi.b  #$fe,d3                         ; 69588
         sub.w   d3,d0                           ; 6958C
         asr.w   #$3,d0                          ; 6958E
@@ -23899,7 +24865,7 @@ l_69644:
         andi.l  #$f000000,d4                    ; 696A6
         bne.w   l_696E6                         ; 696AC
         move.l  a6,-(a7)                        ; 696B0
-        jsr     (sub_6950C).l                   ; 696B2
+        jsr     (FillTriangle).l                   ; 696B2
         movea.l (a7)+,a6                        ; 696B8
         bra.w   l_696E6                         ; 696BA
 l_696BE:
@@ -24381,7 +25347,12 @@ l_69FDE:
         move.w  (a7)+,d1                        ; 69FE2
         move.l  (a7)+,d5                        ; 69FE4
         rts                                     ; 69FE6
-sub_69FE8:
+
+;-------------------------------------------------------------------------------
+; CutoutShiftedRow - DrawFaceFrame: a row of a masked cut-out shifted by d3 bits and drawn into
+; ScreenDraw's planes (CutoutPointers, CutoutRects) (probably DrawCutoutMasked's inner part)
+;-------------------------------------------------------------------------------
+CutoutShiftedRow:
         move.w  (a1)+,d0                        ; 69FE8
         swap    d0                              ; 69FEA
         jsr     (Helper_AGA2).w                 ; 69FEC  the release helper block: AGA fix ($E8)
@@ -24505,7 +25476,7 @@ l_6A128:
         cmpi.w  #$80,(dat_6A16A).l              ; 6A12C
         bcc.w   l_6A148                         ; 6A134
 l_6A138:
-        jsr     (sub_69FE8).l                   ; 6A138
+        jsr     (CutoutShiftedRow).l                   ; 6A138
         addq.w  #$1,(dat_6A168).l               ; 6A13E
         dbra    d1,l_6A138                      ; 6A144
 l_6A148:
