@@ -132,9 +132,25 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `ScanEdgeInView` - the header written at once, no `dat_668A2`/`dat_668A6`: the race's work 1.1%
   less).
 * ~~**The mountains as an option**~~: done (**F10**, `DrawMountains` returns at once): they cost
-  about 79,000 cycles a frame (11% of the work: 23 `ScanEdge` calls, mostly clipped at the view's
-  sides, at ~1,400 cycles each, and 6 `FillPolygon`s). Still to do, for when they are on: clip
-  them to the view's sides once (they are flat, at the horizon) rather than edge by edge.
+  about 75,000 cycles a frame (10% of the work). Measured since (the benchmark against F10, by
+  routine): about 6 small mountains in view, each the same 4-point shape (a quadrilateral 3-7
+  lines high on the horizon, 2 triangles' worth of edges): 24 `ScanEdge` calls and 6
+  `FillPolygon`s a frame. The edges about 29,000 cycles: half in the view (`ScanEdgeInView`,
+  about 500 each with the stepping), a third crossing a side and a sixth wholly off one (the
+  clipping path: about 2,200 each - 26,000 of the 29,000); the fill about 25,000 (about 40 lines
+  at 525 cycles: the partial words at both ends, 4 planes); `DrawMountains`' own loops 13,000; the
+  roll 5,000. No mountain is wholly outside the view (so nothing to cull: the angle window is only
+  a little wider than the view), and the cost is spread rather than in one place. Exact savings
+  ~~done~~ (`src/scanside.i`, `DrawMountains`): edges clipped only at the view's sides (about 15 a
+  frame, the track's included) skip the bit-by-bit outcodes and the four y tests, and join the
+  release's clipping where it deals with the sides - about 140 cycles an edge (the estimate of 500
+  counted `ScanEdge`'s entry, which every edge needs); the level case of the roll done inline for
+  the mountains' 24 points. Together 0.5% of the work (101.2 to 100.75 ms), not the 1.2% estimated.
+  Checked edge by edge by `tools/test_scanside.py`, and frame by frame against the build before.
+  A larger cut would not be exact:
+  the mountains' spans kept per shape and phase (their x is the shape's x + the heading, rounded
+  by the projection's `asr #2`, so 4 phases a direction) and redrawn shifted, or drawn every other
+  frame.
 * ~~The blitter for the cockpit~~: done (`src/blitcutout.i`): `DrawCutout`'s cut-outs blitted
   (cookie-cut, from copies made at start-up in the blitter's form), the cockpit's time 54% less
   (15.6 ms to 7.2 ms a frame), the race's work 8.8% less than the released game's: 6.07 vertical
@@ -239,11 +255,19 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   (the readout 5,200 cycles a frame, its steps about 20,000). The same bytes and the same
   registers left as the release's loop, checked character by character by
   `tools/test_text.py` (in the workflow: the menus and races, every way of drawing text).
-* The benchmark's race now moves with the menus' speed: the benchmark reaches the race by keys
-  pressed at set times, so faster text in the menus starts the race at another moment and a
-  different race follows (the work 101.9 and 103.5 ms for the same race code). Start the
-  benchmark's inputs from the race's start instead (an `until` on it) so that menus' changes do
-  not move it; until then compare changes to text or menus by profile (`callprof`).
+* ~~The benchmark's race moved with the menus' speed~~: done (`tools/bench.py`) - the keys were
+  pressed at set times, and Random's state for the race (`SaveRandomSeed` keeps it after the title,
+  `RestoreRandomSeed` puts it back as the race is set up) depends on how long the menus took: the
+  menus call `Random` as they wait (`ReadControls`). So faster text started another race (the
+  opponent placed elsewhere). Now the script waits for the race's start (`Race`, scremu's `until`,
+  the next frame from its start: the line's overrun cleared), sets that saved state to a fixed value
+  (`RACE_SEED`) and presses the track's keys a set time after it; the slow-text and fast-text builds
+  then run the same race (the geometry within 0.01 ms; the cockpit 0.53 ms and the instruments 0.33 ms
+  less: the text). Left as it is: the race still depends on the race's own speed - the engine's revs
+  (`dat_1BC34`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
+  them, so a frame taking 7 vertical blanks instead of 6 moves the opponent a little (the game's own
+  behaviour). The baselines regenerated: the released game (the telemetry build of 21b21ba with the
+  release's helper, `original/bin/lowmem_c0.bin`) 6.61 vertical blanks of work, 7.55 frames a second.
 * ~~**The vertical blank's work**~~ (`VBlankTick`): looked at, little to win - about 1,800 cycles
   a vertical blank (10,700 a frame): saving and restoring all the registers, the engine sound's
   period (a `divu`), the timers. The wheels' sprites are not rebuilt there, only pointed at their

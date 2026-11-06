@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: dec333b2c71f64dc4ba2c5cd019b85b22f7888c0
+  ADF_SHA1: 8e7f0bce94fcaef04c0ce9009210e03b9c1ceb2f
 
 jobs:
   build:
@@ -77,6 +77,8 @@ jobs:
         run: python enhanced/tools/test_text.py
       - name: The readout leaves a character only when the screen shows it (enhanced/tools/test_readout.py)
         run: python enhanced/tools/test_readout.py
+      - name: The edges clipped at the view's sides exactly as before (enhanced/tools/test_scanside.py)
+        run: python enhanced/tools/test_scanside.py
       - name: The variables the view's drawing keeps (enhanced/tools/measure_keep.py --check)
         run: python enhanced/tools/measure_keep.py --check
       - name: The blitter beside the CPU in the right order (enhanced/tools/bench.py --blitcheck)

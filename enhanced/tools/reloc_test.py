@@ -46,7 +46,7 @@ def main():
         bins = []
         for name, s in (('as_is', src), ('moved', moved)):
             b = os.path.join(work, name + '.bin')
-            bench_vasm(s, b)
+            bench_vasm(s, b, b[:-4] + '.lst')
             bins.append(b)
     finally:
         os.remove(moved)
@@ -58,7 +58,7 @@ def main():
     results = []
     for b in bins:
         sc = os.path.join(work, 'script.txt')
-        txt = bench.script(vblanks, b + '.snap').replace("joy f\nframes", "calls 1\njoy f\nframes", 1)
+        txt = bench.script(vblanks, b + '.snap', lst=b[:-4] + '.lst').replace("joy f\nframes", "calls 1\njoy f\nframes", 1)
         lines = [f'log {b}.log'] + txt.split('\n')
         lines.insert(len(lines) - 2, f'callsdump {b}.calls')
         open(sc, 'w').write('\n'.join(lines))

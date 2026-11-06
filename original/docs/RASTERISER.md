@@ -125,6 +125,7 @@ The enhanced game keeps the same pipeline and, unless an option is switched on, 
 | --- | --- | --- |
 | Edges | Shallow edges stepped a line at a time: each line's run found by one division (`ScanXMajor`), not pixel by pixel | 4.5% less |
 | Edges | Edges with both ends in view skip the outcodes and clipping, and have their own lean stepping and exit (`ScanEdgeInView`) | 1.1% for the lean path; the clipping skip came with the line change |
+| Edges | Edges clipped only at the view's sides (both ends' y in view) skip the bit-by-bit outcodes and the four y tests, and join the release's clipping where it deals with the sides (`scanside.i`); the mountains' points worked out without the roll's calls when the car is level | 0.5% less |
 | Lines | Each line's run of kerb pixels written a word at a time (`EdgeFlush`), not one `PlotPixel` call per pixel | 3.5% less |
 | Filling | Whole words written two per plane at once (`move.l`), unrolled; partial words call `PlotWord<colour>` directly with computed masks; also in `FillPolygon` | about 3% less |
 | Cockpit | The cut-outs drawn by the blitter's cookie-cut, from copies made at start-up | the cockpit's time halved (15.6 to 7.2 ms) |
