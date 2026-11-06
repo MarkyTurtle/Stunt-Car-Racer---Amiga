@@ -116,11 +116,11 @@ AskForGameDisk:
 	move.l	DiskFileTable+FT_DRIVE(pc),d0
 	addi.b	#'0',d0
 	move.b	d0,(InsertGameDiscDrive).l
-	move.b	(dat_1BBD3).l,-(a7)		; printed on the screen on show (ScreenToShow), as
+	move.b	(TextNoBackground).l,-(a7)		; printed on the screen on show (ScreenToShow), as
 	move.w	(TextCursorX).l,-(a7)		; PrintOnBothScreens does
 	move.l	(ScreenDraw).l,-(a7)
 	move.l	(ScreenToShow).l,(ScreenDraw).l
-	move.b	#$0,(dat_1BBD3).l
+	move.b	#$0,(TextNoBackground).l
 	move.b	#$1,d0
 	jsr	(SetTextColour).l
 	move.b	#$3,d0
@@ -131,7 +131,7 @@ AskForGameDisk:
 	jsr	(PrintMessage).l
 	move.l	(a7)+,(ScreenDraw).l
 	move.w	(a7)+,(TextCursorX).l
-	move.b	(a7)+,(dat_1BBD3).l
+	move.b	(a7)+,(TextNoBackground).l
 .wait:	move.b	#50,d2
 	jsr	(Wait).l
 	movem.l	(a7)+,d0-d7/a0-a6

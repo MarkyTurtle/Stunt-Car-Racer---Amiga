@@ -6,8 +6,8 @@
 ; PrintCharNow draws a glyph a row at a time: for each row the glyph's byte and its cell's mask
 ; (7 columns, $1FC00; 6 for the proportional font, $1F800) shifted to the column, then for each
 ; of the row's 2 words and each pair of planes the screen read, the background's colour put in
-; the cell (unless the text is drawn without one: dat_1BBD3 set), the text's colour in the glyph's
-; pixels, and the word written - to the second screen, and to the first (unless dat_1BBBC is
+; the cell (unless the text is drawn without one: TextNoBackground set), the text's colour in the glyph's
+; pixels, and the word written - to the second screen, and to the first (unless TextOneScreen is
 ; set: then to ScreenDraw only). About 11,400 cycles a character: the colours reloaded from
 ; memory, the masks turned and swapped for each step.
 ;
@@ -55,7 +55,7 @@ TextRows:
 	moveq	#7,d2
 	tst.b	(dat_5924A).l
 	bne.s	.prop
-	tst.b	(dat_1BBD3).l
+	tst.b	(TextNoBackground).l
 	bmi.s	.clear
 .back:	moveq	#0,d7				; the glyph's rows, with a background: U = M or G,
 	move.b	(a0)+,d7			; V back = M and not G
@@ -89,7 +89,7 @@ TextRows:
 	lsl.l	d1,d7
 	move.l	d7,(a4)+
 	move.l	d4,d5
-	tst.b	(dat_1BBD3).l
+	tst.b	(TextNoBackground).l
 	bmi.s	.pclr
 	or.l	d7,d5
 	move.l	d7,d0
@@ -111,7 +111,7 @@ TextRows:
 	move.l	(dat_5983A).l,d1
 	move.l	(TextBackgroundMasks).l,d2
 	move.l	(dat_59832).l,d3
-	tst.b	(dat_1BBBC).l			; to both screens, or (dat_1BBBC set) to this one only
+	tst.b	(TextOneScreen).l			; to both screens, or (TextOneScreen set) to this one only
 	bmi.s	.one
 	swap	d0				; plane 0
 	swap	d2
@@ -224,7 +224,7 @@ TextRowsRelease:
         move.w  (a1),d0                         ; 5969A
         swap    d0                              ; 5969C
         move.w  $1f40(a1),d0                    ; 5969E
-        tst.b   (dat_1BBD3).l                   ; 596A2
+        tst.b   (TextNoBackground).l                   ; 596A2
         bmi.w   .r596B0                         ; 596A8
         and.l   d4,d0                           ; 596AC
         or.l    d3,d0                           ; 596AE
@@ -237,7 +237,7 @@ TextRowsRelease:
         move.w  d0,$1f40(a1)                    ; 596BE
         swap    d0                              ; 596C2
         move.w  d0,(a1)                         ; 596C4
-        tst.b   (dat_1BBBC).l                   ; 596C6
+        tst.b   (TextOneScreen).l                   ; 596C6
         bmi.w   .r596DA                         ; 596CC
         move.w  d0,-$7d00(a1)                   ; 596D0
         swap    d0                              ; 596D4
@@ -252,7 +252,7 @@ TextRowsRelease:
         move.w  (a1),d0                         ; 596EE
         swap    d0                              ; 596F0
         move.w  $1f40(a1),d0                    ; 596F2
-        tst.b   (dat_1BBD3).l                   ; 596F6
+        tst.b   (TextNoBackground).l                   ; 596F6
         bmi.w   .r59704                         ; 596FC
         and.l   d4,d0                           ; 59700
         or.l    d3,d0                           ; 59702
@@ -265,7 +265,7 @@ TextRowsRelease:
         move.w  d0,$1f40(a1)                    ; 59712
         swap    d0                              ; 59716
         move.w  d0,(a1)                         ; 59718
-        tst.b   (dat_1BBBC).l                   ; 5971A
+        tst.b   (TextOneScreen).l                   ; 5971A
         bmi.w   .r5972E                         ; 59720
         move.w  d0,-$7d00(a1)                   ; 59724
         swap    d0                              ; 59728
@@ -284,7 +284,7 @@ TextRowsRelease:
         move.w  (a1),d0                         ; 5974A
         swap    d0                              ; 5974C
         move.w  $1f40(a1),d0                    ; 5974E
-        tst.b   (dat_1BBD3).l                   ; 59752
+        tst.b   (TextNoBackground).l                   ; 59752
         bmi.w   .r59760                         ; 59758
         and.l   d4,d0                           ; 5975C
         or.l    d3,d0                           ; 5975E
@@ -297,7 +297,7 @@ TextRowsRelease:
         move.w  d0,$1f40(a1)                    ; 5976E
         swap    d0                              ; 59772
         move.w  d0,(a1)                         ; 59774
-        tst.b   (dat_1BBBC).l                   ; 59776
+        tst.b   (TextOneScreen).l                   ; 59776
         bmi.w   .r5978A                         ; 5977C
         move.w  d0,-$7d00(a1)                   ; 59780
         swap    d0                              ; 59784
@@ -312,7 +312,7 @@ TextRowsRelease:
         move.w  (a1),d0                         ; 5979E
         swap    d0                              ; 597A0
         move.w  $1f40(a1),d0                    ; 597A2
-        tst.b   (dat_1BBD3).l                   ; 597A6
+        tst.b   (TextNoBackground).l                   ; 597A6
         bmi.w   .r597B4                         ; 597AC
         and.l   d4,d0                           ; 597B0
         or.l    d3,d0                           ; 597B2
@@ -325,7 +325,7 @@ TextRowsRelease:
         move.w  d0,$1f40(a1)                    ; 597C2
         swap    d0                              ; 597C6
         move.w  d0,(a1)                         ; 597C8
-        tst.b   (dat_1BBBC).l                   ; 597CA
+        tst.b   (TextOneScreen).l                   ; 597CA
         bmi.w   .r597DE                         ; 597D0
         move.w  d0,-$7d00(a1)                   ; 597D4
         swap    d0                              ; 597D8
@@ -348,10 +348,10 @@ TextCheckRows:
 	tst.b	(dat_5924A).l			; how many in each way: $374C the proportional font,
 	beq.s	.c1				; $3750 one screen only, $3754 without a background
 	addq.l	#1,($374C).w
-.c1:	tst.b	(dat_1BBBC).l
+.c1:	tst.b	(TextOneScreen).l
 	bpl.s	.c2
 	addq.l	#1,($3750).w
-.c2:	tst.b	(dat_1BBD3).l
+.c2:	tst.b	(TextNoBackground).l
 	bpl.s	.c3
 	addq.l	#1,($3754).w
 .c3:	lea	TCBefore,a2
@@ -371,7 +371,7 @@ TextCheckRows:
 	lea	TCRelease,a2			; the bytes (one screen's, or both)
 	lea	TCNew,a3
 	move.w	#TC_BYTES-1,d0
-	tst.b	(dat_1BBBC).l
+	tst.b	(TextOneScreen).l
 	bpl.s	.cmp
 	move.w	#TC_BYTES/2-1,d0
 .cmp:	cmpm.b	(a2)+,(a3)+
@@ -397,8 +397,8 @@ TextCheckRows:
 ; TCCopyOut, TCCopyIn - a2: the rows' bytes (from the start's a1) to it, or back from it
 TCCopyOut:
 	movea.l	36+4(a7),a0			; (the start's a1: past the return address)
-	moveq	#1,d3				; both screens - or, text to one screen only (dat_1BBBC
-	tst.b	(dat_1BBBC).l			; set), that one only: the other's place is not the rows'
+	moveq	#1,d3				; both screens - or, text to one screen only (TextOneScreen
+	tst.b	(TextOneScreen).l			; set), that one only: the other's place is not the rows'
 	bpl.s	.scr
 	moveq	#0,d3				; the screen, and the first (- $7D00)
 .scr:	moveq	#3,d2				; the planes
@@ -415,8 +415,8 @@ TCCopyOut:
 	rts
 TCCopyIn:
 	movea.l	36+4(a7),a0
-	moveq	#1,d3				; both screens - or, text to one screen only (dat_1BBBC
-	tst.b	(dat_1BBBC).l			; set), that one only: the other's place is not the rows'
+	moveq	#1,d3				; both screens - or, text to one screen only (TextOneScreen
+	tst.b	(TextOneScreen).l			; set), that one only: the other's place is not the rows'
 	bpl.s	.scr
 	moveq	#0,d3
 .scr:	moveq	#3,d2

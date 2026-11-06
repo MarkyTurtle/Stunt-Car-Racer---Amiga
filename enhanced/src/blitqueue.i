@@ -6,7 +6,7 @@
 ; (colour $D, from that line down) before anything is drawn on them: 8 blits (4 planes, 2 areas),
 ; 8,192 words - about 4.6 ms of the blitter's time, which the CPU spent waiting (HorizonFill: one
 ; blit a plane, the next set up when the last is done). But the fills need only the band's top
-; line, which comes from the car's angles (dat_1BC42, dat_1BB68, the roll in ViewMatrix) - known
+; line, which comes from the car's angles (ViewPitch, dat_1BB68, the roll in ViewMatrix) - known
 ; before the geometry (ProjectNearPiece ... EdgesFarPieces: about a third of the frame, the CPU
 ; only, the screen not touched).
 ;
@@ -58,13 +58,13 @@ HorizonEarly:
 	move.l	(dat_668A0).l,(a6)+		; ScanEdge's variables
 	move.l	(dat_668A0+4).l,(a6)+
 	move.w	(RowOffset).l,(a6)+
-	move.b	(dat_1BB77).l,(a6)+
+	move.b	(ScanEdgeHorizon).l,(a6)+
 	move.l	#HorizonScratch,(EdgeBufferNext).l
 	move.w	#$500,d0			; DrawHorizon's first part (67888-678EE), as it is
 	move.w	d0,(dat_1BFB6).l
 	neg.w	d0
 	move.w	d0,(dat_1BFB4).l
-	move.w	(dat_1BC42).l,d0
+	move.w	(ViewPitch).l,d0
 	asr.w	#$3,d0
 	neg.w	d0
 	tst.b	(dat_1BB68).l
@@ -79,7 +79,7 @@ HorizonEarly:
 	move.w	#$0,(RowOffset).l
 	move.w	#$4,d1
 	move.w	#$6,d2
-	move.b	#$80,(dat_1BB77).l
+	move.b	#$80,(ScanEdgeHorizon).l
 	jsr	(ScanEdge).l
 	move.l	(a1),d0				; DrawHorizon's tests (678FE-6792C): nothing filled unless
 	andi.l	#$ffffff,d0			; the edge is in the view
@@ -102,7 +102,7 @@ HorizonEarly:
 	move.l	(a6)+,(dat_668A0).l
 	move.l	(a6)+,(dat_668A0+4).l
 	move.w	(a6)+,(RowOffset).l
-	move.b	(a6)+,(dat_1BB77).l
+	move.b	(a6)+,(ScanEdgeHorizon).l
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
 

@@ -38,8 +38,8 @@ nothing the physics reads but the text's colours and the random numbers, and kee
 variables of its own from frame to frame (the drop's chains, the cockpit's sway, caches:
 `interp_keep.i`, measured by `enhanced/tools/measure_keep.py`). So a step runs the first half
 only, and a picture between steps sets the variables back to those the step's view began from,
-writes the blended place and angles of the moment (the car's: `dat_1BCD8`, `dat_1BCDC`,
-`dat_1BCE0`, its angles and `ViewMatrix`; the opponent's distance along its piece), runs the
+writes the blended place and angles of the moment (the car's: `CarX`, `CarY`,
+`CarZ`, its angles and `ViewMatrix`; the opponent's distance along its piece), runs the
 whole of `RaceView` with the opponent not moved, and sets the variables back to the step's end.
 With the picture forced to the latest step, the pictures are the release's, frame for frame
 (checked in the emulator); the physics is the same step for step whatever the pictures.
@@ -246,7 +246,7 @@ the 68000 almost instruction for instruction: its data is still laid out as the 
 and the 6502's leftovers are everywhere in the code:
 
 * variables are bytes in memory, each reached with a 32-bit absolute address (`move.b
-  (dat_1BB0E).l,d0`: 16 cycles where a register would take 4, or `(d16,An)` 12);
+  (PlayerPosAhead).l,d0`: 16 cycles where a register would take 4, or `(d16,An)` 12);
 * values are moved through memory between routines instead of registers (the 6502 had 3);
 * instructions that do nothing are kept from the 6502's carry handling (`move.b d2,d2` then
   `addi.b #$0,d2`: a `CLC`, `ADC #0`);

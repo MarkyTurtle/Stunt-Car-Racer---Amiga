@@ -32,7 +32,7 @@
 ; (InterpPost). A picture: the variables set back to InterpPre, the blended place and angles
 ; written over them, the whole of RaceView run (the opponent not moved: InterpMoveOpponent),
 ; and the variables set back to InterpPost - so the physics goes on from exactly where the step
-; left it. The variables: the block from dat_1BAF8 to dat_1C280 (1,928 bytes: all the cars-placing
+; left it. The variables: the block from dat_1BAF8 to TrackGrid (1,928 bytes: all the cars-placing
 ; half writes, with three others), less those the interrupts change meanwhile (the wheels'
 ; animation, the engine's revs) and the screens' parity (FrameFlip changes it with each picture).
 ;
@@ -44,12 +44,12 @@
 ; Any further picture before the next step is drawn from them and leaves nothing changed (all set
 ; back: InterpPost2) - so the game goes the same way however many pictures a machine draws.
 ;
-; The blending: the car's place (dat_1BCD8, dat_1BCDC, dat_1BCE0: across, height, along: longs)
-; and angles (dat_1BCE4, dat_1BCE6, dat_1BCE8: words, the shorter way round), the camera's bob
-; (dat_1BD38) and the horizon's pitch (dat_1BC42), the view's rotation (ViewMatrix, each of its
+; The blending: the car's place (CarX, CarY, CarZ: across, height, along: longs)
+; and angles (CarPitch, CarHeading, CarRoll: words, the shorter way round), the camera's bob
+; (dat_1BD38) and the horizon's pitch (ViewPitch), the view's rotation (ViewMatrix, each of its
 ; words - built by CarPhysics from the step before's angles, as in the release), the opponent's
 ; distance along its piece (OpponentPiecePos, onto the next piece when it has crossed: the piece's
-; length kept from the step, InterpMoveOpponent) and its steering (dat_1BB1A).
+; length kept from the step, InterpMoveOpponent) and its steering (WorkByte5).
 ;-------------------------------------------------------------------------------
 
 HelperInterpOff	equ	$174			; F8: non-zero - the release's timing (helper_c0.s)
@@ -73,24 +73,24 @@ InterpOppLen:	dc.b	0			; the length of the piece the opponent was on before its 
 
 ; a step's state to blend (taken as its view starts: InterpViewStart; the opponent's after its
 ; move: InterpMoveOpponent): offsets
-IS_X		equ	0			; dat_1BCD8.l
-IS_Y		equ	4			; dat_1BCDC.l
-IS_Z		equ	8			; dat_1BCE0.l
-IS_A1		equ	12			; dat_1BCE4.w
-IS_A2		equ	14			; dat_1BCE6.w
-IS_A3		equ	16			; dat_1BCE8.w
+IS_X		equ	0			; CarX.l
+IS_Y		equ	4			; CarY.l
+IS_Z		equ	8			; CarZ.l
+IS_A1		equ	12			; CarPitch.w
+IS_A2		equ	14			; CarHeading.w
+IS_A3		equ	16			; CarRoll.w
 IS_BOB		equ	18			; dat_1BD38.w
-IS_PITCH	equ	20			; dat_1BC42.w
+IS_PITCH	equ	20			; ViewPitch.w
 IS_OPOS		equ	22			; OpponentPiecePos.w
 IS_OPIECE	equ	24			; OpponentPiece.b
-IS_OSTEER	equ	25			; dat_1BB1A.b
+IS_OSTEER	equ	25			; WorkByte5.b
 IS_OLEN		equ	26			; InterpOppLen.b
 IS_MATRIX	equ	28			; ViewMatrix: 36 words
 IS_SIZE		equ	IS_MATRIX+72
 InterpPrev:	dcb.b	IS_SIZE,0
 InterpCur:	dcb.b	IS_SIZE,0
 
-IB_SIZE		equ	dat_1C280-dat_1BAF8	; the variables' block
+IB_SIZE		equ	TrackGrid-dat_1BAF8	; the variables' block
 	ifne	IB_SIZE&3
 	fail	"interp.i: the variables' block is not a number of longs"
 	endc
@@ -118,7 +118,7 @@ FrameEnd:
 	bne.w	InterpFrameEnd
 	; starting: this step's view was drawn as before - shown, and the clock started
 	jsr	(FrameLimiter).l
-	move.b	(dat_1BBC8).l,StepParity
+	move.b	(FrameParity).l,StepParity
 	movem.l	d0-d1/a0-a1,-(a7)
 	lea	InterpCur(pc),a1
 	bsr.w	InterpTake
@@ -136,7 +136,7 @@ FrameEnd:
 .release:
 	sf	InterpActive
 	jsr	(FrameLimiter).l
-	move.b	(dat_1BBC8).l,StepParity
+	move.b	(FrameParity).l,StepParity
 	rts
 
 ;-------------------------------------------------------------------------------
@@ -337,14 +337,14 @@ InterpMoveOpponent:
 	tst.b	InterpRendering
 	bne.s	.rts
 	jsr	(MoveOpponent).l
-	move.b	(dat_1BB6A).l,InterpOppLen	; (MoveOpponent loaded its piece: its length)
+	move.b	(PieceSections).l,InterpOppLen	; (MoveOpponent loaded its piece: its length)
 	tst.b	InterpSkipDraw
 	beq.s	.rts
 	move.l	a1,-(a7)			; a step's: the opponent where it has moved to
 	lea	InterpCur(pc),a1
 	move.w	(OpponentPiecePos).l,IS_OPOS(a1)
 	move.b	(OpponentPiece).l,IS_OPIECE(a1)
-	move.b	(dat_1BB1A).l,IS_OSTEER(a1)
+	move.b	(WorkByte5).l,IS_OSTEER(a1)
 	move.b	InterpOppLen(pc),IS_OLEN(a1)
 	movea.l	(a7)+,a1
 .rts:	rts
@@ -384,10 +384,10 @@ InterpBlockIn:
 	dbra	d1,.k2
 	bra.s	.k1
 .nokeep:
-	move.b	(dat_1BBE3).l,d1		; the wheels' animation (VBlankTick: UpdateWheelSprites)
-	move.b	(dat_1BBDB).l,d2
-	move.w	(dat_1BC34).l,d3		; the engine's revs (VBlankTick)
-	move.b	(dat_1BBC8).l,d4		; the screens' parity (FrameFlip)
+	move.b	(WheelTurn).l,d1		; the wheels' animation (VBlankTick: UpdateWheelSprites)
+	move.b	(WheelFrame).l,d2
+	move.w	(EngineRevs).l,d3		; the engine's revs (VBlankTick)
+	move.b	(FrameParity).l,d4		; the screens' parity (FrameFlip)
 	swap	d4
 	move.b	(dat_1BCC8).l,d4
 	lea	(dat_1BAF8).l,a1
@@ -397,12 +397,12 @@ InterpBlockIn:
 	move.w	(a0)+,(dat_5A54E).l
 	move.w	(a0)+,(dat_63EDE).l
 	move.l	(a0)+,(dat_65EC0).l
-	move.b	d1,(dat_1BBE3).l
-	move.b	d2,(dat_1BBDB).l
-	move.w	d3,(dat_1BC34).l
+	move.b	d1,(WheelTurn).l
+	move.b	d2,(WheelFrame).l
+	move.w	d3,(EngineRevs).l
 	move.b	d4,(dat_1BCC8).l
 	swap	d4
-	move.b	d4,(dat_1BBC8).l
+	move.b	d4,(FrameParity).l
 	tst.b	d6
 	beq.s	.done
 	lea	InterpKeepBuf,a2		; and put back
@@ -423,17 +423,17 @@ InterpBlockIn:
 ; InterpTake - a1: the step's state to blend, from the variables. d0, a0-a1 used
 ;-------------------------------------------------------------------------------
 InterpTake:
-	move.l	(dat_1BCD8).l,IS_X(a1)
-	move.l	(dat_1BCDC).l,IS_Y(a1)
-	move.l	(dat_1BCE0).l,IS_Z(a1)
-	move.w	(dat_1BCE4).l,IS_A1(a1)
-	move.w	(dat_1BCE6).l,IS_A2(a1)
-	move.w	(dat_1BCE8).l,IS_A3(a1)
+	move.l	(CarX).l,IS_X(a1)
+	move.l	(CarY).l,IS_Y(a1)
+	move.l	(CarZ).l,IS_Z(a1)
+	move.w	(CarPitch).l,IS_A1(a1)
+	move.w	(CarHeading).l,IS_A2(a1)
+	move.w	(CarRoll).l,IS_A3(a1)
 	move.w	(dat_1BD38).l,IS_BOB(a1)
-	move.w	(dat_1BC42).l,IS_PITCH(a1)
+	move.w	(ViewPitch).l,IS_PITCH(a1)
 	move.w	(OpponentPiecePos).l,IS_OPOS(a1)
 	move.b	(OpponentPiece).l,IS_OPIECE(a1)
-	move.b	(dat_1BB1A).l,IS_OSTEER(a1)
+	move.b	(WorkByte5).l,IS_OSTEER(a1)
 	move.b	InterpOppLen(pc),IS_OLEN(a1)
 	lea	(ViewMatrix).l,a0
 	lea	IS_MATRIX(a1),a1
@@ -453,28 +453,28 @@ InterpBlend:
 	move.l	IS_X(a0),d0
 	move.l	IS_X(a1),d1
 	bsr.w	InterpLong
-	move.l	d0,(dat_1BCD8).l
+	move.l	d0,(CarX).l
 	move.l	IS_Y(a0),d0
 	move.l	IS_Y(a1),d1
 	bsr.w	InterpLong
-	move.l	d0,(dat_1BCDC).l
+	move.l	d0,(CarY).l
 	move.l	IS_Z(a0),d0
 	move.l	IS_Z(a1),d1
 	bsr.w	InterpLong
-	move.l	d0,(dat_1BCE0).l
+	move.l	d0,(CarZ).l
 	; the angles: the shorter way round
 	move.w	IS_A1(a0),d0
 	move.w	IS_A1(a1),d1
 	bsr.w	InterpAngle
-	move.w	d0,(dat_1BCE4).l
+	move.w	d0,(CarPitch).l
 	move.w	IS_A2(a0),d0
 	move.w	IS_A2(a1),d1
 	bsr.w	InterpAngle
-	move.w	d0,(dat_1BCE6).l
+	move.w	d0,(CarHeading).l
 	move.w	IS_A3(a0),d0
 	move.w	IS_A3(a1),d1
 	bsr.w	InterpAngle
-	move.w	d0,(dat_1BCE8).l
+	move.w	d0,(CarRoll).l
 	move.w	IS_BOB(a0),d0
 	move.w	IS_BOB(a1),d1
 	bsr.w	InterpWord
@@ -482,7 +482,7 @@ InterpBlend:
 	move.w	IS_PITCH(a0),d0
 	move.w	IS_PITCH(a1),d1
 	bsr.w	InterpWord
-	move.w	d0,(dat_1BC42).l
+	move.w	d0,(ViewPitch).l
 	; the view's rotation, word by word
 	lea	IS_MATRIX(a0),a2
 	movem.l	a0-a1,-(a7)
@@ -501,7 +501,7 @@ InterpBlend:
 	move.b	IS_OSTEER(a1),d1
 	ext.w	d1
 	bsr.w	InterpWord
-	move.b	d0,(dat_1BB1A).l
+	move.b	d0,(WorkByte5).l
 	; the opponent's place: along its piece, or onto the next
 	moveq	#0,d0
 	move.w	IS_OPOS(a0),d0			; before

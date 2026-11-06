@@ -30,9 +30,10 @@ they are shown: about 89K of chip memory is free now.
   any text). Both sources now have the numbers; `tools/reloc_test.py` now compares the screens
   too (it caught this one: 60 bytes), not only the routines' calls. Others like it may remain
   where a value is used only as data.
-* Annotate the rest of the game's source: 196 routines and most of the race's variables are not
-  named yet (`original/docs/CODE.md`): the physics, the opponent, the rows' sides and lines, the
-  track format.
+* ~~Annotate the rest of the game's source~~: the routines done (November 2026: all named, with
+  headers, many "probably"), and 163 of the race's variables. Still to do: the rest of the race's
+  variables (about 330 labels, mostly table parts and one-routine variables), the track format
+  (`docs/DATA.md`), and the "probably"s worked through - the physics and the opponent first.
 * ~~Make the source safe to change~~: done - every address in it is a label, checked by
   `tools/reloc_test.py` (in the workflow). The game cannot grow, though: its screens follow the
   code and the work areas (`$7A01A`) follow the screens 263 bytes later. New code replaces old code
@@ -187,7 +188,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `dat_667E0`; the line's end tested from the line count (`subq`/`bgt`) instead of comparing a6
   with `ScreenDrawTop`; the same in `FillPolygon` (the mountains, the cars), whose whole words are
   now written as `FillBetweenEdges`' (two a plane at once, unrolled). The race's work 1.3% less,
-  the screens the same frame for frame. Still to do: its variables in registers (`dat_1BC5A`,
+  the screens the same frame for frame. Still to do: its variables in registers (`FillLines`,
   `dat_69ACE` and the edge list's bounds read from memory each line: no register is free in the
   loop as it is).
 * ~~`PlotPixel` / `DrawEdgeLine`~~: done - `DrawEdgeLine` notes each screen line's run of pixels
@@ -264,7 +265,7 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   (`RACE_SEED`) and presses the track's keys a set time after it; the slow-text and fast-text builds
   then run the same race (the geometry within 0.01 ms; the cockpit 0.53 ms and the instruments 0.33 ms
   less: the text). Left as it is: the race still depends on the race's own speed - the engine's revs
-  (`dat_1BC34`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
+  (`EngineRevs`) move each vertical blank, and whether `UpdateEngineRevs` calls `Random` depends on
   them, so a frame taking 7 vertical blanks instead of 6 moves the opponent a little (the game's own
   behaviour). The baselines regenerated: the released game (the telemetry build of 21b21ba with the
   release's helper, `original/bin/lowmem_c0.bin`) 6.61 vertical blanks of work, 7.55 frames a second.

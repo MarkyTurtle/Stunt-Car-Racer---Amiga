@@ -82,7 +82,21 @@ view's pipeline ([RENDER.md](RENDER.md): `RaceView`, `ProjectNearPiece`, `Projec
 `Edges...` routines, `ScanEdge`, `DrawFarRows`, `DrawNearRows`, `FillRowSurface`,
 `FillBetweenEdges`, `DrawEdgeLine`, `DrawOpponentCar`, the row table and the edge buffers). Named by
 what they work on, not yet understood in detail (their descriptions say "probably"): the car's
-physics, the opponent's driving, the track's format, the opponent's car's model. Not named yet:
-196 routines - the rows' sides and lines (`DrawRowMidLine`-`FillRowsRightSide`, `FillFarRowLeftSide`,
-`FillFarRowRightSide`), the physics (`$61950-$62424`), the opponent (`$636C0-$63EE2`) - and most of the
-race's variables (`$1BAF8-$1CA35`).
+physics, the opponent's driving, the track's format, the opponent's car's model.
+
+Since November 2026 every routine has a name and a header (528; none is `sub_` now). The last 196
+were named from what they do and what calls them, many of them "probably": the race's input,
+clock, lamps (L the lead, B probably the best lap), messages and damage (`CarKnocks`,
+`GrowCrack`, `DrawDamageMark`); the physics (`VelocityToCarAxes`, `DriveForce`, `WheelForces`,
+`SuspensionForces`, `AddForce`, `AddTorque`, `MoveCar`, the drop: `UpdateDrop`); the opponent
+(`OpponentDrive`, its pace, `OpponentCollide`, `OpponentPhysics`); the sparks; the track's grid
+(`TrackGrid`, `BuildTrackGrid`), the pieces' sections and the rows' sides and lines
+(`DrawRowsLeftLines`, `FillRowsLeftSide`, `FillFarRowLeftSide`, ...); the save disk's scrambling
+(`ScrambleLeague`), the menus and the season's end (`SeasonEnd`). `CarPhysicsPieces` is named from
+where it is called only. Of the race's variables (`$1BAF8-$1CA35`), 163 are named - the car's
+place, angles, velocity, forces and turning in the world's and the car's axes, the springs, the
+knocks, the messages, the text cursor, the league's tables - and six shared work bytes
+(`WorkByte1-6`); about 330 labels there are still `dat_`: mostly parts of tables (the car model's
+corners, the horizon's and the cars' edge buffers, the pieces' data) and variables used by one
+routine whose role is not yet clear. `sub_`/`dat_` names are renamed across both sources, the docs
+and the tools at once (whole words), so the binaries stay the same.

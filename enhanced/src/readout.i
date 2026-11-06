@@ -3,7 +3,7 @@
 ; characters that changed printed again.
 ;
 ; Every 4th step PrintOpponentDistance prints the distance: a sign (space or '-') and 4 digits, at the
-; text cursor (6, $17) a pixel further right each (dat_1BB6D 2-6) and 4 lines down (dat_1BB6E):
+; text cursor (6, $17) a pixel further right each (TextPixelX 2-6) and 4 lines down (TextLineOffset):
 ; the cells at x 44-83, lines 188-195, in both screens. PrintCharNow draws a character a row at a
 ; time into both screens - about 11,400 cycles each, 57,000 on those steps (2% of the race's
 ; work on average, and a hitch every 4th step). Most of the time only the last digit or two have
@@ -13,9 +13,9 @@
 ; not drawn - the cursor and PrintCharNow's own work bytes (dat_59840, dat_59841) are moved on as
 ; printing it would have, so the game's state is the same - while the cells still hold it
 ; (ReadoutValid). They do unless something else has drawn there or the way of drawing changed:
-; * ReadoutStart compares the text's colours, its background's, dat_1BBD3 (a background or
+; * ReadoutStart compares the text's colours, its background's, TextNoBackground (a background or
 ;   not), dat_5D724 and ScreenFront with those of the last print: any change, all 5 printed;
-; * text printed to one screen only (dat_1BBBC set) or to the other buffer (dat_5924A): not kept;
+; * text printed to one screen only (TextOneScreen set) or to the other buffer (dat_5924A): not kept;
 ; * UnpackCockpit (the race's start: ReadoutUnpackCockpit), any other text whose rows meet
 ;   lines 188-195 (PrintCharNow, any column) and any cut-out whose rectangle meets the cells
 ;   (DrawCutoutBlit, DrawCutout's CPU path): ReadoutValid cleared.
@@ -30,7 +30,7 @@ READOUT_Y0	equ	188
 READOUT_Y1	equ	195
 
 ReadoutSlot:	dc.l	0			; the next character's place in ReadoutChars
-ReadoutContext:	dcb.b	16+2+4,0		; the text's colours (16 bytes), dat_1BBD3, dat_5D724, ScreenFront
+ReadoutContext:	dcb.b	16+2+4,0		; the text's colours (16 bytes), TextNoBackground, dat_5D724, ScreenFront
 ReadoutChars:	dcb.b	5,0			; the characters last printed (sign, 4 digits)
 ReadoutValid:	dc.b	0			; non-zero: the cells hold ReadoutChars
 ReadoutOk:	dc.b	0			; this print: the same characters may be left as they are
@@ -56,7 +56,7 @@ ReadoutStart:
 	or.b	d3,d1
 	move.l	d0,(a1)+
 	dbra	d2,.mask
-	move.b	(dat_1BBD3).l,d0
+	move.b	(TextNoBackground).l,d0
 	cmp.b	(a1),d0
 	sne	d3
 	or.b	d3,d1
@@ -72,7 +72,7 @@ ReadoutStart:
 	or.b	d3,d1
 	move.l	d0,(a1)
 	sf	ReadoutKeep
-	tst.b	(dat_1BBBC).l			; one screen only, or not the screen: not kept
+	tst.b	(TextOneScreen).l			; one screen only, or not the screen: not kept
 	bmi.s	.done
 	tst.b	(dat_5924A).l
 	bne.s	.done
@@ -97,7 +97,7 @@ ReadoutEnd:
 ; on return (as PrintDigitNext); the rest kept
 ;-------------------------------------------------------------------------------
 ReadoutDigit:
-	addq.b	#1,(dat_1BB6D).l		; PrintDigitNext
+	addq.b	#1,(TextPixelX).l		; PrintDigitNext
 	addi.b	#$30,d0				; PrintDigit
 	move.l	a0,-(a7)
 	movea.l	ReadoutSlot(pc),a0
@@ -121,7 +121,7 @@ ReadoutSkip:
 	asl.w	#3,d3
 	sub.w	d4,d3				; the column x 7 (dat_5924A clear: kept only then)
 	moveq	#0,d4
-	move.b	(dat_1BB6D).l,d4
+	move.b	(TextPixelX).l,d4
 	add.w	d4,d3
 	move.w	d3,d4
 	lsr.w	#4,d4
