@@ -136,7 +136,7 @@ A shape's data:
 | n + 1 | bit 0: across measured the other way (`AcrossOtherWay`) |
 | n + 2 | `ShapeAcrossScale`: the scale (x 128) `TrackUnderWheels` puts the car's points' offsets across by |
 | n + 3 | `ShapeAlongScale`: the same for the offsets along, and for the opponent's speed (`MoveOpponent`) |
-| n + 6 | `ShapeByte6` (read only in `CarPhysicsPieces`, which is not studied) |
+| n + 6 | `ShapeSteer`: the steering's strength on the piece, and on a bend the car's own turn round it (`CarPhysicsPieces`) |
 | n + 7 on | the points: (x, z), two words each, the low byte first; side A then side B at each end |
 
 ## What `BuildTrack` works out

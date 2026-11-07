@@ -106,10 +106,19 @@ and where the purpose is not certain the description gives the mechanics only. W
   and width as vectors, `CarAlongX`..., the parts' points `CarSideX0`...), the horizon
   (`HorizonLine`), the drawing routines confirmed by knock-outs.
 
-Left as they are: `CarPhysicsPieces` (it holds the game's integrity check, so it is not studied:
-the variables only it uses say so), and a few variables nothing reads or nothing writes by name
-(their descriptions say so). `RaceViewUnused` was misnamed: only its first 4 instructions are
-unreachable (now `RaceViewNoTrack`), the rest is `RaceView`'s.
+The steering (`CarPhysicsPieces`): the heading's error against the track (`TrackHeading` less
+`CarHeading`) sets how the car turns. Steering's strength is the piece's (`ShapeSteer`), helped
+when steering back towards the track's line (`SteerBackHelp`); a bend steers the car round itself
+and cannot be steered out of (`BendWay`); with no steering on a straight the heading is pulled
+back to the track's line, and more than 42 degrees off it is put back at once. The game's
+integrity check is in it: the turning force is 0 unless `CopylockResult` holds `$9CEDCD02`, the
+value the Copylock leaves when passed - a copy that skips the Copylock races but cannot steer. In
+this release the start-up puts that value there itself (`l_5C960`). The Copylock itself
+(`CopylockRoutine`) is not studied.
+
+A few variables nothing reads or nothing writes by name remain (their descriptions say so).
+`RaceViewUnused` was misnamed: only its first 4 instructions are unreachable (now
+`RaceViewNoTrack`), the rest is `RaceView`'s.
 
 `sub_`/`dat_` names are renamed across both sources, the docs
 and the tools at once (whole words), so the binaries stay the same.

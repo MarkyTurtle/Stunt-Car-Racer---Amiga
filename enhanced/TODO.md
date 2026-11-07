@@ -32,9 +32,7 @@ they are shown: about 89K of chip memory is free now.
   where a value is used only as data.
 * ~~Annotate the rest of the game's source~~: done (November 2026) - every routine and every race
   variable named and described, none of it a guess ("probably"); checked against the code,
-  recordings and knock-outs (`original/docs/CODE.md`). Left: `CarPhysicsPieces` (not studied: it
-  holds the integrity check) and the shapes' geometry in the 6502 data beyond what
-  `original/docs/TRACKS.md` reads.
+  recordings and knock-outs (`original/docs/CODE.md`). Left: the shapes' geometry in the 6502 data beyond what `original/docs/TRACKS.md` reads.
 * **The benchmark's car does not drive**: its race holds fire only, and fire is the boost - up is
   the accelerator (`RaceInput`) - so the player's car stays on the start (the opponent drives, the
   view and the drawing are what is measured). A race with up held (and some steering) would

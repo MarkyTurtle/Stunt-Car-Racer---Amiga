@@ -1073,7 +1073,7 @@ LinkRaceState:				; GameLoop: $C0 in a link race (with RaceResult), bit 7 cleare
 	dc.b	$00
 ViewUnused:				; cleared by StartView, read nowhere
 	dc.b	$00
-SteeringKept:				; (CarPhysicsPieces - not studied: it holds the game's integrity check) SteeringInput kept from step to step
+BendWay:				; the bend's way as the car drives it: AcrossOtherWay eor PieceReversed, bit 7 (CarPhysicsPieces): on a bend with no steering, or steering against it, SteeringInput is set to it
 	dc.b	$00
 ListLineRow:				; the text row of the list's line (TextAtListLine)
 	dc.b	$00
@@ -1296,7 +1296,7 @@ FillingSurface:				; $80 while FillRowSurface fills a row; read nowhere by name
 	dc.b	$00
 TextNoBackground:				; negative: text printed without its background (PrintCharNow)
 	dc.b	$00
-ShapeByte6:				; byte n + 6 of the piece's shape data (LoadPiece; CarPhysicsPieces - not studied)
+ShapeSteer:				; byte n + 6 of the piece's shape data (LoadPiece): the steering's strength on the piece, and on a bend the car's own turn round it with no steering (CarPhysicsPieces: + $2D steering with the bend, - $23 against it)
 	dc.b	$00
 GridOffsetX:				; x of a grid square's offset from the player's (GridSquarePiece; also EditText's)
 	dc.b	$00
@@ -1361,7 +1361,7 @@ EngineRevRate:				; the engine revs' change each vertical blank (VBlankTick adds
 	dc.b	$00
 EngineRevHold:				; UpdateEngineRevs: 0, or $E0 counted while the car is in the air with the revs falling
 	dc.b	$00
-WorkPointX:				; a point's x (ProjectCarPoint, ProjectStoredPoint, StorePiecePoint); BuildTrack's and UpdateDrawBridge's work word
+WorkPointX:				; a point's x (ProjectCarPoint, ProjectStoredPoint, StorePiecePoint); BuildTrack's and UpdateDrawBridge's work word; CarPhysicsPieces: the heading error (its high byte's sign the way back to the track's line)
 	dc.b	$00
 WorkFlags:				; a work byte: RandomRaceResult's result (bit 7, bit 6), BuildTrack's
 	dc.b	$00
@@ -1439,7 +1439,7 @@ ViewSectionWord:				; ViewSections as a word (SetPlayerPiecePos); PieceModelSect
 ViewSectionWordKept:				; ViewSectionWord kept from the last frame on the track (RaceView)
 	dc.b	$00
 	dc.b	$00
-WorkAccum:				; BuildTrack: the distance so far in sections (PieceDistances x 32); UpdateDrawBridge: the bridge's height, its speed (WorkPointX) added each step
+WorkAccum:				; BuildTrack: the distance so far in sections (PieceDistances x 32); UpdateDrawBridge: the bridge's height, its speed (WorkPointX) added each step; CarPhysicsPieces: the heading error's size
 	dc.b	$00
 WorkAccumLow:				; WorkAccum's low byte (UpdateDrawBridge writes it into the bridge's profiles)
 	dc.b	$00
@@ -1467,7 +1467,7 @@ OpponentDistanceLow:				; OpponentDistance's low byte (OpponentDrive, OpponentCo
 KnockForce:				; the knock's force (WheelsOnTrack; CarKnocks: a hard one from $1400)
 	dc.b	$00
 	dc.b	$00
-PhysicsPiecesWord:				; (CarPhysicsPieces - not studied: it holds the game's integrity check) a word it keeps
+SteerBackHelp:				; CarPhysicsPieces: the heading error's size x 16 (at most $7FFF from $800 on): its high byte (the size / 16) is added to the steering's amount when steering back towards the track's line
 	dc.b	$00
 	dc.b	$00
 OpponentGap:				; the opponent's distance ahead of the player along the track (negative: behind), by the pieces' distances and the places on them (UpdateOpponentDistance; OpponentLead)
@@ -1742,7 +1742,7 @@ ForceZ:				; the forces on the car, z
 TurnForcePitch:				; the turning force on the pitch (TurnForces: the springs' SpringPitch, damped, and a quarter of the forward force with the wheels down - accelerating lifts the nose)
 	dc.b	$00
 	dc.b	$00
-TurnForceHeading:				; the turning force on the heading: the steering (CarPhysicsPieces; AddTorque)
+TurnForceHeading:				; the turning force on the heading (CarPhysicsPieces: the steering's turn less TurnSpeedHeading; 0 in the air or when the integrity check fails; AddTorque)
 	dc.b	$00
 	dc.b	$00
 TurnForceRoll:				; the turning force on the roll (TurnForces: the springs' SpringRoll, damped)
@@ -9566,7 +9566,7 @@ l_5C8DA:
 	dcb.b	104,$00
 	dc.b	$FF,$FF,$FF,$FF
 l_5C960:
-        move.l  #$9cedcd02,d0                   ; 5C960
+        move.l  #$9cedcd02,d0                   ; 5C960  the release: the Copylock's result without it
         move.l  d0,(V_Trace).w                  ; 5C966
         bra.w   l_5CEAA                         ; 5C96A
 
@@ -9688,7 +9688,7 @@ GameLoop:
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 	dc.b	$00,$00,$00,$00,$00,$00,$00,$00
 l_5CEFA:
-        move.l  d0,(dat_64AEC).l                ; 5CEFA
+        move.l  d0,(CopylockResult).l                ; 5CEFA
         move.l  (mem_7A21A).l,d0                ; 5CF00
         add.l   (mem_7A416).l,d0                ; 5CF06
         move.l  (dat_5CF2C).l,d3                ; 5CF0C
@@ -12920,7 +12920,7 @@ LoadPiece:
         addq.b  #$1,d2                          ; 5FF7C
         move.b  (a0,d2.w),(ShapeAlongScale).l         ; 5FF7E
         addq.b  #$3,d2                          ; 5FF86
-        move.b  (a0,d2.w),(ShapeByte6).l         ; 5FF88
+        move.b  (a0,d2.w),(ShapeSteer).l         ; 5FF88
         addq.b  #$1,d2                          ; 5FF90
         rts                                     ; 5FF92
 
@@ -14129,9 +14129,24 @@ l_6100A:
         rts                                     ; 61010
 
 ;-------------------------------------------------------------------------------
-; CarPhysicsPieces - CarPhysics: the pieces the car is on kept up to date as it moves (LoadPiece,
-; NextPiece), the steering's turning force (TurnForceHeading) - not studied: it holds the game's
-; integrity check
+; CarPhysicsPieces - CarPhysics: the steering - the turning force on the car's heading
+; (TurnForceHeading) - from the controls and the piece the car is on, and the game's integrity
+; check. The player's piece loaded (LoadPiece; the next one too when fewer than 2 of its sections
+; are left: NextPiece). The heading error: TrackHeading less CarHeading (turned half round on a
+; reversed piece), less $D9 or plus $D9 on a bend (BendHeadingOffsets, by the bend's way); its
+; size in WorkAccum, it in WorkPointX, its size / 16 in SteerBackHelp. Steering held: the amount
+; is ShapeSteer, plus SteerBackHelp when steering back towards the track's line; on a bend + $2D
+; steering with the bend, and steering against it is turned round to the bend's way at ShapeSteer
+; - $23 - so a bend can't be steered out of. No steering: on a bend the car steers itself round it
+; (BendWay, ShapeSteer); on a straight the heading is pulled straight towards the track's line, by
+; (|SpeedForward| + $A00) x the error (at most $FF) / 32768, at least 1 a step. On any piece, more
+; than $1E00 (42 degrees) off the line, the heading is put back to $1E00 off at once and the
+; steering turned to the way back. The steering's turn is SpeedForward x the amount / 2048;
+; TurnForceHeading = it less TurnSpeedHeading (the turn rate driven towards it). The integrity
+; check: TurnForceHeading is 0 unless CopylockResult holds $9CEDCD02 (the value made as $667B379F
+; + $36729563, the address as a sum) - and, as for any car in the air, unless WheelsDown. Failing
+; it, the car never turns: steering does nothing (tested in scremu: left held for 60 frames turned
+; the heading from $C000 to $BCB7, and with CopylockResult cleared not at all)
 ;-------------------------------------------------------------------------------
 CarPhysicsPieces:
         move.b  (PlayerPiece).l,d1              ; 61012
@@ -14150,7 +14165,7 @@ CarPhysicsPieces:
         bpl.w   l_61056                         ; 61050
         addq.b  #$2,d2                          ; 61054
 l_61056:
-        movea.l #dat_6125A,a0                   ; 61056
+        movea.l #BendHeadingOffsets,a0                   ; 61056
         add.w   (a0,d2.w),d4                    ; 6105C
         move.w  d4,d0                           ; 61060
         bpl.w   l_61068                         ; 61062
@@ -14165,7 +14180,7 @@ l_61068:
 l_61084:
         asl.w   #$4,d0                          ; 61084
 l_61086:
-        move.w  d0,(PhysicsPiecesWord).l                ; 61086
+        move.w  d0,(SteerBackHelp).l                ; 61086
         move.b  (PieceSections).l,d0                ; 6108C
         sub.b   (PlayerPiecePos).l,d0           ; 61092
         cmpi.b  #$2,d0                          ; 61098
@@ -14176,7 +14191,7 @@ l_610AC:
         move.b  (AcrossOtherWay).l,d0                ; 610AC
         move.b  (PieceReversed).l,d3                ; 610B2
         eor.b   d3,d0                           ; 610B8
-        move.b  d0,(SteeringKept).l                ; 610BA
+        move.b  d0,(BendWay).l                ; 610BA
         move.b  (SteeringInput).l,d0                ; 610C0
         beq.w   l_6113C                         ; 610C6
         move.b  (WorkPointX).l,d3                ; 610CA
@@ -14185,32 +14200,32 @@ l_610AC:
         move.b  (PieceDirection).l,d0                ; 610D8
         bpl.w   l_61120                         ; 610DE
         move.b  (SteeringInput).l,d0                ; 610E2
-        move.b  (SteeringKept).l,d3                ; 610E8
+        move.b  (BendWay).l,d3                ; 610E8
         eor.b   d3,d0                           ; 610EE
         bmi.w   l_61104                         ; 610F0
-        move.b  (ShapeByte6).l,d0                ; 610F4
+        move.b  (ShapeSteer).l,d0                ; 610F4
         addi.b  #$2d,d0                         ; 610FA
         jmp     (l_61126).l                     ; 610FE
 l_61104:
-        move.b  (SteeringKept).l,d0                ; 61104
+        move.b  (BendWay).l,d0                ; 61104
         move.b  d0,(SteeringInput).l                ; 6110A
-        move.b  (ShapeByte6).l,d0                ; 61110
+        move.b  (ShapeSteer).l,d0                ; 61110
         subi.b  #$23,d0                         ; 61116
         jmp     (l_61136).l                     ; 6111A
 l_61120:
-        move.b  (ShapeByte6).l,d0                ; 61120
+        move.b  (ShapeSteer).l,d0                ; 61120
 l_61126:
         tst.b   (WorkByte6).l                   ; 61126
         bmi.w   l_61136                         ; 6112C
-        add.b   (PhysicsPiecesWord).l,d0                ; 61130
+        add.b   (SteerBackHelp).l,d0                ; 61130
 l_61136:
         jmp     (l_6121C).l                     ; 61136
 l_6113C:
         move.w  #$0,d4                          ; 6113C
         move.b  (PieceDirection).l,d0                ; 61140
         bpl.w   l_61160                         ; 61146
-        move.b  (SteeringKept).l,(SteeringInput).l     ; 6114A
-        move.b  (ShapeByte6).l,d0                ; 61154
+        move.b  (BendWay).l,(SteeringInput).l     ; 6114A
+        move.b  (ShapeSteer).l,d0                ; 61154
         jmp     (l_6121C).l                     ; 6115A
 l_61160:
         move.b  (WorkPointX).l,(SteeringInput).l     ; 61160
@@ -14253,16 +14268,16 @@ l_611D4:
         andi.l  #$f,d2                          ; 611DE
         lsr.w   d2,d0                           ; 611E4
         sub.w   d0,d4                           ; 611E6
-        movea.l #dat_64AEC+dat_14874,a0         ; 611E8  (= $79360: written as a sum so that it moves with the code)
+        movea.l #CopylockResult+dat_14874,a0         ; 611E8  (= $79360: written as a sum so that it moves with the code)
         suba.l  #dat_14874,a0                   ; 611EE
-        move.l  #$667b379f,d3                   ; 611F4
-        addi.l  #$36729563,d3                   ; 611FA
-        cmp.l   (a0),d3                         ; 61200
+        move.l  #$667b379f,d3                   ; 611F4  the integrity check: $9CEDCD02,
+        addi.l  #$36729563,d3                   ; 611FA  made as a sum
+        cmp.l   (a0),d3                         ; 61200  CopylockResult as the Copylock leaves it?
         bne.w   l_61210                         ; 61202
         tst.b   (WheelsDown).l                   ; 61206
         bne.w   l_61214                         ; 6120C
 l_61210:
-        move.w  #$0,d4                          ; 61210
+        move.w  #$0,d4                          ; 61210  no: no turning force (also in the air)
 l_61214:
         move.w  d4,(TurnForceHeading).l                ; 61214
         rts                                     ; 6121A
@@ -14284,7 +14299,7 @@ l_61246:
         cmpi.b  #$1e,(WorkAccum).l              ; 6124A
         bcs.w   l_611D4                         ; 61252
         bra.w   l_61160                         ; 61256
-dat_6125A:
+BendHeadingOffsets:				; 3 words added to the heading error by the piece (CarPhysicsPieces): 0 a straight, $D9 a bend one way, -$D9 the other (by AcrossOtherWay eor PieceReversed)
 	dc.b	$00,$00,$00,$D9,$FF,$27
 
 ;-------------------------------------------------------------------------------
@@ -18697,7 +18712,7 @@ l_64AD6:
         bpl.w   l_64AD6                         ; 64AE6
 l_64AEA:
         rts                                     ; 64AEA
-dat_64AEC:
+CopylockResult:				; the Copylock's result: $9CEDCD02 once it was passed (written at the end of CopylockRoutine, 5CEFA); CarPhysicsPieces compares it every step and, if it differs, the car cannot steer. In this release nothing calls the Copylock: the start-up's l_5C960 puts $9CEDCD02 in d0 and goes on at the routine's end, which stores it here
 	dc.b	$2F,$76,$EA,$80
 dat_64AF0:
 	dc.b	$00,$06,$04,$00
