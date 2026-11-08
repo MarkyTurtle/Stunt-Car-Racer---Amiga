@@ -66,7 +66,7 @@ baseline measured again.)
 `RaceView` (called by the race loop once a frame) does it all; the CPU draws every pixel (the
 blitter is not used in the race; the enhanced game blits the cockpit).
 
-1. **The cars.** Each car placed on its piece of track (`PlaceCarOnTrack`, `MoveOpponent`).
+1. **The cars.** Each car placed on its piece of track (`PlaceOpponentOnTrack`, `MoveOpponent`).
 2. **The near pieces.** The piece the car is on and the next two: their points read
    (`ReadPiecePoints`: heights from the piece's shape, `PiecePointHeight`, `InterpolatePiece`),
    turned by the view's matrix (`RollPoint`, `RollPointXY`) and projected (`ProjectPointX`: an
@@ -313,7 +313,7 @@ The source can now be changed and its code moved: everything that held an addres
 was given a label - the patched instructions above (`PlotPixelP0Hi`..., `ColourWordJump`), the
 tables of pointers (`PictureTable`, `KeysPlainPtr`, `KeysShiftedPtr`, `dat_699B8`, `dat_69A80`),
 the 6502 data's base (`Data6502`), and an address the game worked out from two constants
-(`dat_64AEC+dat_14874`). `enhanced/tools/reloc_test.py` checks it: the game assembled with 16
+(`CopylockResult+dat_14874`). `enhanced/tools/reloc_test.py` checks it: the game assembled with 16
 bytes put in before its code plays the benchmark's race exactly as before (every routine called
 the same number of times). The game's load ends with its screens, and the work areas start soon after them (the
 second screen ends 263 bytes before them in the enhanced game): the game cannot grow - new code

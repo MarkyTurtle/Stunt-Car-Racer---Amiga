@@ -6,7 +6,7 @@
 ; (colour $D, from that line down) before anything is drawn on them: 8 blits (4 planes, 2 areas),
 ; 8,192 words - about 4.6 ms of the blitter's time, which the CPU spent waiting (HorizonFill: one
 ; blit a plane, the next set up when the last is done). But the fills need only the band's top
-; line, which comes from the car's angles (ViewPitch, dat_1BB68, the roll in ViewMatrix) - known
+; line, which comes from the car's angles (ViewPitch, PreviewCamera, the roll in ViewMatrix) - known
 ; before the geometry (ProjectNearPiece ... EdgesFarPieces: about a third of the frame, the CPU
 ; only, the screen not touched).
 ;
@@ -51,8 +51,8 @@ HorizonEarly:
 	move.w	#-1,HorizonEarlyTop
 	movem.l	d0-d7/a0-a6,-(a7)
 	lea	HorizonSave(pc),a6		; put aside what DrawHorizon's first part changes
-	move.l	(dat_1BFB4).l,(a6)+		; the points' x (4, 6)
-	move.l	(dat_1C0F4).l,(a6)+		; and y
+	move.l	(HorizonPointX2).l,(a6)+		; the points' x (4, 6)
+	move.l	(HorizonPointY2).l,(a6)+		; and y
 	move.l	(EdgeBufferNext).l,(a6)+
 	move.l	($7b08a).l,(a6)+		; the row table's first entry (ScanEdge's, with RowOffset 0)
 	move.l	(dat_668A0).l,(a6)+		; ScanEdge's variables
@@ -61,17 +61,17 @@ HorizonEarly:
 	move.b	(ScanEdgeHorizon).l,(a6)+
 	move.l	#HorizonScratch,(EdgeBufferNext).l
 	move.w	#$500,d0			; DrawHorizon's first part (67888-678EE), as it is
-	move.w	d0,(dat_1BFB6).l
+	move.w	d0,(HorizonPointX3).l
 	neg.w	d0
-	move.w	d0,(dat_1BFB4).l
+	move.w	d0,(HorizonPointX2).l
 	move.w	(ViewPitch).l,d0
 	asr.w	#$3,d0
 	neg.w	d0
-	tst.b	(dat_1BB68).l
+	tst.b	(PreviewCamera).l
 	bmi.s	.pitch
 	subq.w	#$8,d0
-.pitch:	move.w	d0,(dat_1C0F4).l
-	move.w	d0,(dat_1C0F6).l
+.pitch:	move.w	d0,(HorizonPointY2).l
+	move.w	d0,(HorizonPointY3).l
 	move.w	#$4,d1
 	jsr	(RollPointNow).l
 	move.w	#$6,d1
@@ -95,8 +95,8 @@ HorizonEarly:
 	move.b	HalfRes,HorizonEarlyHalf
 	bsr.s	HorizonQueue
 .back:	lea	HorizonSave(pc),a6		; all put back
-	move.l	(a6)+,(dat_1BFB4).l
-	move.l	(a6)+,(dat_1C0F4).l
+	move.l	(a6)+,(HorizonPointX2).l
+	move.l	(a6)+,(HorizonPointY2).l
 	move.l	(a6)+,(EdgeBufferNext).l
 	move.l	(a6)+,($7b08a).l
 	move.l	(a6)+,(dat_668A0).l
@@ -246,14 +246,14 @@ HorizonStart:
 	rts
 
 ;-------------------------------------------------------------------------------
-; HorizonEarlyMatch - DrawHorizon, the band's top line known (dat_1BC58): HorizonSkipFills set if
+; HorizonEarlyMatch - DrawHorizon, the band's top line known (HorizonLine): HorizonSkipFills set if
 ; the queued fills were for it, on this screen at this height. All registers kept
 ;-------------------------------------------------------------------------------
 HorizonEarlyMatch:
 	sf	HorizonSkipFills
 	move.l	d0,-(a7)
 	move.w	HorizonEarlyNow(pc),d0
-	cmp.w	(dat_1BC58).l,d0
+	cmp.w	(HorizonLine).l,d0
 	bne.s	.no
 	move.l	HorizonEarlyScreen(pc),d0
 	cmp.l	(ScreenDrawTop).l,d0
