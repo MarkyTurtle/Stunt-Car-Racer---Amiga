@@ -5151,18 +5151,18 @@ l_58756:
 LinkCheckOvertake:
         tst.b   (LinkMode).l                    ; 58758
         beq.w   l_5879C                         ; 5875E
-        tst.b   (RaceStarted).l                   ; 58762
+        tst.b   RaceStarted-PHYS_BASE(a6)       ; 58762
         bpl.w   l_5879C                         ; 58768
-        move.b  (LinkOtherFlags).l,d0                ; 5876C
+        move.b  LinkOtherFlags-PHYS_BASE(a6),d0 ; 5876C
         bpl.w   l_5879C                         ; 58772
         asl.b   #$1,d0                          ; 58776
-        move.b  (PlayerPiece).l,d3              ; 58778
-        cmp.b   (OpponentPiece).l,d3            ; 5877E
+        move.b  PlayerPiece-PHYS_BASE(a6),d3    ; 58778
+        cmp.b   OpponentPiece-PHYS_BASE(a6),d3  ; 5877E
         bne.w   l_5879C                         ; 58784
-        move.b  (OffTrackSide).l,d3                ; 58788
+        move.b  OffTrackSide-PHYS_BASE(a6),d3   ; 58788
         eor.b   d3,d0                           ; 5878E
         bmi.w   l_5879C                         ; 58790
-        eori.b  #$80,(OffTrackSide).l              ; 58794
+        eori.b  #$80,OffTrackSide-PHYS_BASE(a6) ; 58794
 l_5879C:
         rts                                     ; 5879C
 
@@ -6727,53 +6727,55 @@ l_5A15E:
 ; EndHeightA0-EndHeightB2), its points between (OpponentPiecePoints, ExtendPiecePoints)
 ;-------------------------------------------------------------------------------
 PlaceOpponentOnTrack:
+	movem.l	a6,-(a7)			; (the enhanced game) a6: the race's variables
+	lea	(PHYS_BASE).l,a6		; (physfast.i; movem and lea leave the flags)
         move.w  #$40,d0                         ; 5A186
         jsr     (OpponentPieceDistance).l       ; 5A18A
-        move.w  d0,(OpponentSection).l                ; 5A190
-        move.b  d1,(OpponentDrawPiece).l                ; 5A196
+        move.w  d0,OpponentSection-PHYS_BASE(a6)	; 5A190
+        move.b  d1,OpponentDrawPiece-PHYS_BASE(a6)	; 5A196
         jsr     (LoadPiece).l                   ; 5A19C
         move.w  d1,d0                           ; 5A1A2
         jsr     (PieceGridOffset).l             ; 5A1A4
-        move.w  (ViewQuarter).l,d0                ; 5A1AA
-        sub.w   (PieceHeading).l,d0                ; 5A1B0
-        move.w  d0,(PieceAxes).l                ; 5A1B6
-        move.w  (TrackDataPointer).l,d0                ; 5A1BC
+        move.w  ViewQuarter-PHYS_BASE(a6),d0    ; 5A1AA
+        sub.w   PieceHeading-PHYS_BASE(a6),d0   ; 5A1B0
+        move.w  d0,PieceAxes-PHYS_BASE(a6)      ; 5A1B6
+        move.w  TrackDataPointer-PHYS_BASE(a6),d0	; 5A1BC
         rol.w   #$8,d0                          ; 5A1C2
         subi.w  #$b100,d0                       ; 5A1C4
         andi.l  #$ffff,d0                       ; 5A1C8
         addi.l  #Data6502,d0                    ; 5A1CE
         movea.l d0,a4                           ; 5A1D4
-        move.w  (TrackDataStart).l,d0                ; 5A1D6
+        move.w  TrackDataStart-PHYS_BASE(a6),d0 ; 5A1D6
         rol.w   #$8,d0                          ; 5A1DC
         subi.w  #$b100,d0                       ; 5A1DE
         andi.l  #$ffff,d0                       ; 5A1E2
         addi.l  #Data6502,d0                    ; 5A1E8
         movea.l d0,a5                           ; 5A1EE
-        move.b  (OpponentSection).l,d1                ; 5A1F0
+        move.b  OpponentSection-PHYS_BASE(a6),d1	; 5A1F0
         asl.w   #$1,d1                          ; 5A1F6
         jsr     (PiecePointHeight).l            ; 5A1F8
-        move.w  d0,(EndHeightA0).l                ; 5A1FE
+        move.w  d0,EndHeightA0-PHYS_BASE(a6)    ; 5A1FE
         addq.b  #$1,d1                          ; 5A204
         jsr     (PiecePointHeight).l            ; 5A206
-        move.w  d0,(EndHeightB0).l                ; 5A20C
+        move.w  d0,EndHeightB0-PHYS_BASE(a6)    ; 5A20C
         addq.b  #$1,d1                          ; 5A212
         jsr     (PiecePointHeight).l            ; 5A214
-        move.w  d0,(EndHeightA1).l                ; 5A21A
+        move.w  d0,EndHeightA1-PHYS_BASE(a6)    ; 5A21A
         addq.b  #$1,d1                          ; 5A220
         jsr     (PiecePointHeight).l            ; 5A222
-        move.w  d0,(EndHeightB1).l                ; 5A228
+        move.w  d0,EndHeightB1-PHYS_BASE(a6)    ; 5A228
         addq.b  #$1,d1                          ; 5A22E
-        cmp.b   (PiecePointCount).l,d1                ; 5A230
+        cmp.b   PiecePointCount-PHYS_BASE(a6),d1	; 5A230
         bcs.w   l_5A2DE                         ; 5A236
         jsr     (NextPiece).l                   ; 5A23A
         jsr     (LoadPiece).l                   ; 5A240
-        move.w  (TrackDataPointer).l,d0                ; 5A246
+        move.w  TrackDataPointer-PHYS_BASE(a6),d0	; 5A246
         rol.w   #$8,d0                          ; 5A24C
         subi.w  #$b100,d0                       ; 5A24E
         andi.l  #$ffff,d0                       ; 5A252
         addi.l  #Data6502,d0                    ; 5A258
         movea.l d0,a4                           ; 5A25E
-        move.w  (TrackDataStart).l,d0                ; 5A260
+        move.w  TrackDataStart-PHYS_BASE(a6),d0 ; 5A260
         rol.w   #$8,d0                          ; 5A266
         subi.w  #$b100,d0                       ; 5A268
         andi.l  #$ffff,d0                       ; 5A26C
@@ -6781,20 +6783,20 @@ PlaceOpponentOnTrack:
         movea.l d0,a5                           ; 5A278
         move.w  #$2,d1                          ; 5A27A
         jsr     (PiecePointHeight).l            ; 5A27E
-        move.w  d0,(EndHeightA2).l                ; 5A284
+        move.w  d0,EndHeightA2-PHYS_BASE(a6)    ; 5A284
         addq.b  #$1,d1                          ; 5A28A
         jsr     (PiecePointHeight).l            ; 5A28C
-        move.w  d0,(EndHeightB2).l                ; 5A292
+        move.w  d0,EndHeightB2-PHYS_BASE(a6)    ; 5A292
         addq.b  #$1,d1                          ; 5A298
         jsr     (PreviousPiece).l               ; 5A29A
         jsr     (LoadPiece).l                   ; 5A2A0
-        move.w  (TrackDataPointer).l,d0                ; 5A2A6
+        move.w  TrackDataPointer-PHYS_BASE(a6),d0	; 5A2A6
         rol.w   #$8,d0                          ; 5A2AC
         subi.w  #$b100,d0                       ; 5A2AE
         andi.l  #$ffff,d0                       ; 5A2B2
         addi.l  #Data6502,d0                    ; 5A2B8
         movea.l d0,a4                           ; 5A2BE
-        move.w  (TrackDataStart).l,d0                ; 5A2C0
+        move.w  TrackDataStart-PHYS_BASE(a6),d0 ; 5A2C0
         rol.w   #$8,d0                          ; 5A2C6
         subi.w  #$b100,d0                       ; 5A2C8
         andi.l  #$ffff,d0                       ; 5A2CC
@@ -6803,13 +6805,13 @@ PlaceOpponentOnTrack:
         bra.w   l_5A2FA                         ; 5A2DA
 l_5A2DE:
         jsr     (PiecePointHeight).l            ; 5A2DE
-        move.w  d0,(EndHeightA2).l                ; 5A2E4
+        move.w  d0,EndHeightA2-PHYS_BASE(a6)    ; 5A2E4
         addq.b  #$1,d1                          ; 5A2EA
         jsr     (PiecePointHeight).l            ; 5A2EC
-        move.w  d0,(EndHeightB2).l                ; 5A2F2
+        move.w  d0,EndHeightB2-PHYS_BASE(a6)    ; 5A2F2
         addq.b  #$1,d1                          ; 5A2F8
 l_5A2FA:
-        move.b  (OpponentSection).l,d0                ; 5A2FA
+        move.b  OpponentSection-PHYS_BASE(a6),d0	; 5A2FA
         jsr     (StoreSectionPoints).l                   ; 5A300
         move.w  #$8,d2                          ; 5A306
         move.w  #$0,d1                          ; 5A30A
@@ -6817,59 +6819,61 @@ l_5A2FA:
         move.w  #$c,d2                          ; 5A314
         move.w  #$2,d1                          ; 5A318
         jsr     (OpponentPiecePoints).l                   ; 5A31C
-        bclr    #$7,(PiecePointsBoth).l               ; 5A322
-        movea.l #OpponentCorners,a0                   ; 5A32A
-        movea.l #dat_1EF4A,a3                   ; 5A330
+        bclr    #$7,PiecePointsBoth-PHYS_BASE(a6)	; 5A322
+        lea OpponentCorners-PHYS_BASE(a6),a0    ; 5A32A
+        lea dat_1EF4A-PHYS_BASE(a6),a3          ; 5A330
         move.w  (a0),d0                         ; 5A336
         sub.w   $2(a0),d0                       ; 5A338
         bpl.w   l_5A342                         ; 5A33C
         neg.w   d0                              ; 5A340
 l_5A342:
         asr.w   #$4,d0                          ; 5A342
-        move.b  (a3,d0.w),(OpponentEdgeOffset).l         ; 5A344
-        move.b  (OpponentSectionPart).l,(AlongFraction).l     ; 5A34C
-        move.w  (OpponentAcrossWord).l,d0                ; 5A356
+        move.b  (a3,d0.w),OpponentEdgeOffset-PHYS_BASE(a6)	; 5A344
+        move.b  OpponentSectionPart-PHYS_BASE(a6),AlongFraction-PHYS_BASE(a6)	; 5A34C
+        move.w  OpponentAcrossWord-PHYS_BASE(a6),d0	; 5A356
         clr.w   d3                              ; 5A35C
-        move.b  (OpponentEdgeOffset).l,d3                ; 5A35E
+        move.b  OpponentEdgeOffset-PHYS_BASE(a6),d3	; 5A35E
         sub.w   d3,d0                           ; 5A364
-        move.w  d0,(OpponentAcross).l                ; 5A366
+        move.w  d0,OpponentAcross-PHYS_BASE(a6) ; 5A366
         move.w  #$0,d1                          ; 5A36C
         jsr     (PiecePointBetween).l           ; 5A370
         move.w  #$a,d2                          ; 5A376
         move.w  #$8,d1                          ; 5A37A
-        move.w  (OpponentAcross).l,d0                ; 5A37E
+        move.w  OpponentAcross-PHYS_BASE(a6),d0 ; 5A37E
         jsr     (PiecePointsBetween).l                   ; 5A384
-        move.w  (OpponentAcrossWord).l,d0                ; 5A38A
+        move.w  OpponentAcrossWord-PHYS_BASE(a6),d0	; 5A38A
         clr.w   d3                              ; 5A390
-        move.b  (OpponentEdgeOffset).l,d3                ; 5A392
+        move.b  OpponentEdgeOffset-PHYS_BASE(a6),d3	; 5A392
         add.w   d3,d0                           ; 5A398
-        move.w  d0,(OpponentAcross).l                ; 5A39A
+        move.w  d0,OpponentAcross-PHYS_BASE(a6) ; 5A39A
         move.w  #$2,d1                          ; 5A3A0
         jsr     (PiecePointBetween).l           ; 5A3A4
         move.w  #$e,d2                          ; 5A3AA
         move.w  #$8,d1                          ; 5A3AE
-        move.w  (OpponentAcross).l,d0                ; 5A3B2
+        move.w  OpponentAcross-PHYS_BASE(a6),d0 ; 5A3B2
         jsr     (PiecePointsBetween).l                   ; 5A3B8
-        move.w  (EndHeightA0).l,d0                ; 5A3BE
-        sub.w   (EndHeightA1).l,d0                ; 5A3C4
+        move.w  EndHeightA0-PHYS_BASE(a6),d0    ; 5A3BE
+        sub.w   EndHeightA1-PHYS_BASE(a6),d0    ; 5A3C4
         bpl.w   l_5A3D0                         ; 5A3CA
         neg.w   d0                              ; 5A3CE
 l_5A3D0:
         cmpi.w  #$14,d0                         ; 5A3D0
         blt.w   l_5A3E0                         ; 5A3D4
-        move.b  #$80,(OpponentHidden).l              ; 5A3D8
+        move.b  #$80,OpponentHidden-PHYS_BASE(a6)	; 5A3D8
 l_5A3E0:
         jsr     (ExtendPiecePoints).l                   ; 5A3E0
-        move.w  (EndHeightA0).l,d0                ; 5A3E6
-        sub.w   (EndHeightA1).l,d0                ; 5A3EC
+        move.w  EndHeightA0-PHYS_BASE(a6),d0    ; 5A3E6
+        sub.w   EndHeightA1-PHYS_BASE(a6),d0    ; 5A3EC
         bpl.w   l_5A3F8                         ; 5A3F2
         neg.w   d0                              ; 5A3F6
 l_5A3F8:
         cmpi.w  #$14,d0                         ; 5A3F8
         blt.w   l_5A408                         ; 5A3FC
-        move.b  #$80,(OpponentHidden).l              ; 5A400
+        move.b  #$80,OpponentHidden-PHYS_BASE(a6)	; 5A400
 l_5A408:
         move.w  #$ff,d0                         ; 5A408
+	movem.l	(a7)+,a6			; (the enhanced game) a6 back: on into OpponentPieceDistance,
+						; which is called on its own too
 
 ;-------------------------------------------------------------------------------
 ; OpponentPieceDistance - d0: how far along its piece the opponent's car is (OpponentPiece,
@@ -6900,9 +6904,9 @@ l_5A440:
 ;-------------------------------------------------------------------------------
 PiecePointBetween:
         jsr     (InterpolatePiece).l            ; 5A44E
-        move.l  (WorkByte3).l,d0                ; 5A454
+        move.l  WorkByte3-PHYS_BASE(a6),d0      ; 5A454
         asr.l   #$3,d0                          ; 5A45A
-        movea.l #PiecePoints,a0                 ; 5A45C
+        lea PiecePoints-PHYS_BASE(a6),a0        ; 5A45C
         move.w  d0,(a0,d1.w)                    ; 5A462
         rts                                     ; 5A466
 
@@ -6913,39 +6917,39 @@ PiecePointBetween:
 ; PiecePointBetween for point 4
 ;-------------------------------------------------------------------------------
 ExtendPiecePoints:
-        movea.l #PiecePointsX,a0                ; 5A468
+        lea PiecePointsX-PHYS_BASE(a6),a0       ; 5A468
         move.w  $e(a0),d0                       ; 5A46E
         sub.w   $a(a0),d0                       ; 5A472
-        move.w  d0,(PieceExtendB).l                ; 5A476
+        move.w  d0,PieceExtendB-PHYS_BASE(a6)   ; 5A476
         asr.w   #$1,d0                          ; 5A47C
-        add.w   d0,(PieceExtendB).l                ; 5A47E
+        add.w   d0,PieceExtendB-PHYS_BASE(a6)   ; 5A47E
         move.w  $2e(a0),d0                      ; 5A484
         sub.w   $2a(a0),d0                      ; 5A488
-        move.w  d0,(PieceExtendA).l                ; 5A48C
+        move.w  d0,PieceExtendA-PHYS_BASE(a6)   ; 5A48C
         asr.w   #$1,d0                          ; 5A492
-        add.w   d0,(PieceExtendA).l                ; 5A494
+        add.w   d0,PieceExtendA-PHYS_BASE(a6)   ; 5A494
         move.w  $a(a0),d0                       ; 5A49A
-        sub.w   (PieceExtendA).l,d0                ; 5A49E
+        sub.w   PieceExtendA-PHYS_BASE(a6),d0   ; 5A49E
         move.w  d0,$10(a0)                      ; 5A4A4
         move.w  $2a(a0),d0                      ; 5A4A8
-        add.w   (PieceExtendB).l,d0                ; 5A4AC
+        add.w   PieceExtendB-PHYS_BASE(a6),d0   ; 5A4AC
         move.w  d0,$30(a0)                      ; 5A4B2
         move.w  $e(a0),d0                       ; 5A4B6
-        sub.w   (PieceExtendA).l,d0                ; 5A4BA
+        sub.w   PieceExtendA-PHYS_BASE(a6),d0   ; 5A4BA
         move.w  d0,$14(a0)                      ; 5A4C0
         move.w  $2e(a0),d0                      ; 5A4C4
-        add.w   (PieceExtendB).l,d0                ; 5A4C8
+        add.w   PieceExtendB-PHYS_BASE(a6),d0   ; 5A4C8
         move.w  d0,$34(a0)                      ; 5A4CE
-        move.b  (OpponentSectionPart).l,d0                ; 5A4D2
+        move.b  OpponentSectionPart-PHYS_BASE(a6),d0	; 5A4D2
         addi.b  #$80,d0                         ; 5A4D8
         bcc.w   l_5A508                         ; 5A4DC
-        move.w  (EndHeightA1).l,(EndHeightA0).l     ; 5A4E0
-        move.w  (EndHeightB1).l,(EndHeightB0).l     ; 5A4EA
-        move.w  (EndHeightA2).l,(EndHeightA1).l     ; 5A4F4
-        move.w  (EndHeightB2).l,(EndHeightB1).l     ; 5A4FE
+        move.w  EndHeightA1-PHYS_BASE(a6),EndHeightA0-PHYS_BASE(a6)	; 5A4E0
+        move.w  EndHeightB1-PHYS_BASE(a6),EndHeightB0-PHYS_BASE(a6)	; 5A4EA
+        move.w  EndHeightA2-PHYS_BASE(a6),EndHeightA1-PHYS_BASE(a6)	; 5A4F4
+        move.w  EndHeightB2-PHYS_BASE(a6),EndHeightB1-PHYS_BASE(a6)	; 5A4FE
 l_5A508:
-        move.b  d0,(AlongFraction).l                ; 5A508
-        move.b  (OpponentLane).l,(AcrossFraction).l     ; 5A50E
+        move.b  d0,AlongFraction-PHYS_BASE(a6)  ; 5A508
+        move.b  OpponentLane-PHYS_BASE(a6),AcrossFraction-PHYS_BASE(a6)	; 5A50E
         move.w  #$4,d1                          ; 5A518
         bra.w   PiecePointBetween               ; 5A51C
 
@@ -6983,11 +6987,11 @@ PiecePointPartStore:
 ; (OpponentSectionPart + SideOffsets[d1]: the swerve's wobble), then PiecePointsBetween
 ;-------------------------------------------------------------------------------
 OpponentPiecePoints:
-        move.b  (OpponentSectionPart).l,d0                ; 5A55A
-        movea.l #SideOffsets,a0                   ; 5A560
+        move.b  OpponentSectionPart-PHYS_BASE(a6),d0	; 5A55A
+        lea SideOffsets-PHYS_BASE(a6),a0        ; 5A560
         add.b   (a0,d1.w),d0                    ; 5A566
         roxr.b  #$1,d3                          ; 5A56A
-        move.b  d3,(PiecePointsBoth).l                ; 5A56C
+        move.b  d3,PiecePointsBoth-PHYS_BASE(a6)	; 5A56C
         andi.w  #$ff,d0                         ; 5A572
 
 ;-------------------------------------------------------------------------------
@@ -7597,6 +7601,8 @@ l_5AE40:
 ; lines (docs/TRACKS.md; original/tools/tracks.py reads the tracks the same way)
 ;-------------------------------------------------------------------------------
 BuildTrack:
+	clr.w	(LoadPieceCount).l		; (the enhanced game) LoadPiece's table not valid until
+						; BuildTrackTable has built it (physfast.i; clr leaves X)
         move.b  d1,d0                           ; 5AE46
         asl.b   #$1,d0                          ; 5AE48
         move.b  d0,d2                           ; 5AE4A
@@ -7913,20 +7919,20 @@ l_5B314:
 ; when the car is let go (DropCountdown, OffTrack, MessagePending cleared)
 ;-------------------------------------------------------------------------------
 UpdateDrop:
-        move.b  (DropCountdown).l,d1            ; 5B32E
+        move.b  DropCountdown-PHYS_BASE(a6),d1  ; 5B32E
         beq.w   l_5B38E                         ; 5B334
         cmpi.b  #$e6,d1                         ; 5B338
         bcs.w   l_5B36E                         ; 5B33C
         jsr     (LinkCheckOvertake).l           ; 5B340
         move.b  #$2c,d0                         ; 5B346
-        tst.b   (OffTrackSide).l                   ; 5B34A
+        tst.b   OffTrackSide-PHYS_BASE(a6)      ; 5B34A
         bpl.w   l_5B358                         ; 5B350
         move.b  #$d4,d0                         ; 5B354
 l_5B358:
-        move.b  d0,(DropAngle).l                ; 5B358
-        move.b  #$0,(DropUnused).l               ; 5B35E
+        move.b  d0,DropAngle-PHYS_BASE(a6)      ; 5B358
+        move.b  #$0,DropUnused-PHYS_BASE(a6)    ; 5B35E
 l_5B366:
-        subq.b  #$1,(DropCountdown).l           ; 5B366
+        subq.b  #$1,DropCountdown-PHYS_BASE(a6) ; 5B366
         rts                                     ; 5B36C
 l_5B36E:
         cmpi.b  #$e5,d1                         ; 5B36E
@@ -7950,18 +7956,18 @@ l_5B390:
         andi.b  #$1f,d0                         ; 5B3B6
         addi.b  #$a0,d0                         ; 5B3BA
         move.b  #$2c,d2                         ; 5B3BE
-        tst.b   (RaceStarted).l                   ; 5B3C2
+        tst.b   RaceStarted-PHYS_BASE(a6)       ; 5B3C2
         bpl.w   l_5B3D0                         ; 5B3C8
         move.b  #$3c,d2                         ; 5B3CC
 l_5B3D0:
-        tst.b   (SeasonRace).l                   ; 5B3D0
+        tst.b   SeasonRace-PHYS_BASE(a6)        ; 5B3D0
         bmi.w   l_5B3DE                         ; 5B3D6
         move.b  #$8c,d0                         ; 5B3DA
 l_5B3DE:
-        move.b  d0,(DropCountdown).l            ; 5B3DE
-        tst.b   (OpponentHeld).l                   ; 5B3E4
+        move.b  d0,DropCountdown-PHYS_BASE(a6)  ; 5B3DE
+        tst.b   OpponentHeld-PHYS_BASE(a6)      ; 5B3E4
         beq.w   l_5B3F6                         ; 5B3EA
-        move.b  #$32,(OpponentHeld).l              ; 5B3EE
+        move.b  #$32,OpponentHeld-PHYS_BASE(a6) ; 5B3EE
 l_5B3F6:
         move.b  #$4,d0                          ; 5B3F6
         jmp     (QueueMessage).l                   ; 5B3FA
@@ -7972,27 +7978,27 @@ l_5B402:
         jsr     (DropTilt).l                   ; 5B406
         move.b  #$2,d0                          ; 5B40C
         jsr     (DropLower).l                   ; 5B410
-        tst.b   (ClockTick).l                   ; 5B416
+        tst.b   ClockTick-PHYS_BASE(a6)         ; 5B416
         bmi.w   l_5B430                         ; 5B41C
-        subq.b  #$1,(DropCountdown).l           ; 5B420
+        subq.b  #$1,DropCountdown-PHYS_BASE(a6) ; 5B420
         bne.w   l_5B430                         ; 5B426
-        addq.b  #$1,(DropCountdown).l           ; 5B42A
+        addq.b  #$1,DropCountdown-PHYS_BASE(a6) ; 5B42A
 l_5B430:
-        move.b  (RaceStarted).l,d0                ; 5B430
+        move.b  RaceStarted-PHYS_BASE(a6),d0    ; 5B430
         bne.w   l_5B446                         ; 5B436
-        tst.b   (DropCountdown).l               ; 5B43A
+        tst.b   DropCountdown-PHYS_BASE(a6)     ; 5B43A
         bpl.w   l_5B450                         ; 5B440
         rts                                     ; 5B444
 l_5B446:
-        move.b  (BoostOff).l,d0                ; 5B446
+        move.b  BoostOff-PHYS_BASE(a6),d0       ; 5B446
         bne.w   l_5B470                         ; 5B44C
 l_5B450:
         move.b  #$0,d0                          ; 5B450
-        move.b  d0,(DropCountdown).l            ; 5B454
-        move.b  d0,(OffTrack).l                ; 5B45A
-        move.b  d0,(MessagePending).l                ; 5B460
+        move.b  d0,DropCountdown-PHYS_BASE(a6)  ; 5B454
+        move.b  d0,OffTrack-PHYS_BASE(a6)       ; 5B45A
+        move.b  d0,MessagePending-PHYS_BASE(a6) ; 5B460
         move.b  #$80,d0                         ; 5B466
-        move.b  d0,(RaceStarted).l                ; 5B46A
+        move.b  d0,RaceStarted-PHYS_BASE(a6)    ; 5B46A
 l_5B470:
         rts                                     ; 5B470
 
@@ -8003,8 +8009,8 @@ l_5B470:
 ;-------------------------------------------------------------------------------
 DropLower:
         asl.w   #$8,d0                          ; 5B472
-        move.w  (CarHeight).l,d3                ; 5B474
-        sub.w   (DropGround).l,d3                ; 5B47A
+        move.w  CarHeight-PHYS_BASE(a6),d3      ; 5B474
+        sub.w   DropGround-PHYS_BASE(a6),d3     ; 5B47A
         sub.w   d0,d3                           ; 5B480
         move.w  d3,d0                           ; 5B482
         asr.w   #$3,d0                          ; 5B484
@@ -8014,7 +8020,7 @@ DropLower:
         bcc.w   l_5B49A                         ; 5B492
         move.w  #$fe00,d0                       ; 5B496
 l_5B49A:
-        sub.w   d0,(SpringForceUp).l                ; 5B49A
+        sub.w   d0,SpringForceUp-PHYS_BASE(a6)  ; 5B49A
         lsr.w   #$8,d3                          ; 5B4A0
         move.b  d3,d0                           ; 5B4A2
         addq.b  #$2,d0                          ; 5B4A4
@@ -8026,7 +8032,7 @@ l_5B49A:
 ;-------------------------------------------------------------------------------
 DropTilt:
         move.b  #$10,d4                         ; 5B4A8
-        tst.b   (OffTrackSide).l                   ; 5B4AC
+        tst.b   OffTrackSide-PHYS_BASE(a6)      ; 5B4AC
         bpl.w   l_5B4BC                         ; 5B4B2
         neg.b   d0                              ; 5B4B6
         move.b  #$f0,d4                         ; 5B4B8
@@ -8037,19 +8043,19 @@ l_5B4BC:
         muls.w  d2,d0                           ; 5B4C6
         asr.l   #$8,d0                          ; 5B4C8
 l_5B4CA:
-        move.w  (CarFromMiddle).l,d3                ; 5B4CA
+        move.w  CarFromMiddle-PHYS_BASE(a6),d3  ; 5B4CA
         asl.w   #$5,d3                          ; 5B4D0
-        move.b  (DropAngle).l,d7                ; 5B4D2
+        move.b  DropAngle-PHYS_BASE(a6),d7      ; 5B4D2
         cmp.b   d4,d7                           ; 5B4D8
         beq.w   l_5B4E4                         ; 5B4DA
-        add.w   d0,(DropAngle).l                ; 5B4DE
+        add.w   d0,DropAngle-PHYS_BASE(a6)      ; 5B4DE
 l_5B4E4:
-        move.w  (DropAngle).l,d0                ; 5B4E4
+        move.w  DropAngle-PHYS_BASE(a6),d0      ; 5B4E4
         sub.w   d3,d0                           ; 5B4EA
-        move.w  d0,(CarRoll).l                ; 5B4EC
+        move.w  d0,CarRoll-PHYS_BASE(a6)        ; 5B4EC
         move.w  #$0,d0                          ; 5B4F2
-        move.w  d0,(SpringPitch).l                ; 5B4F6
-        move.b  (DropAngle).l,d0                ; 5B4FC
+        move.w  d0,SpringPitch-PHYS_BASE(a6)    ; 5B4F6
+        move.b  DropAngle-PHYS_BASE(a6),d0      ; 5B4FC
         cmp.b   d4,d0                           ; 5B502
         rts                                     ; 5B504
 
@@ -8610,21 +8616,21 @@ l_5BD0E:
 ; not driving to an exact speed and the player is ahead (OpponentBendWay); not with the link
 ;-------------------------------------------------------------------------------
 OpponentSwerve:
-        move.b  (OpponentRacing).l,d0                ; 5BD1E
+        move.b  OpponentRacing-PHYS_BASE(a6),d0 ; 5BD1E
         beq.w   l_5BE32                         ; 5BD24
         tst.b   (LinkMode).l                    ; 5BD28
         bne.w   l_5BE32                         ; 5BD2E
         move.b  #$0,d1                          ; 5BD32
-        move.b  d1,(SideOffsets).l                ; 5BD36
-        move.b  d1,(SideOffsetsCopy).l                ; 5BD3C
-        move.b  d1,(SwerveExtra).l                ; 5BD42
-        move.b  (SwerveCountdown).l,d0                ; 5BD48
+        move.b  d1,SideOffsets-PHYS_BASE(a6)    ; 5BD36
+        move.b  d1,SideOffsetsCopy-PHYS_BASE(a6)	; 5BD3C
+        move.b  d1,SwerveExtra-PHYS_BASE(a6)    ; 5BD42
+        move.b  SwerveCountdown-PHYS_BASE(a6),d0	; 5BD48
         beq.w   l_5BDA6                         ; 5BD4E
-        tst.b   (ClockTick).l                   ; 5BD52
+        tst.b   ClockTick-PHYS_BASE(a6)         ; 5BD52
         bmi.w   l_5BD62                         ; 5BD58
-        subq.b  #$1,(SwerveCountdown).l               ; 5BD5C
+        subq.b  #$1,SwerveCountdown-PHYS_BASE(a6)	; 5BD5C
 l_5BD62:
-        add.b   (SwervePhase).l,d0                ; 5BD62
+        add.b   SwervePhase-PHYS_BASE(a6),d0    ; 5BD62
         andi.b  #$f,d0                          ; 5BD68
         move.b  d0,d2                           ; 5BD6C
         movea.l #dat_5BE34,a2                   ; 5BD6E
@@ -8633,45 +8639,45 @@ l_5BD62:
         neg.b   d0                              ; 5BD7C
         addq.b  #$1,d1                          ; 5BD7E
 l_5BD80:
-        movea.l #SideOffsets,a1                   ; 5BD80
+        lea SideOffsets-PHYS_BASE(a6),a1        ; 5BD80
         move.b  d0,(a1,d1.w)                    ; 5BD86
         addq.b  #$5,d2                          ; 5BD8A
         andi.b  #$f,d2                          ; 5BD8C
         movea.l #dat_5BE34,a2                   ; 5BD90
         move.b  (a2,d2.w),d0                    ; 5BD96
-        move.b  d0,(SwerveExtra).l                ; 5BD9A
+        move.b  d0,SwerveExtra-PHYS_BASE(a6)    ; 5BD9A
         jmp     (l_5BE1C).l                     ; 5BDA0
 l_5BDA6:
-        move.b  (OpponentPiece).l,d2            ; 5BDA6
-        movea.l #PieceOpponentSpeeds,a0                   ; 5BDAC
+        move.b  OpponentPiece-PHYS_BASE(a6),d2  ; 5BDA6
+        lea PieceOpponentSpeeds-PHYS_BASE(a6),a0	; 5BDAC
         tst.b   (a0,d2.w)                       ; 5BDB2
         bmi.w   l_5BE1C                         ; 5BDB6
-        tst.b   (OpponentBehind).l                   ; 5BDBA
+        tst.b   OpponentBehind-PHYS_BASE(a6)    ; 5BDBA
         bmi.w   l_5BE1C                         ; 5BDC0
-        tst.b   (PieceDirection).l                   ; 5BDC4
+        tst.b   PieceDirection-PHYS_BASE(a6)    ; 5BDC4
         bmi.w   l_5BE1C                         ; 5BDCA
         move.b  #$8,d2                          ; 5BDCE
-        tst.b   (OpponentBendWay).l                   ; 5BDD2
+        tst.b   OpponentBendWay-PHYS_BASE(a6)   ; 5BDD2
         bpl.w   l_5BE1C                         ; 5BDD8
-        btst    #$6,(OpponentBendWay).l               ; 5BDDC
+        btst    #$6,OpponentBendWay-PHYS_BASE(a6)	; 5BDDC
         beq.w   l_5BDEC                         ; 5BDE4
         move.b  #$10,d2                         ; 5BDE8
 l_5BDEC:
-        move.b  d2,(SwervePhase).l                ; 5BDEC
+        move.b  d2,SwervePhase-PHYS_BASE(a6)    ; 5BDEC
         jsr     (Random).l                      ; 5BDF2
         andi.b  #$1f,d0                         ; 5BDF8
-        move.b  d0,(WorkByte6).l                ; 5BDFC
-        move.b  (OpponentSkill).l,d0                ; 5BE02
-        cmp.b   (WorkByte6).l,d0                ; 5BE08
+        move.b  d0,WorkByte6-PHYS_BASE(a6)      ; 5BDFC
+        move.b  OpponentSkill-PHYS_BASE(a6),d0  ; 5BE02
+        cmp.b   WorkByte6-PHYS_BASE(a6),d0      ; 5BE08
         blt.w   l_5BE1C                         ; 5BE0E
         move.b  #$10,d0                         ; 5BE12
-        move.b  d0,(SwerveCountdown).l                ; 5BE16
+        move.b  d0,SwerveCountdown-PHYS_BASE(a6)	; 5BE16
 l_5BE1C:
-        move.b  (PieceReversed).l,d0                ; 5BE1C
+        move.b  PieceReversed-PHYS_BASE(a6),d0  ; 5BE1C
         lsr.b   #$1,d0                          ; 5BE22
-        move.b  (PieceDirection).l,d3                ; 5BE24
+        move.b  PieceDirection-PHYS_BASE(a6),d3 ; 5BE24
         eor.b   d3,d0                           ; 5BE2A
-        move.b  d0,(OpponentBendWay).l                ; 5BE2C
+        move.b  d0,OpponentBendWay-PHYS_BASE(a6)	; 5BE2C
 l_5BE32:
         rts                                     ; 5BE32
 dat_5BE34:
@@ -8841,7 +8847,7 @@ l_5C0A2:
 ;-------------------------------------------------------------------------------
 PiecePointHeight:
         move.b  d1,d2                           ; 5C0AA
-        tst.b   (PieceProfileA).l                   ; 5C0AC
+        tst.b   PieceProfileA-PHYS_BASE(a6)     ; 5C0AC
         bpl.w   l_5C0F6                         ; 5C0B2
         bclr    #$0,d2                          ; 5C0B6
         btst    #$0,d1                          ; 5C0BA
@@ -8851,7 +8857,7 @@ PiecePointHeight:
         andi.b  #$7f,d0                         ; 5C0CA
         asl.w   #$8,d0                          ; 5C0CE
         or.b    d3,d0                           ; 5C0D0
-        add.w   (PieceBaseA).l,d0                ; 5C0D2
+        add.w   PieceBaseA-PHYS_BASE(a6),d0     ; 5C0D2
         bra.w   l_5C134                         ; 5C0D8
 l_5C0DC:
         move.b  $1(a5,d2.w),d3                  ; 5C0DC
@@ -8859,7 +8865,7 @@ l_5C0DC:
         andi.b  #$7f,d0                         ; 5C0E4
         asl.w   #$8,d0                          ; 5C0E8
         or.b    d3,d0                           ; 5C0EA
-        add.w   (PieceBaseB).l,d0                ; 5C0EC
+        add.w   PieceBaseB-PHYS_BASE(a6),d0     ; 5C0EC
         bra.w   l_5C134                         ; 5C0F2
 l_5C0F6:
         lsr.b   #$1,d2                          ; 5C0F6
@@ -8871,7 +8877,7 @@ l_5C0F6:
         andi.b  #$f,d3                          ; 5C108
         asl.w   #$8,d3                          ; 5C10C
         or.w    d3,d0                           ; 5C10E
-        add.w   (PieceBaseA).l,d0                ; 5C110
+        add.w   PieceBaseA-PHYS_BASE(a6),d0     ; 5C110
         bra.w   l_5C134                         ; 5C116
 l_5C11A:
         move.b  (a5,d2.w),d0                    ; 5C11A
@@ -8881,7 +8887,7 @@ l_5C11A:
         andi.b  #$f,d3                          ; 5C126
         asl.w   #$8,d3                          ; 5C12A
         or.w    d3,d0                           ; 5C12C
-        add.w   (PieceBaseB).l,d0                ; 5C12E
+        add.w   PieceBaseB-PHYS_BASE(a6),d0     ; 5C12E
 l_5C134:
         asr.w   #$5,d0                          ; 5C134
         rts                                     ; 5C136
@@ -8939,30 +8945,30 @@ l_5C1BE:
 ; 0-$180) marked in WheelOffTrack
 ;-------------------------------------------------------------------------------
 TrackUnderWheels:
-        move.b  (PlayerPiece).l,d1              ; 5C1D0
-        move.b  d1,(PieceIndex).l               ; 5C1D6
+        move.b  PlayerPiece-PHYS_BASE(a6),d1    ; 5C1D0
+        move.b  d1,PieceIndex-PHYS_BASE(a6)     ; 5C1D6
         jsr     (LoadPiece).l                   ; 5C1DC
-        move.b  #$0,(WheelsPastEdge).l               ; 5C1E2
+        move.b  #$0,WheelsPastEdge-PHYS_BASE(a6)	; 5C1E2
         move.b  #$4,d1                          ; 5C1EA
 l_5C1EE:
-        move.b  d1,(WorkD1b).l                ; 5C1EE
-        move.b  (PlayerPiece).l,d0              ; 5C1F4
-        cmp.b   (PieceIndex).l,d0               ; 5C1FA
+        move.b  d1,WorkD1b-PHYS_BASE(a6)        ; 5C1EE
+        move.b  PlayerPiece-PHYS_BASE(a6),d0    ; 5C1F4
+        cmp.b   PieceIndex-PHYS_BASE(a6),d0     ; 5C1FA
         beq.w   l_5C218                         ; 5C200
         move.b  d0,d1                           ; 5C204
-        move.b  d1,(PieceIndex).l               ; 5C206
+        move.b  d1,PieceIndex-PHYS_BASE(a6)     ; 5C206
         jsr     (LoadPiece).l                   ; 5C20C
-        move.b  (WorkD1b).l,d1                ; 5C212
+        move.b  WorkD1b-PHYS_BASE(a6),d1        ; 5C212
 l_5C218:
-        move.b  (ShapeAcrossScale).l,(WorkByte5).l     ; 5C218
-        movea.l #PointAcrossB,a1                   ; 5C222
+        move.b  ShapeAcrossScale-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 5C218
+        lea PointAcrossB-PHYS_BASE(a6),a1       ; 5C222
         move.w  (a1,d1.w),d0                    ; 5C228
         asr.w   #$4,d0                          ; 5C22C
-        add.w   (CarAcrossTrack).l,d0                ; 5C22E
+        add.w   CarAcrossTrack-PHYS_BASE(a6),d0 ; 5C22E
         cmpi.w  #$180,d0                        ; 5C234
         bcs.w   l_5C25E                         ; 5C238
-        bset    #$7,(WheelOffTrack).l               ; 5C23C
-        move.w  d0,(WheelAcross).l                ; 5C244
+        bset    #$7,WheelOffTrack-PHYS_BASE(a6) ; 5C23C
+        move.w  d0,WheelAcross-PHYS_BASE(a6)    ; 5C244
         bmi.w   l_5C256                         ; 5C24A
         move.b  #$ff,d0                         ; 5C24E
         bra.w   l_5C286                         ; 5C252
@@ -8974,7 +8980,7 @@ l_5C25E:
         bpl.w   l_5C266                         ; 5C260
         neg.w   d0                              ; 5C264
 l_5C266:
-        move.b  (WorkByte5).l,d3                ; 5C266
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 5C266
         asl.w   #$7,d3                          ; 5C26C
         bclr    #$f,d3                          ; 5C26E
         muls.w  d3,d0                           ; 5C272
@@ -8984,82 +8990,82 @@ l_5C266:
         blt.w   l_5C286                         ; 5C27C
         move.b  $ff.l,d0                        ; 5C280
 l_5C286:
-        move.b  d0,(AcrossFraction).l                ; 5C286
-        tst.b   (PieceReversed).l                   ; 5C28C
+        move.b  d0,AcrossFraction-PHYS_BASE(a6) ; 5C286
+        tst.b   PieceReversed-PHYS_BASE(a6)     ; 5C28C
         bpl.w   l_5C29A                         ; 5C292
         eori.b  #$ff,d0                         ; 5C296
 l_5C29A:
         cmpi.b  #$4,d1                          ; 5C29A
         bne.w   l_5C2A8                         ; 5C29E
-        move.b  d0,(PlayerLane).l                ; 5C2A2
+        move.b  d0,PlayerLane-PHYS_BASE(a6)     ; 5C2A2
 l_5C2A8:
-        move.b  (ShapeAlongScale).l,(WorkByte5).l     ; 5C2A8
-        movea.l #PointAlongB,a1                   ; 5C2B2
+        move.b  ShapeAlongScale-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 5C2A8
+        lea PointAlongB-PHYS_BASE(a6),a1        ; 5C2B2
         move.w  (a1,d1.w),d0                    ; 5C2B8
         asr.w   #$3,d0                          ; 5C2BC
-        move.b  (WorkByte5).l,d3                ; 5C2BE
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 5C2BE
         asl.w   #$7,d3                          ; 5C2C4
         bclr    #$f,d3                          ; 5C2C6
         muls.w  d3,d0                           ; 5C2CA
         asl.l   #$1,d0                          ; 5C2CC
         swap    d0                              ; 5C2CE
-        add.w   (CarAlongPiece).l,d0                ; 5C2D0
-        move.w  d0,(WheelAlong).l                ; 5C2D6
-        move.b  (WheelAlong).l,d0                ; 5C2DC
+        add.w   CarAlongPiece-PHYS_BASE(a6),d0  ; 5C2D0
+        move.w  d0,WheelAlong-PHYS_BASE(a6)     ; 5C2D6
+        move.b  WheelAlong-PHYS_BASE(a6),d0     ; 5C2DC
         asl.b   #$1,d0                          ; 5C2E2
-        move.b  d0,(WheelPoint).l                ; 5C2E4
+        move.b  d0,WheelPoint-PHYS_BASE(a6)     ; 5C2E4
         bmi.w   l_5C2F8                         ; 5C2EA
-        cmp.b   (PieceLastPair).l,d0                ; 5C2EE
+        cmp.b   PieceLastPair-PHYS_BASE(a6),d0  ; 5C2EE
         blt.w   l_5C2FE                         ; 5C2F4
 l_5C2F8:
         jsr     (WheelNextPiece).l                   ; 5C2F8
 l_5C2FE:
-        move.w  (TrackDataPointer).l,d0                ; 5C2FE
+        move.w  TrackDataPointer-PHYS_BASE(a6),d0	; 5C2FE
         rol.w   #$8,d0                          ; 5C304
         subi.w  #$b100,d0                       ; 5C306
         andi.l  #$ffff,d0                       ; 5C30A
         addi.l  #Data6502,d0                    ; 5C310
         movea.l d0,a4                           ; 5C316
-        move.w  (TrackDataStart).l,d0                ; 5C318
+        move.w  TrackDataStart-PHYS_BASE(a6),d0 ; 5C318
         rol.w   #$8,d0                          ; 5C31E
         subi.w  #$b100,d0                       ; 5C320
         andi.l  #$ffff,d0                       ; 5C324
         addi.l  #Data6502,d0                    ; 5C32A
         movea.l d0,a5                           ; 5C330
-        tst.b   (PieceReversed).l                   ; 5C332
+        tst.b   PieceReversed-PHYS_BASE(a6)     ; 5C332
         bmi.w   l_5C37E                         ; 5C338
-        move.b  (WheelPoint).l,d1                ; 5C33C
+        move.b  WheelPoint-PHYS_BASE(a6),d1     ; 5C33C
         jsr     (PiecePointHeight).l            ; 5C342
-        move.w  d0,(EndHeightA0).l                ; 5C348
+        move.w  d0,EndHeightA0-PHYS_BASE(a6)    ; 5C348
         addq.b  #$1,d1                          ; 5C34E
         jsr     (PiecePointHeight).l            ; 5C350
-        move.w  d0,(EndHeightB0).l                ; 5C356
+        move.w  d0,EndHeightB0-PHYS_BASE(a6)    ; 5C356
         addq.b  #$1,d1                          ; 5C35C
         jsr     (PiecePointHeight).l            ; 5C35E
-        move.w  d0,(EndHeightA1).l                ; 5C364
+        move.w  d0,EndHeightA1-PHYS_BASE(a6)    ; 5C364
         addq.b  #$1,d1                          ; 5C36A
         jsr     (PiecePointHeight).l            ; 5C36C
-        move.w  d0,(EndHeightB1).l                ; 5C372
+        move.w  d0,EndHeightB1-PHYS_BASE(a6)    ; 5C372
         addq.b  #$1,d1                          ; 5C378
         bra.w   l_5C3C6                         ; 5C37A
 l_5C37E:
-        move.b  (PiecePointCount).l,d1                ; 5C37E
-        sub.b   (WheelPoint).l,d1                ; 5C384
+        move.b  PiecePointCount-PHYS_BASE(a6),d1	; 5C37E
+        sub.b   WheelPoint-PHYS_BASE(a6),d1     ; 5C384
         subi.b  #$4,d1                          ; 5C38A
         jsr     (PiecePointHeight).l            ; 5C38E
-        move.w  d0,(EndHeightB1).l                ; 5C394
+        move.w  d0,EndHeightB1-PHYS_BASE(a6)    ; 5C394
         addq.b  #$1,d1                          ; 5C39A
         jsr     (PiecePointHeight).l            ; 5C39C
-        move.w  d0,(EndHeightA1).l                ; 5C3A2
+        move.w  d0,EndHeightA1-PHYS_BASE(a6)    ; 5C3A2
         addq.b  #$1,d1                          ; 5C3A8
         jsr     (PiecePointHeight).l            ; 5C3AA
-        move.w  d0,(EndHeightB0).l                ; 5C3B0
+        move.w  d0,EndHeightB0-PHYS_BASE(a6)    ; 5C3B0
         addq.b  #$1,d1                          ; 5C3B6
         jsr     (PiecePointHeight).l            ; 5C3B8
-        move.w  d0,(EndHeightA0).l                ; 5C3BE
+        move.w  d0,EndHeightA0-PHYS_BASE(a6)    ; 5C3BE
         addq.b  #$1,d1                          ; 5C3C4
 l_5C3C6:
-        move.b  (WorkD1b).l,d1                ; 5C3C6
+        move.b  WorkD1b-PHYS_BASE(a6),d1        ; 5C3C6
         jsr     (WheelTrackHeight).l                   ; 5C3CC
         subq.b  #$2,d1                          ; 5C3D2
         bpl.w   l_5C1EE                         ; 5C3D4
@@ -9114,39 +9120,39 @@ l_5C462:
 ; (TrackUnderWheels)
 ;-------------------------------------------------------------------------------
 WheelNextPiece:
-        move.b  (WheelAlong).l,d0                ; 5C484
-        move.b  (PieceReversed).l,d3                ; 5C48A
+        move.b  WheelAlong-PHYS_BASE(a6),d0     ; 5C484
+        move.b  PieceReversed-PHYS_BASE(a6),d3  ; 5C48A
         eor.b   d3,d0                           ; 5C490
         bpl.w   l_5C4B0                         ; 5C492
         jsr     (PreviousPiece).l               ; 5C496
         jsr     (LoadPiece).l                   ; 5C49C
-        move.b  (PieceReversed).l,d0                ; 5C4A2
+        move.b  PieceReversed-PHYS_BASE(a6),d0  ; 5C4A2
         bpl.w   l_5C4DC                         ; 5C4A8
         bmi.w   l_5C4C6                         ; 5C4AC
 l_5C4B0:
         jsr     (NextPiece).l                   ; 5C4B0
         jsr     (LoadPiece).l                   ; 5C4B6
-        tst.b   (PieceReversed).l                   ; 5C4BC
+        tst.b   PieceReversed-PHYS_BASE(a6)     ; 5C4BC
         bmi.w   l_5C4DC                         ; 5C4C2
 l_5C4C6:
-        move.b  #$0,(WheelPoint).l               ; 5C4C6
-        tst.b   (WheelAlong).l                   ; 5C4CE
+        move.b  #$0,WheelPoint-PHYS_BASE(a6)    ; 5C4C6
+        tst.b   WheelAlong-PHYS_BASE(a6)        ; 5C4CE
         bpl.w   l_5C518                         ; 5C4D4
         bmi.w   l_5C4F4                         ; 5C4D8
 l_5C4DC:
-        move.b  (PiecePointCount).l,d0                ; 5C4DC
+        move.b  PiecePointCount-PHYS_BASE(a6),d0	; 5C4DC
         subq.b  #$4,d0                          ; 5C4E2
-        move.b  d0,(WheelPoint).l                ; 5C4E4
-        tst.b   (WheelAlong).l                   ; 5C4EA
+        move.b  d0,WheelPoint-PHYS_BASE(a6)     ; 5C4E4
+        tst.b   WheelAlong-PHYS_BASE(a6)        ; 5C4EA
         bmi.w   l_5C518                         ; 5C4F0
 l_5C4F4:
-        neg.b   (AlongFraction).l                   ; 5C4F4
+        neg.b   AlongFraction-PHYS_BASE(a6)     ; 5C4F4
         bne.w   l_5C506                         ; 5C4FA
-        move.b  #$ff,(AlongFraction).l              ; 5C4FE
+        move.b  #$ff,AlongFraction-PHYS_BASE(a6)	; 5C4FE
 l_5C506:
-        neg.b   (AcrossFraction).l                   ; 5C506
+        neg.b   AcrossFraction-PHYS_BASE(a6)    ; 5C506
         bne.w   l_5C518                         ; 5C50C
-        move.b  #$ff,(AcrossFraction).l              ; 5C510
+        move.b  #$ff,AcrossFraction-PHYS_BASE(a6)	; 5C510
 l_5C518:
         rts                                     ; 5C518
 
@@ -9180,24 +9186,24 @@ l_5C54C:
 ; InterpolatePiece - a point between the ends of a piece (by PieceFraction)
 ;-------------------------------------------------------------------------------
 InterpolatePiece:
-        move.b  (AcrossFraction).l,d3                ; 5C554
+        move.b  AcrossFraction-PHYS_BASE(a6),d3 ; 5C554
         andi.w  #$ff,d3                         ; 5C55A
-        move.w  (EndHeightB0).l,d0                ; 5C55E
-        sub.w   (EndHeightA0).l,d0                ; 5C564
+        move.w  EndHeightB0-PHYS_BASE(a6),d0    ; 5C55E
+        sub.w   EndHeightA0-PHYS_BASE(a6),d0    ; 5C564
         muls.w  d3,d0                           ; 5C56A
-        move.w  (EndHeightA0).l,d4                ; 5C56C
+        move.w  EndHeightA0-PHYS_BASE(a6),d4    ; 5C56C
         ext.l   d4                              ; 5C572
         asl.l   #$8,d4                          ; 5C574
         add.l   d4,d0                           ; 5C576
         move.l  d0,d5                           ; 5C578
-        move.w  (EndHeightB1).l,d0                ; 5C57A
-        sub.w   (EndHeightA1).l,d0                ; 5C580
+        move.w  EndHeightB1-PHYS_BASE(a6),d0    ; 5C57A
+        sub.w   EndHeightA1-PHYS_BASE(a6),d0    ; 5C580
         muls.w  d3,d0                           ; 5C586
-        move.w  (EndHeightA1).l,d4                ; 5C588
+        move.w  EndHeightA1-PHYS_BASE(a6),d4    ; 5C588
         ext.l   d4                              ; 5C58E
         asl.l   #$8,d4                          ; 5C590
         add.l   d4,d0                           ; 5C592
-        move.b  (AlongFraction).l,d3                ; 5C594
+        move.b  AlongFraction-PHYS_BASE(a6),d3  ; 5C594
         andi.w  #$ff,d3                         ; 5C59A
         sub.l   d5,d0                           ; 5C59E
         move.l  d0,d4                           ; 5C5A0
@@ -9232,7 +9238,7 @@ l_5C5E4:
 l_5C5E6:
         asr.l   #$8,d0                          ; 5C5E6
         add.l   d5,d0                           ; 5C5E8
-        move.l  d0,(WorkByte3).l                ; 5C5EA
+        move.l  d0,WorkByte3-PHYS_BASE(a6)      ; 5C5EA
         rts                                     ; 5C5F0
 
 ;-------------------------------------------------------------------------------
@@ -9242,28 +9248,28 @@ l_5C5E6:
 WheelTrackHeight:
         jsr     (InterpolatePiece).l            ; 5C5F2
         asl.b   #$1,d1                          ; 5C5F8
-        movea.l #WheelTrackHeights,a3                   ; 5C5FA
-        bclr    #$7,(WheelOffTrack).l               ; 5C600
+        lea WheelTrackHeights-PHYS_BASE(a6),a3  ; 5C5FA
+        bclr    #$7,WheelOffTrack-PHYS_BASE(a6) ; 5C600
         beq.w   l_5C612                         ; 5C608
         jsr     (WheelPastEdge).l                   ; 5C60C
 l_5C612:
-        move.b  (SpeedAbs).l,d0                ; 5C612
+        move.b  SpeedAbs-PHYS_BASE(a6),d0       ; 5C612
         cmpi.b  #$a,d0                          ; 5C618
         blt.w   l_5C632                         ; 5C61C
 l_5C620:
-        movea.l #WheelTrackHeights,a0                   ; 5C620
-        move.l  (WorkByte3).l,(a3,d1.w)         ; 5C626
+        lea WheelTrackHeights-PHYS_BASE(a6),a0  ; 5C620
+        move.l  WorkByte3-PHYS_BASE(a6),(a3,d1.w)	; 5C626
         lsr.b   #$1,d1                          ; 5C62E
         rts                                     ; 5C630
 l_5C632:
-        move.b  (CarPitch).l,d0                ; 5C632
+        move.b  CarPitch-PHYS_BASE(a6),d0       ; 5C632
         bpl.w   l_5C63E                         ; 5C638
         neg.b   d0                              ; 5C63C
 l_5C63E:
         cmpi.b  #$5,d0                          ; 5C63E
         bgt.w   l_5C620                         ; 5C642
         move.l  (a3,d1.w),d0                    ; 5C646
-        add.l   (WorkByte3).l,d0                ; 5C64A
+        add.l   WorkByte3-PHYS_BASE(a6),d0      ; 5C64A
         roxr.l  #$1,d0                          ; 5C650
         move.l  d0,(a3,d1.w)                    ; 5C652
         lsr.b   #$1,d1                          ; 5C656
@@ -9384,10 +9390,10 @@ l_5C7C6:
 ; $1000), further out it is the ground ($1000); WheelOffEdge the side, WheelsPastEdge bit 7
 ;-------------------------------------------------------------------------------
 WheelPastEdge:
-        move.w  (WheelAcross).l,d0                ; 5C808
+        move.w  WheelAcross-PHYS_BASE(a6),d0    ; 5C808
         bmi.w   l_5C820                         ; 5C80E
         move.w  #$180,d0                        ; 5C812
-        sub.w   (WheelAcross).l,d0                ; 5C816
+        sub.w   WheelAcross-PHYS_BASE(a6),d0    ; 5C816
         bpl.w   l_5C822                         ; 5C81C
 l_5C820:
         neg.w   d0                              ; 5C820
@@ -9396,27 +9402,27 @@ l_5C822:
         bgt.w   l_5C872                         ; 5C826
         andi.l  #$ff,d0                         ; 5C82A
         asl.l   #$4,d0                          ; 5C830
-        move.l  (WorkByte3).l,d3                ; 5C832
+        move.l  WorkByte3-PHYS_BASE(a6),d3      ; 5C832
         sub.l   d0,d3                           ; 5C838
         subi.l  #$100,d3                        ; 5C83A
         cmpi.l  #$1000,d3                       ; 5C840
         blt.w   l_5C872                         ; 5C846
-        move.l  d3,(WorkByte3).l                ; 5C84A
-        move.b  (WheelAcross).l,d3                ; 5C850
-        move.b  (PieceReversed).l,d0                ; 5C856
+        move.l  d3,WorkByte3-PHYS_BASE(a6)      ; 5C84A
+        move.b  WheelAcross-PHYS_BASE(a6),d3    ; 5C850
+        move.b  PieceReversed-PHYS_BASE(a6),d0  ; 5C856
         eor.b   d3,d0                           ; 5C85C
         andi.b  #$80,d0                         ; 5C85E
         bmi.w   l_5C86A                         ; 5C862
         move.b  #$40,d0                         ; 5C866
 l_5C86A:
-        move.b  d0,(WheelOffEdge).l                ; 5C86A
+        move.b  d0,WheelOffEdge-PHYS_BASE(a6)   ; 5C86A
         rts                                     ; 5C870
 l_5C872:
-        move.l  #$1000,(WorkByte3).l            ; 5C872
-        move.b  (WheelsPastEdge).l,d0                ; 5C87C
+        move.l  #$1000,WorkByte3-PHYS_BASE(a6)  ; 5C872
+        move.b  WheelsPastEdge-PHYS_BASE(a6),d0 ; 5C87C
         lsr.b   #$1,d0                          ; 5C882
         bset    #$7,d0                          ; 5C884
-        move.b  d0,(WheelsPastEdge).l                ; 5C888
+        move.b  d0,WheelsPastEdge-PHYS_BASE(a6) ; 5C888
         rts                                     ; 5C88E
 l_5C890:
         move.w  #$0,(dat_23C32).l               ; 5C890
@@ -9695,7 +9701,8 @@ l_5D2A6:
         jsr     (SetTextColour).l               ; 5D2BC
         jsr     (ClearPointHeights).l           ; 5D2C2
         move.b  (CurrentTrack).l,d1             ; 5D2C8
-        jsr     (BuildTrack).l                  ; 5D2CE
+        jsr     (BuildTrackTable).l             ; 5D2CE  (the enhanced game) BuildTrack, then LoadPiece's
+						; table (physfast.i)
         jsr     (BuildTrackGrid).l                   ; 5D2D4
         jsr     (UpdateDrawBridge).l            ; 5D2DA
         jsr     (LoadMountains).l               ; 5D2E0
@@ -12517,6 +12524,8 @@ l_5FB9A:
 ; HallOfFame - the Hall of Fame: its picture (Pic_HallOfFame) and the record times
 ;-------------------------------------------------------------------------------
 HallOfFame:
+	clr.w	(LoadPieceCount).l		; (the enhanced game) the track's tables borrowed:
+						; LoadPiece's table not valid (physfast.i)
         move.b  #$42,(dat_5D724).l              ; 5FBC6
         move.w  #FID_HALLOFFAME,d0              ; its picture loaded from the disk (LoadPicture)
         jsr     (LoadPicture).l
@@ -12675,9 +12684,10 @@ l_5FE50:
 ;-------------------------------------------------------------------------------
 ; LoadPiece - d1: a piece made current: its height profiles (HeightProfiles by TrackPieceProfileA
 ; and B) and their base heights, its flags (PieceDirection, PieceReversed, PieceShape: its shape) and
-; its shape's numbers from the 6502 data (Data6502 by the shape: the points, the sections)
+; its shape's numbers from the 6502 data (Data6502 by the shape: the points, the sections). (The
+; enhanced game: the release's routine, LoadPiece is physfast.i's - the piece's record copied)
 ;-------------------------------------------------------------------------------
-LoadPiece:
+LoadPieceRelease:
         movea.l #TrackPieceProfileA,a1             ; 5FE56
         move.b  (a1,d1.w),d2                    ; 5FE5C
         move.b  d2,(PieceProfileA).l                ; 5FE60
@@ -13976,18 +13986,18 @@ l_6100A:
 ; the heading from $C000 to $BCB7, and with CopylockResult cleared not at all)
 ;-------------------------------------------------------------------------------
 CarPhysicsPieces:
-        move.b  (PlayerPiece).l,d1              ; 61012
-        move.b  d1,(PieceIndex).l               ; 61018
+        move.b  PlayerPiece-PHYS_BASE(a6),d1    ; 61012
+        move.b  d1,PieceIndex-PHYS_BASE(a6)     ; 61018
         jsr     (LoadPiece).l                   ; 6101E
-        move.w  (TrackHeading).l,d4                ; 61024
-        sub.w   (CarHeading).l,d4                ; 6102A
-        move.w  (PieceReversed).l,d3                ; 61030
+        move.w  TrackHeading-PHYS_BASE(a6),d4   ; 61024
+        sub.w   CarHeading-PHYS_BASE(a6),d4     ; 6102A
+        move.w  PieceReversed-PHYS_BASE(a6),d3  ; 61030
         eor.w   d3,d4                           ; 61036
         move.b  #$0,d2                          ; 61038
-        tst.b   (PieceDirection).l                   ; 6103C
+        tst.b   PieceDirection-PHYS_BASE(a6)    ; 6103C
         bpl.w   l_61056                         ; 61042
         addq.b  #$2,d2                          ; 61046
-        move.w  (AcrossOtherWay).l,d0                ; 61048
+        move.w  AcrossOtherWay-PHYS_BASE(a6),d0 ; 61048
         eor.w   d3,d0                           ; 6104E
         bpl.w   l_61056                         ; 61050
         addq.b  #$2,d2                          ; 61054
@@ -13998,8 +14008,8 @@ l_61056:
         bpl.w   l_61068                         ; 61062
         neg.w   d0                              ; 61066
 l_61068:
-        move.w  d0,(WorkAccum).l                ; 61068
-        move.w  d4,(WorkPointX).l                ; 6106E
+        move.w  d0,WorkAccum-PHYS_BASE(a6)      ; 61068
+        move.w  d4,WorkPointX-PHYS_BASE(a6)     ; 6106E
         cmpi.w  #$800,d0                        ; 61074
         bcs.w   l_61084                         ; 61078
         move.w  #$7fff,d0                       ; 6107C
@@ -14007,65 +14017,65 @@ l_61068:
 l_61084:
         asl.w   #$4,d0                          ; 61084
 l_61086:
-        move.w  d0,(SteerBackHelp).l                ; 61086
-        move.b  (PieceSections).l,d0                ; 6108C
-        sub.b   (PlayerPiecePos).l,d0           ; 61092
+        move.w  d0,SteerBackHelp-PHYS_BASE(a6)  ; 61086
+        move.b  PieceSections-PHYS_BASE(a6),d0  ; 6108C
+        sub.b   PlayerPiecePos-PHYS_BASE(a6),d0 ; 61092
         cmpi.b  #$2,d0                          ; 61098
         bcc.w   l_610AC                         ; 6109C
         jsr     (NextPiece).l                   ; 610A0
         jsr     (LoadPiece).l                   ; 610A6
 l_610AC:
-        move.b  (AcrossOtherWay).l,d0                ; 610AC
-        move.b  (PieceReversed).l,d3                ; 610B2
+        move.b  AcrossOtherWay-PHYS_BASE(a6),d0 ; 610AC
+        move.b  PieceReversed-PHYS_BASE(a6),d3  ; 610B2
         eor.b   d3,d0                           ; 610B8
-        move.b  d0,(BendWay).l                ; 610BA
-        move.b  (SteeringInput).l,d0                ; 610C0
+        move.b  d0,BendWay-PHYS_BASE(a6)        ; 610BA
+        move.b  SteeringInput-PHYS_BASE(a6),d0  ; 610C0
         beq.w   l_6113C                         ; 610C6
-        move.b  (WorkPointX).l,d3                ; 610CA
+        move.b  WorkPointX-PHYS_BASE(a6),d3     ; 610CA
         eor.b   d3,d0                           ; 610D0
-        move.b  d0,(WorkByte6).l                ; 610D2
-        move.b  (PieceDirection).l,d0                ; 610D8
+        move.b  d0,WorkByte6-PHYS_BASE(a6)      ; 610D2
+        move.b  PieceDirection-PHYS_BASE(a6),d0 ; 610D8
         bpl.w   l_61120                         ; 610DE
-        move.b  (SteeringInput).l,d0                ; 610E2
-        move.b  (BendWay).l,d3                ; 610E8
+        move.b  SteeringInput-PHYS_BASE(a6),d0  ; 610E2
+        move.b  BendWay-PHYS_BASE(a6),d3        ; 610E8
         eor.b   d3,d0                           ; 610EE
         bmi.w   l_61104                         ; 610F0
-        move.b  (ShapeSteer).l,d0                ; 610F4
+        move.b  ShapeSteer-PHYS_BASE(a6),d0     ; 610F4
         addi.b  #$2d,d0                         ; 610FA
         jmp     (l_61126).l                     ; 610FE
 l_61104:
-        move.b  (BendWay).l,d0                ; 61104
-        move.b  d0,(SteeringInput).l                ; 6110A
-        move.b  (ShapeSteer).l,d0                ; 61110
+        move.b  BendWay-PHYS_BASE(a6),d0        ; 61104
+        move.b  d0,SteeringInput-PHYS_BASE(a6)  ; 6110A
+        move.b  ShapeSteer-PHYS_BASE(a6),d0     ; 61110
         subi.b  #$23,d0                         ; 61116
         jmp     (l_61136).l                     ; 6111A
 l_61120:
-        move.b  (ShapeSteer).l,d0                ; 61120
+        move.b  ShapeSteer-PHYS_BASE(a6),d0     ; 61120
 l_61126:
-        tst.b   (WorkByte6).l                   ; 61126
+        tst.b   WorkByte6-PHYS_BASE(a6)         ; 61126
         bmi.w   l_61136                         ; 6112C
-        add.b   (SteerBackHelp).l,d0                ; 61130
+        add.b   SteerBackHelp-PHYS_BASE(a6),d0  ; 61130
 l_61136:
         jmp     (l_6121C).l                     ; 61136
 l_6113C:
         move.w  #$0,d4                          ; 6113C
-        move.b  (PieceDirection).l,d0                ; 61140
+        move.b  PieceDirection-PHYS_BASE(a6),d0 ; 61140
         bpl.w   l_61160                         ; 61146
-        move.b  (BendWay).l,(SteeringInput).l     ; 6114A
-        move.b  (ShapeSteer).l,d0                ; 61154
+        move.b  BendWay-PHYS_BASE(a6),SteeringInput-PHYS_BASE(a6)	; 6114A
+        move.b  ShapeSteer-PHYS_BASE(a6),d0     ; 61154
         jmp     (l_6121C).l                     ; 6115A
 l_61160:
-        move.b  (WorkPointX).l,(SteeringInput).l     ; 61160
-        move.w  (WorkAccum).l,d0                ; 6116A
+        move.b  WorkPointX-PHYS_BASE(a6),SteeringInput-PHYS_BASE(a6)	; 61160
+        move.w  WorkAccum-PHYS_BASE(a6),d0      ; 6116A
         move.b  d0,d2                           ; 61170
-        move.b  (WorkAccum).l,d3                ; 61172
+        move.b  WorkAccum-PHYS_BASE(a6),d3      ; 61172
         beq.w   l_61188                         ; 61178
         subi.w  #$1e00,d0                       ; 6117C
         bpl.w   l_611C2                         ; 61180
         move.b  #$ff,d2                         ; 61184
 l_61188:
-        move.b  d2,(WorkByte5).l                ; 61188
-        move.w  (SpeedForward).l,d0                ; 6118E
+        move.b  d2,WorkByte5-PHYS_BASE(a6)      ; 61188
+        move.w  SpeedForward-PHYS_BASE(a6),d0   ; 6118E
         bpl.w   l_6119A                         ; 61194
         neg.w   d0                              ; 61198
 l_6119A:
@@ -14073,7 +14083,7 @@ l_6119A:
         bpl.w   l_611A6                         ; 6119E
         move.w  #$7f00,d0                       ; 611A2
 l_611A6:
-        move.b  (WorkByte5).l,d3                ; 611A6
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 611A6
         asl.w   #$7,d3                          ; 611AC
         bclr    #$f,d3                          ; 611AE
         muls.w  d3,d0                           ; 611B2
@@ -14084,14 +14094,14 @@ l_611A6:
         bne.w   l_611C2                         ; 611BC
         addq.b  #$1,d0                          ; 611C0
 l_611C2:
-        tst.b   (WorkPointX).l                   ; 611C2
+        tst.b   WorkPointX-PHYS_BASE(a6)        ; 611C2
         bpl.w   l_611CE                         ; 611C8
         neg.w   d0                              ; 611CC
 l_611CE:
-        add.w   d0,(CarHeading).l                ; 611CE
+        add.w   d0,CarHeading-PHYS_BASE(a6)     ; 611CE
 l_611D4:
         move.w  #$0,d2                          ; 611D4
-        move.w  (TurnSpeedHeading).l,d0                ; 611D8
+        move.w  TurnSpeedHeading-PHYS_BASE(a6),d0	; 611D8
         andi.l  #$f,d2                          ; 611DE
         lsr.w   d2,d0                           ; 611E4
         sub.w   d0,d4                           ; 611E6
@@ -14101,29 +14111,29 @@ l_611D4:
         addi.l  #$36729563,d3                   ; 611FA  made as a sum
         cmp.l   (a0),d3                         ; 61200  CopylockResult as the Copylock leaves it?
         bne.w   l_61210                         ; 61202
-        tst.b   (WheelsDown).l                   ; 61206
+        tst.b   WheelsDown-PHYS_BASE(a6)        ; 61206
         bne.w   l_61214                         ; 6120C
 l_61210:
         move.w  #$0,d4                          ; 61210  no: no turning force (also in the air)
 l_61214:
-        move.w  d4,(TurnForceHeading).l                ; 61214
+        move.w  d4,TurnForceHeading-PHYS_BASE(a6)	; 61214
         rts                                     ; 6121A
 l_6121C:
-        move.b  d0,(WorkByte5).l                ; 6121C
-        move.w  (SpeedForward).l,d0                ; 61222
-        move.b  (WorkByte5).l,d3                ; 61228
+        move.b  d0,WorkByte5-PHYS_BASE(a6)      ; 6121C
+        move.w  SpeedForward-PHYS_BASE(a6),d0   ; 61222
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 61228
         asl.w   #$7,d3                          ; 6122E
         bclr    #$f,d3                          ; 61230
         muls.w  d3,d0                           ; 61234
         asl.l   #$1,d0                          ; 61236
         swap    d0                              ; 61238
-        tst.b   (SteeringInput).l                   ; 6123A
+        tst.b   SteeringInput-PHYS_BASE(a6)     ; 6123A
         bpl.w   l_61246                         ; 61240
         neg.w   d0                              ; 61244
 l_61246:
         asr.w   #$3,d0                          ; 61246
         move.w  d0,d4                           ; 61248
-        cmpi.b  #$1e,(WorkAccum).l              ; 6124A
+        cmpi.b  #$1e,WorkAccum-PHYS_BASE(a6)    ; 6124A
         bcs.w   l_611D4                         ; 61252
         bra.w   l_61160                         ; 61256
 BendHeadingOffsets:				; 3 words added to the heading error by the piece (CarPhysicsPieces): 0 a straight, $D9 a bend one way, -$D9 the other (by AcrossOtherWay eor PieceReversed)
@@ -14227,7 +14237,8 @@ MatrixTimesPos:
         move.w  #$13d,d0                        ; 61340
 
 ;-------------------------------------------------------------------------------
-; MatrixTimes - d1: an element of ViewMatrix, d0: a value - d0 = their product
+; MatrixTimes - d1: an element of ViewMatrix, d0: a value - d0 = their product (the enhanced
+; game: inlined where it was called, as are MatrixTimesNeg and MatrixTimesPos - physfast.i)
 ;-------------------------------------------------------------------------------
 MatrixTimes:
         asl.w   #$1,d1                          ; 61344
@@ -14413,21 +14424,39 @@ l_6152A:
 ;-------------------------------------------------------------------------------
 VelocityToCarAxes:
         move.w  #$2,d2                          ; 6158C
-        movea.l #dat_1EC46,a5                   ; 61590
-        movea.l #SpeedSideways,a4                   ; 61596
+        lea dat_1EC46-PHYS_BASE(a6),a5          ; 61590
+        lea SpeedSideways-PHYS_BASE(a6),a4      ; 61596
 l_6159C:
         move.w  #$0,d5                          ; 6159C
-        move.w  (VelocityX).l,d0                ; 615A0
+        move.w  VelocityX-PHYS_BASE(a6),d0      ; 615A0
         move.b  (a5,d2.w),d1                    ; 615A6
-        jsr     (MatrixTimes).l                 ; 615AA
+	asl.w	#1,d1				; 615AA (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 615B0
-        move.w  (VelocityY).l,d0                ; 615B2
+        move.w  VelocityY-PHYS_BASE(a6),d0      ; 615B2
         move.b  $3(a5,d2.w),d1                  ; 615B8
-        jsr     (MatrixTimes).l                 ; 615BC
+	asl.w	#1,d1				; 615BC (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 615C2
-        move.w  (VelocityZ).l,d0                ; 615C4
+        move.w  VelocityZ-PHYS_BASE(a6),d0      ; 615C4
         move.b  $6(a5,d2.w),d1                  ; 615CA
-        jsr     (MatrixTimes).l                 ; 615CE
+	asl.w	#1,d1				; 615CE (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 615D4
         asl.w   #$1,d2                          ; 615D6
         move.w  d5,(a4,d2.w)                    ; 615D8
@@ -14442,14 +14471,35 @@ l_6159C:
 ;-------------------------------------------------------------------------------
 GravityInCarAxes:
         move.w  #$f,d1                          ; 615E6
-        jsr     (MatrixTimesNeg).l              ; 615EA
-        move.w  d0,(GravityUp).l                ; 615F0
+	move.w	#$fec3,d0			; 615EA (MatrixTimesNeg: x -$13D)
+	asl.w	#1,d1				; (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
+        move.w  d0,GravityUp-PHYS_BASE(a6)      ; 615F0
         move.w  #$4,d1                          ; 615F6
-        jsr     (MatrixTimesNeg).l              ; 615FA
-        move.w  d0,(GravityForward).l                ; 61600
+	move.w	#$fec3,d0			; 615FA (MatrixTimesNeg: x -$13D)
+	asl.w	#1,d1				; (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
+        move.w  d0,GravityForward-PHYS_BASE(a6) ; 61600
         move.w  #$e,d1                          ; 61606
-        jsr     (MatrixTimesPos).l              ; 6160A
-        move.w  d0,(GravitySide).l                ; 61610
+	move.w	#$13d,d0			; 6160A (MatrixTimesPos: x $13D)
+	asl.w	#1,d1				; (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
+        move.w  d0,GravitySide-PHYS_BASE(a6)    ; 61610
         rts                                     ; 61616
 
 ;-------------------------------------------------------------------------------
@@ -14458,21 +14508,39 @@ GravityInCarAxes:
 ;-------------------------------------------------------------------------------
 ForceToWorld:
         move.w  #$2,d2                          ; 61618
-        movea.l #dat_1EC46,a5                   ; 6161C
-        movea.l #ForceX,a4                   ; 61622
+        lea dat_1EC46-PHYS_BASE(a6),a5          ; 6161C
+        lea ForceX-PHYS_BASE(a6),a4             ; 61622
 l_61628:
         move.w  #$0,d5                          ; 61628
-        move.w  (CarForceSide).l,d0                ; 6162C
+        move.w  CarForceSide-PHYS_BASE(a6),d0   ; 6162C
         move.b  $9(a5,d2.w),d1                  ; 61632
-        jsr     (MatrixTimes).l                 ; 61636
+	asl.w	#1,d1				; 61636 (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 6163C
-        move.w  (CarForceUp).l,d0                ; 6163E
+        move.w  CarForceUp-PHYS_BASE(a6),d0     ; 6163E
         move.b  $c(a5,d2.w),d1                  ; 61644
-        jsr     (MatrixTimes).l                 ; 61648
+	asl.w	#1,d1				; 61648 (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 6164E
-        move.w  (CarForceForward).l,d0                ; 61650
+        move.w  CarForceForward-PHYS_BASE(a6),d0	; 61650
         move.b  $f(a5,d2.w),d1                  ; 61656
-        jsr     (MatrixTimes).l                 ; 6165A
+	asl.w	#1,d1				; 6165A (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 61660
         asl.w   #$1,d2                          ; 61662
         move.w  d5,(a4,d2.w)                    ; 61664
@@ -14488,28 +14556,46 @@ l_61628:
 ;-------------------------------------------------------------------------------
 TorqueToWorld:
         move.w  #$1,d2                          ; 61672
-        movea.l #dat_1EC46,a5                   ; 61676
-        movea.l #PitchRate,a4                   ; 6167C
+        lea dat_1EC46-PHYS_BASE(a6),a5          ; 61676
+        lea PitchRate-PHYS_BASE(a6),a4          ; 6167C
 l_61682:
         move.w  #$0,d5                          ; 61682
-        move.w  (TurnSpeedPitch).l,d0                ; 61686
+        move.w  TurnSpeedPitch-PHYS_BASE(a6),d0 ; 61686
         move.b  $12(a5,d2.w),d1                 ; 6168C
-        jsr     (MatrixTimes).l                 ; 61690
+	asl.w	#1,d1				; 61690 (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 61696
-        move.w  (TurnSpeedHeading).l,d0                ; 61698
+        move.w  TurnSpeedHeading-PHYS_BASE(a6),d0	; 61698
         move.b  $14(a5,d2.w),d1                 ; 6169E
-        jsr     (MatrixTimes).l                 ; 616A2
+	asl.w	#1,d1				; 616A2 (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
         add.w   d0,d5                           ; 616A8
         asl.w   #$1,d2                          ; 616AA
         move.w  d5,(a4,d2.w)                    ; 616AC
         lsr.w   #$1,d2                          ; 616B0
         subq.b  #$1,d2                          ; 616B2
         bpl.w   l_61682                         ; 616B4
-        move.w  (HeadingRate).l,d0                ; 616B8
+        move.w  HeadingRate-PHYS_BASE(a6),d0    ; 616B8
         move.w  #$4,d1                          ; 616BE
-        jsr     (MatrixTimes).l                 ; 616C2
-        add.w   (TurnSpeedRoll).l,d0                ; 616C8
-        move.w  d0,(RollRate).l                ; 616CE
+	asl.w	#1,d1				; 616C2 (the enhanced game) MatrixTimes inlined
+	lea	ViewMatrix-PHYS_BASE(a6),a0	; (physfast.i): the same registers and flags
+	move.w	(a0,d1.w),d3
+	muls.w	d3,d0
+	asl.l	#1,d0
+	swap	d0
+	lsr.w	#1,d1
+        add.w   TurnSpeedRoll-PHYS_BASE(a6),d0  ; 616C8
+        move.w  d0,RollRate-PHYS_BASE(a6)       ; 616CE
         rts                                     ; 616D4
 	dc.b	$00,$00
 Countdown1:				; counted down to 0 by VBlankTick each frame
@@ -14650,6 +14736,8 @@ l_6185A:
 ; the forces, its speed, the wheels on the track (WheelsOnTrack)
 ;-------------------------------------------------------------------------------
 CarPhysics:
+	movem.l	a6,-(a7)			; (the enhanced game) a6: the race's variables
+	lea	(PHYS_BASE).l,a6		; (physfast.i; movem and lea leave the flags)
         jsr     (BuildViewMatrix).l             ; 6185C
         jsr     (PointOffsets).l                   ; 61862
         jsr     (TrackUnderWheels).l                   ; 61868
@@ -14658,7 +14746,7 @@ CarPhysics:
         jsr     (SetSpeed).l                   ; 6187A
         jsr     (GravityInCarAxes).l                   ; 61880
         jsr     (WheelsOnTrack).l               ; 61886
-        move.b  (RaceUnderway).l,d0                ; 6188C
+        move.b  RaceUnderway-PHYS_BASE(a6),d0   ; 6188C
         beq.w   l_618C0                         ; 61892
         jsr     (WheelForces).l                   ; 61896
         jsr     (CarPhysicsPieces).l                   ; 6189C
@@ -14670,6 +14758,7 @@ CarPhysics:
 l_618C0:
         jsr     (AddForce).l                   ; 618C0
         jsr     (MoveCar).l                   ; 618C6
+	movem.l	(a7)+,a6			; (the enhanced game) a6 back
         rts                                     ; 618CC
 
 ;-------------------------------------------------------------------------------
@@ -14679,34 +14768,34 @@ l_618C0:
 ; CarAcrossTrack and CarAlongPiece)
 ;-------------------------------------------------------------------------------
 PointOffsets:
-        move.w  (CarTrackMatrixA).l,d4                ; 618CE
-        move.w  (CarTrackMatrix).l,d0                ; 618D4
+        move.w  CarTrackMatrixA-PHYS_BASE(a6),d4	; 618CE
+        move.w  CarTrackMatrix-PHYS_BASE(a6),d0 ; 618D4
         asr.w   #$1,d4                          ; 618DA
         asr.w   #$1,d0                          ; 618DC
         sub.w   d0,d4                           ; 618DE
-        move.w  (CarTrackMatrix4).l,d5                ; 618E0
-        move.w  (CarTrackMatrixE).l,d0                ; 618E6
+        move.w  CarTrackMatrix4-PHYS_BASE(a6),d5	; 618E0
+        move.w  CarTrackMatrixE-PHYS_BASE(a6),d0	; 618E6
         asr.w   #$1,d5                          ; 618EC
         asr.w   #$1,d0                          ; 618EE
         sub.w   d0,d5                           ; 618F0
-        move.w  (CarTrackMatrix10).l,d0                ; 618F2
-        move.w  (CarTrackMatrix12).l,d3                ; 618F8
+        move.w  CarTrackMatrix10-PHYS_BASE(a6),d0	; 618F2
+        move.w  CarTrackMatrix12-PHYS_BASE(a6),d3	; 618F8
         asr.w   #$5,d4                          ; 618FE
         asr.w   #$5,d5                          ; 61900
         asr.w   #$5,d0                          ; 61902
         asr.w   #$5,d3                          ; 61904
-        move.w  d0,(PointAcrossRear).l                ; 61906
-        neg.w   (PointAcrossRear).l                   ; 6190C
-        move.w  d3,(PointAlongRear).l                ; 61912
-        neg.w   (PointAlongRear).l                   ; 61918
-        move.w  d0,(PointAcrossB).l                ; 6191E
-        move.w  d0,(PointAcrossA).l                ; 61924
-        move.w  d3,(PointAlongB).l                ; 6192A
-        move.w  d3,(PointAlongA).l                ; 61930
-        sub.w   d4,(PointAcrossB).l                ; 61936
-        sub.w   d5,(PointAlongB).l                ; 6193C
-        add.w   d4,(PointAcrossA).l                ; 61942
-        add.w   d5,(PointAlongA).l                ; 61948
+        move.w  d0,PointAcrossRear-PHYS_BASE(a6)	; 61906
+        neg.w   PointAcrossRear-PHYS_BASE(a6)   ; 6190C
+        move.w  d3,PointAlongRear-PHYS_BASE(a6) ; 61912
+        neg.w   PointAlongRear-PHYS_BASE(a6)    ; 61918
+        move.w  d0,PointAcrossB-PHYS_BASE(a6)   ; 6191E
+        move.w  d0,PointAcrossA-PHYS_BASE(a6)   ; 61924
+        move.w  d3,PointAlongB-PHYS_BASE(a6)    ; 6192A
+        move.w  d3,PointAlongA-PHYS_BASE(a6)    ; 61930
+        sub.w   d4,PointAcrossB-PHYS_BASE(a6)   ; 61936
+        sub.w   d5,PointAlongB-PHYS_BASE(a6)    ; 6193C
+        add.w   d4,PointAcrossA-PHYS_BASE(a6)   ; 61942
+        add.w   d5,PointAlongA-PHYS_BASE(a6)    ; 61948
         rts                                     ; 6194E
 
 ;-------------------------------------------------------------------------------
@@ -14716,7 +14805,7 @@ PointOffsets:
 ; there); ViewPitch = -CarPitch; SteepPitch set when the pitch is steep
 ;-------------------------------------------------------------------------------
 MoveCar:
-        move.w  (VelocityX).l,d0                ; 61950
+        move.w  VelocityX-PHYS_BASE(a6),d0      ; 61950
         move.b  #$ee,d2                         ; 61956
         beq.w   l_61962                         ; 6195A
         muls.w  d2,d0                           ; 6195E
@@ -14724,8 +14813,8 @@ MoveCar:
 l_61962:
         ext.l   d0                              ; 61962
         asl.l   #$6,d0                          ; 61964
-        add.l   d0,(CarX).l                ; 61966
-        move.w  (VelocityY).l,d0                ; 6196C
+        add.l   d0,CarX-PHYS_BASE(a6)           ; 61966
+        move.w  VelocityY-PHYS_BASE(a6),d0      ; 6196C
         move.b  #$ee,d2                         ; 61972
         beq.w   l_6197E                         ; 61976
         muls.w  d2,d0                           ; 6197A
@@ -14733,8 +14822,8 @@ l_61962:
 l_6197E:
         ext.l   d0                              ; 6197E
         asl.l   #$7,d0                          ; 61980
-        add.l   d0,(CarY).l                ; 61982
-        move.w  (VelocityZ).l,d0                ; 61988
+        add.l   d0,CarY-PHYS_BASE(a6)           ; 61982
+        move.w  VelocityZ-PHYS_BASE(a6),d0      ; 61988
         move.b  #$ee,d2                         ; 6198E
         beq.w   l_6199A                         ; 61992
         muls.w  d2,d0                           ; 61996
@@ -14742,43 +14831,43 @@ l_6197E:
 l_6199A:
         ext.l   d0                              ; 6199A
         asl.l   #$6,d0                          ; 6199C
-        add.l   d0,(CarZ).l                ; 6199E
-        move.w  (CarY).l,d0                ; 619A4
+        add.l   d0,CarZ-PHYS_BASE(a6)           ; 6199E
+        move.w  CarY-PHYS_BASE(a6),d0           ; 619A4
         cmpi.w  #$3e8,d0                        ; 619AA
         blt.w   l_619BA                         ; 619AE
-        move.w  #$3e8,(CarY).l             ; 619B2
+        move.w  #$3e8,CarY-PHYS_BASE(a6)        ; 619B2
 l_619BA:
-        move.w  (PitchRate).l,d0                ; 619BA
+        move.w  PitchRate-PHYS_BASE(a6),d0      ; 619BA
         move.b  #$ee,d2                         ; 619C0
         beq.w   l_619CC                         ; 619C4
         muls.w  d2,d0                           ; 619C8
         asr.l   #$8,d0                          ; 619CA
 l_619CC:
-        add.w   d0,(CarPitch).l                ; 619CC
-        move.w  (HeadingRate).l,d0                ; 619D2
+        add.w   d0,CarPitch-PHYS_BASE(a6)       ; 619CC
+        move.w  HeadingRate-PHYS_BASE(a6),d0    ; 619D2
         move.b  #$ee,d2                         ; 619D8
         beq.w   l_619E4                         ; 619DC
         muls.w  d2,d0                           ; 619E0
         asr.l   #$8,d0                          ; 619E2
 l_619E4:
-        add.w   d0,(CarHeading).l                ; 619E4
-        move.w  (RollRate).l,d0                ; 619EA
+        add.w   d0,CarHeading-PHYS_BASE(a6)     ; 619E4
+        move.w  RollRate-PHYS_BASE(a6),d0       ; 619EA
         move.b  #$ee,d2                         ; 619F0
         beq.w   l_619FC                         ; 619F4
         muls.w  d2,d0                           ; 619F8
         asr.l   #$8,d0                          ; 619FA
 l_619FC:
-        add.w   d0,(CarRoll).l                ; 619FC
+        add.w   d0,CarRoll-PHYS_BASE(a6)        ; 619FC
         move.w  #$0,d2                          ; 61A02
-        tst.b   (OnGround).l                   ; 61A06
+        tst.b   OnGround-PHYS_BASE(a6)          ; 61A06
         bpl.w   l_61A20                         ; 61A0C
-        move.b  (WheelsPastEdge).l,d0                ; 61A10
+        move.b  WheelsPastEdge-PHYS_BASE(a6),d0 ; 61A10
         cmpi.b  #$e0,d0                         ; 61A16
         bne.w   l_61A20                         ; 61A1A
         addq.b  #$2,d2                          ; 61A1E
 l_61A20:
         movea.l #dat_61AD4,a0                   ; 61A20
-        move.w  (CarPitch).l,d3                ; 61A26
+        move.w  CarPitch-PHYS_BASE(a6),d3       ; 61A26
         bmi.w   l_61A3E                         ; 61A2C
         move.w  (a0,d2.w),d0                    ; 61A30
         cmp.w   d3,d0                           ; 61A34
@@ -14789,13 +14878,13 @@ l_61A3E:
         cmp.w   d3,d0                           ; 61A42
         bcs.w   l_61A62                         ; 61A44
 l_61A48:
-        move.w  d0,(CarPitch).l                ; 61A48
-        move.w  (TurnSpeedPitch).l,d3                ; 61A4E
+        move.w  d0,CarPitch-PHYS_BASE(a6)       ; 61A48
+        move.w  TurnSpeedPitch-PHYS_BASE(a6),d3 ; 61A4E
         eor.w   d3,d0                           ; 61A54
         bmi.w   l_61A62                         ; 61A56
-        move.w  #$0,(TurnSpeedPitch).l               ; 61A5A
+        move.w  #$0,TurnSpeedPitch-PHYS_BASE(a6)	; 61A5A
 l_61A62:
-        move.w  (CarRoll).l,d3                ; 61A62
+        move.w  CarRoll-PHYS_BASE(a6),d3        ; 61A62
         bmi.w   l_61A7A                         ; 61A68
         move.w  (a0,d2.w),d0                    ; 61A6C
         cmp.w   d3,d0                           ; 61A70
@@ -14806,24 +14895,24 @@ l_61A7A:
         cmp.w   d3,d0                           ; 61A7E
         bcs.w   l_61A9E                         ; 61A80
 l_61A84:
-        move.w  d0,(CarRoll).l                ; 61A84
-        move.w  (TurnSpeedRoll).l,d3                ; 61A8A
+        move.w  d0,CarRoll-PHYS_BASE(a6)        ; 61A84
+        move.w  TurnSpeedRoll-PHYS_BASE(a6),d3  ; 61A8A
         eor.w   d3,d0                           ; 61A90
         bmi.w   l_61A9E                         ; 61A92
-        move.w  #$0,(TurnSpeedRoll).l               ; 61A96
+        move.w  #$0,TurnSpeedRoll-PHYS_BASE(a6) ; 61A96
 l_61A9E:
-        bclr    #$7,(SteepPitch).l               ; 61A9E
-        move.b  (CarPitch).l,d0                ; 61AA6
+        bclr    #$7,SteepPitch-PHYS_BASE(a6)    ; 61A9E
+        move.b  CarPitch-PHYS_BASE(a6),d0       ; 61AA6
         bpl.w   l_61AB2                         ; 61AAC
         neg.b   d0                              ; 61AB0
 l_61AB2:
         cmpi.b  #$f,d0                          ; 61AB2
         blt.w   l_61AC2                         ; 61AB6
-        bset    #$7,(SteepPitch).l               ; 61ABA
+        bset    #$7,SteepPitch-PHYS_BASE(a6)    ; 61ABA
 l_61AC2:
         move.w  #$0,d0                          ; 61AC2
-        sub.w   (CarPitch).l,d0                ; 61AC6
-        move.w  d0,(ViewPitch).l                ; 61ACC
+        sub.w   CarPitch-PHYS_BASE(a6),d0       ; 61AC6
+        move.w  d0,ViewPitch-PHYS_BASE(a6)      ; 61ACC
         rts                                     ; 61AD2
 dat_61AD4:
 	dc.b	$2C,$00,$0A,$00,$D3,$00,$F5,$00
@@ -14833,27 +14922,27 @@ dat_61AD4:
 ; (ForceX-ForceZ) x $EE / 256
 ;-------------------------------------------------------------------------------
 AddForce:
-        move.w  (ForceX).l,d0                ; 61ADC
+        move.w  ForceX-PHYS_BASE(a6),d0         ; 61ADC
         move.b  #$ee,d2                         ; 61AE2
         beq.w   l_61AEE                         ; 61AE6
         muls.w  d2,d0                           ; 61AEA
         asr.l   #$8,d0                          ; 61AEC
 l_61AEE:
-        add.w   d0,(VelocityX).l                ; 61AEE
-        move.w  (ForceY).l,d0                ; 61AF4
+        add.w   d0,VelocityX-PHYS_BASE(a6)      ; 61AEE
+        move.w  ForceY-PHYS_BASE(a6),d0         ; 61AF4
         move.b  #$ee,d2                         ; 61AFA
         beq.w   l_61B06                         ; 61AFE
         muls.w  d2,d0                           ; 61B02
         asr.l   #$8,d0                          ; 61B04
 l_61B06:
-        add.w   d0,(VelocityY).l                ; 61B06
-        move.w  (ForceZ).l,d0                ; 61B0C
+        add.w   d0,VelocityY-PHYS_BASE(a6)      ; 61B06
+        move.w  ForceZ-PHYS_BASE(a6),d0         ; 61B0C
         move.b  #$ee,d2                         ; 61B12
         beq.w   l_61B1E                         ; 61B16
         muls.w  d2,d0                           ; 61B1A
         asr.l   #$8,d0                          ; 61B1C
 l_61B1E:
-        add.w   d0,(VelocityZ).l                ; 61B1E
+        add.w   d0,VelocityZ-PHYS_BASE(a6)      ; 61B1E
         rts                                     ; 61B24
 
 ;-------------------------------------------------------------------------------
@@ -14861,27 +14950,27 @@ l_61B1E:
 ; (TurnForcePitch-TurnForceRoll) x $EE / 256
 ;-------------------------------------------------------------------------------
 AddTorque:
-        move.w  (TurnForcePitch).l,d0                ; 61B26
+        move.w  TurnForcePitch-PHYS_BASE(a6),d0 ; 61B26
         move.b  #$ee,d2                         ; 61B2C
         beq.w   l_61B38                         ; 61B30
         muls.w  d2,d0                           ; 61B34
         asr.l   #$8,d0                          ; 61B36
 l_61B38:
-        add.w   d0,(TurnSpeedPitch).l                ; 61B38
-        move.w  (TurnForceHeading).l,d0                ; 61B3E
+        add.w   d0,TurnSpeedPitch-PHYS_BASE(a6) ; 61B38
+        move.w  TurnForceHeading-PHYS_BASE(a6),d0	; 61B3E
         move.b  #$ee,d2                         ; 61B44
         beq.w   l_61B50                         ; 61B48
         muls.w  d2,d0                           ; 61B4C
         asr.l   #$8,d0                          ; 61B4E
 l_61B50:
-        add.w   d0,(TurnSpeedHeading).l                ; 61B50
-        move.w  (TurnForceRoll).l,d0                ; 61B56
+        add.w   d0,TurnSpeedHeading-PHYS_BASE(a6)	; 61B50
+        move.w  TurnForceRoll-PHYS_BASE(a6),d0  ; 61B56
         move.b  #$ee,d2                         ; 61B5C
         beq.w   l_61B68                         ; 61B60
         muls.w  d2,d0                           ; 61B64
         asr.l   #$8,d0                          ; 61B66
 l_61B68:
-        add.w   d0,(TurnSpeedRoll).l                ; 61B68
+        add.w   d0,TurnSpeedRoll-PHYS_BASE(a6)  ; 61B68
         rts                                     ; 61B6E
 
 ;-------------------------------------------------------------------------------
@@ -14890,29 +14979,29 @@ l_61B68:
 ; sines of the pitch and the roll
 ;-------------------------------------------------------------------------------
 CornerHeights:
-        move.w  (CarPitch).l,d0                ; 61B70
+        move.w  CarPitch-PHYS_BASE(a6),d0       ; 61B70
         jsr     (Sin).l                         ; 61B76
-        move.w  d0,(WorkPointX).l                ; 61B7C
-        move.w  (CarRoll).l,d0                ; 61B82
+        move.w  d0,WorkPointX-PHYS_BASE(a6)     ; 61B7C
+        move.w  CarRoll-PHYS_BASE(a6),d0        ; 61B82
         jsr     (Sin).l                         ; 61B88
         ext.l   d0                              ; 61B8E
         asl.l   #$3,d0                          ; 61B90
-        move.w  (WorkPointX).l,d3                ; 61B92
+        move.w  WorkPointX-PHYS_BASE(a6),d3     ; 61B92
         ext.l   d3                              ; 61B98
         asl.l   #$4,d3                          ; 61B9A
-        move.l  (CarY).l,d4                ; 61B9C
+        move.l  CarY-PHYS_BASE(a6),d4           ; 61B9C
         sub.l   d3,d4                           ; 61BA2
         asr.l   #$8,d4                          ; 61BA4
-        move.l  d4,(RearHeight).l                ; 61BA6
-        move.l  (CarY).l,d4                ; 61BAC
+        move.l  d4,RearHeight-PHYS_BASE(a6)     ; 61BA6
+        move.l  CarY-PHYS_BASE(a6),d4           ; 61BAC
         add.l   d3,d4                           ; 61BB2
         move.l  d4,d5                           ; 61BB4
         sub.l   d0,d5                           ; 61BB6
         asr.l   #$8,d5                          ; 61BB8
-        move.l  d5,(FrontHeightA).l                ; 61BBA
+        move.l  d5,FrontHeightA-PHYS_BASE(a6)   ; 61BBA
         add.l   d0,d4                           ; 61BC0
         asr.l   #$8,d4                          ; 61BC2
-        move.l  d4,(FrontHeightB).l                ; 61BC4
+        move.l  d4,FrontHeightB-PHYS_BASE(a6)   ; 61BC4
         rts                                     ; 61BCA
 
 ;-------------------------------------------------------------------------------
@@ -14922,12 +15011,12 @@ CornerHeights:
 ; knocks (KnockForce), the drop (UpdateDrop), the springs' forces (SuspensionForces)
 ;-------------------------------------------------------------------------------
 WheelsOnTrack:
-        move.b  #$0,(WheelsLanded).l               ; 61BCC
-        move.b  #$0,(KnockForce).l               ; 61BD4
-        move.l  (WheelTrackHeights).l,d0                ; 61BDC
-        sub.l   (FrontHeightB).l,d0                ; 61BE2
-        sub.l   (WreckDrop).l,d0                ; 61BE8
-        move.l  d0,(RawCompressFrontB).l                ; 61BEE
+        move.b  #$0,WheelsLanded-PHYS_BASE(a6)  ; 61BCC
+        move.b  #$0,KnockForce-PHYS_BASE(a6)    ; 61BD4
+        move.l  WheelTrackHeights-PHYS_BASE(a6),d0	; 61BDC
+        sub.l   FrontHeightB-PHYS_BASE(a6),d0   ; 61BE2
+        sub.l   WreckDrop-PHYS_BASE(a6),d0      ; 61BE8
+        move.l  d0,RawCompressFrontB-PHYS_BASE(a6)	; 61BEE
         bmi.w   l_61C06                         ; 61BF4
         cmpi.l  #$1400,d0                       ; 61BF8
         bcs.w   l_61C20                         ; 61BFE
@@ -14940,65 +15029,65 @@ l_61C06:
 l_61C1A:
         move.l  #$1400,d0                       ; 61C1A
 l_61C20:
-        move.w  d0,(CompressFrontB).l                ; 61C20
+        move.w  d0,CompressFrontB-PHYS_BASE(a6) ; 61C20
         move.w  d0,d6                           ; 61C26
-        move.w  (CompressFrontBKept).l,d3                ; 61C28
+        move.w  CompressFrontBKept-PHYS_BASE(a6),d3	; 61C28
         sub.w   d3,d0                           ; 61C2E
         jsr     (ScaleAdd114).l                   ; 61C30
         bmi.w   l_61CEA                         ; 61C36
-        move.w  (SpringFrontB).l,d4                ; 61C3A
-        move.w  d0,(SpringFrontB).l                ; 61C40
+        move.w  SpringFrontB-PHYS_BASE(a6),d4   ; 61C3A
+        move.w  d0,SpringFrontB-PHYS_BASE(a6)   ; 61C40
         cmpi.w  #$400,d0                        ; 61C46
         blt.w   l_61C5C                         ; 61C4A
         cmpi.w  #$200,d4                        ; 61C4E
         bge.w   l_61C5C                         ; 61C52
-        addq.b  #$1,(WheelsLanded).l               ; 61C56
+        addq.b  #$1,WheelsLanded-PHYS_BASE(a6)  ; 61C56
 l_61C5C:
-        move.w  (SpringFrontB).l,d0                ; 61C5C
-        move.b  (KnockMargin).l,d3                ; 61C62
+        move.w  SpringFrontB-PHYS_BASE(a6),d0   ; 61C5C
+        move.b  KnockMargin-PHYS_BASE(a6),d3    ; 61C62
         asl.w   #$8,d3                          ; 61C68
         sub.w   d3,d0                           ; 61C6A
         bmi.w   l_61CF2                         ; 61C6C
         cmpi.w  #$700,d0                        ; 61C70
         blt.w   l_61CF2                         ; 61C74
-        cmp.w   (KnockForce).l,d0                ; 61C78
+        cmp.w   KnockForce-PHYS_BASE(a6),d0     ; 61C78
         bcs.w   l_61C88                         ; 61C7E
-        move.w  d0,(KnockForce).l                ; 61C82
+        move.w  d0,KnockForce-PHYS_BASE(a6)     ; 61C82
 l_61C88:
         subi.w  #$600,d0                        ; 61C88
-        tst.b   (ClockTick).l                   ; 61C8C
+        tst.b   ClockTick-PHYS_BASE(a6)         ; 61C8C
         bmi.w   l_61CD0                         ; 61C92
-        addq.b  #$1,(HardLandingCount).l               ; 61C96
-        move.b  (HardLandingCount).l,d3                ; 61C9C
+        addq.b  #$1,HardLandingCount-PHYS_BASE(a6)	; 61C96
+        move.b  HardLandingCount-PHYS_BASE(a6),d3	; 61C9C
         cmp.b   (HardLandingSteps).l,d3                ; 61CA2
         bge.w   l_61CD0                         ; 61CA8
         lsr.w   #$8,d0                          ; 61CAC
         move.b  d0,d3                           ; 61CAE
         lsr.b   #$1,d3                          ; 61CB0
         add.b   d3,d0                           ; 61CB2
-        add.b   (KnockStrength1).l,d0                ; 61CB4
+        add.b   KnockStrength1-PHYS_BASE(a6),d0 ; 61CB4
         bcc.w   l_61CC2                         ; 61CBA
         move.b  #$ff,d0                         ; 61CBE
 l_61CC2:
-        move.b  d0,(KnockStrength1).l                ; 61CC2
-        move.b  #$80,(KnockHappened).l              ; 61CC8
+        move.b  d0,KnockStrength1-PHYS_BASE(a6) ; 61CC2
+        move.b  #$80,KnockHappened-PHYS_BASE(a6)	; 61CC8
 l_61CD0:
-        move.w  (SpringFrontB).l,d0                ; 61CD0
+        move.w  SpringFrontB-PHYS_BASE(a6),d0   ; 61CD0
         cmpi.w  #$1200,d0                       ; 61CD6
         bcs.w   l_61CE6                         ; 61CDA
-        move.w  #$11ff,(SpringFrontB).l            ; 61CDE
+        move.w  #$11ff,SpringFrontB-PHYS_BASE(a6)	; 61CDE
 l_61CE6:
         bra.w   l_61CFA                         ; 61CE6
 l_61CEA:
-        move.w  #$0,(SpringFrontB).l               ; 61CEA
+        move.w  #$0,SpringFrontB-PHYS_BASE(a6)  ; 61CEA
 l_61CF2:
-        move.b  #$0,(HardLandingCount).l               ; 61CF2
+        move.b  #$0,HardLandingCount-PHYS_BASE(a6)	; 61CF2
 l_61CFA:
-        move.w  (CompressFrontB).l,(CompressFrontBKept).l     ; 61CFA
-        move.l  (TrackUnderFrontA).l,d0                ; 61D04
-        sub.l   (FrontHeightA).l,d0                ; 61D0A
-        sub.l   (WreckDrop).l,d0                ; 61D10
-        move.l  d0,(RawCompressFrontA).l                ; 61D16
+        move.w  CompressFrontB-PHYS_BASE(a6),CompressFrontBKept-PHYS_BASE(a6)	; 61CFA
+        move.l  TrackUnderFrontA-PHYS_BASE(a6),d0	; 61D04
+        sub.l   FrontHeightA-PHYS_BASE(a6),d0   ; 61D0A
+        sub.l   WreckDrop-PHYS_BASE(a6),d0      ; 61D10
+        move.l  d0,RawCompressFrontA-PHYS_BASE(a6)	; 61D16
         bmi.w   l_61D2E                         ; 61D1C
         cmpi.l  #$1400,d0                       ; 61D20
         bcs.w   l_61D48                         ; 61D26
@@ -15011,65 +15100,65 @@ l_61D2E:
 l_61D42:
         move.l  #$1400,d0                       ; 61D42
 l_61D48:
-        move.w  d0,(CompressFrontA).l                ; 61D48
+        move.w  d0,CompressFrontA-PHYS_BASE(a6) ; 61D48
         move.w  d0,d6                           ; 61D4E
-        move.w  (CompressFrontAKept).l,d3                ; 61D50
+        move.w  CompressFrontAKept-PHYS_BASE(a6),d3	; 61D50
         sub.w   d3,d0                           ; 61D56
         jsr     (ScaleAdd114).l                   ; 61D58
         bmi.w   l_61E12                         ; 61D5E
-        move.w  (SpringFrontA).l,d4                ; 61D62
-        move.w  d0,(SpringFrontA).l                ; 61D68
+        move.w  SpringFrontA-PHYS_BASE(a6),d4   ; 61D62
+        move.w  d0,SpringFrontA-PHYS_BASE(a6)   ; 61D68
         cmpi.w  #$400,d0                        ; 61D6E
         blt.w   l_61D84                         ; 61D72
         cmpi.w  #$200,d4                        ; 61D76
         bge.w   l_61D84                         ; 61D7A
-        addq.b  #$1,(WheelsLanded).l               ; 61D7E
+        addq.b  #$1,WheelsLanded-PHYS_BASE(a6)  ; 61D7E
 l_61D84:
-        move.w  (SpringFrontA).l,d0                ; 61D84
-        move.b  (KnockMargin).l,d3                ; 61D8A
+        move.w  SpringFrontA-PHYS_BASE(a6),d0   ; 61D84
+        move.b  KnockMargin-PHYS_BASE(a6),d3    ; 61D8A
         asl.w   #$8,d3                          ; 61D90
         sub.w   d3,d0                           ; 61D92
         bmi.w   l_61E1A                         ; 61D94
         cmpi.w  #$700,d0                        ; 61D98
         blt.w   l_61E1A                         ; 61D9C
-        cmp.w   (KnockForce).l,d0                ; 61DA0
+        cmp.w   KnockForce-PHYS_BASE(a6),d0     ; 61DA0
         bcs.w   l_61DB0                         ; 61DA6
-        move.w  d0,(KnockForce).l                ; 61DAA
+        move.w  d0,KnockForce-PHYS_BASE(a6)     ; 61DAA
 l_61DB0:
         subi.w  #$600,d0                        ; 61DB0
-        tst.b   (ClockTick).l                   ; 61DB4
+        tst.b   ClockTick-PHYS_BASE(a6)         ; 61DB4
         bmi.w   l_61DF8                         ; 61DBA
-        addq.b  #$1,(HardLandingCount).l               ; 61DBE
-        move.b  (HardLandingCount).l,d3                ; 61DC4
+        addq.b  #$1,HardLandingCount-PHYS_BASE(a6)	; 61DBE
+        move.b  HardLandingCount-PHYS_BASE(a6),d3	; 61DC4
         cmp.b   (HardLandingSteps).l,d3                ; 61DCA
         bge.w   l_61DF8                         ; 61DD0
         lsr.w   #$8,d0                          ; 61DD4
         move.b  d0,d3                           ; 61DD6
         lsr.b   #$1,d3                          ; 61DD8
         add.b   d3,d0                           ; 61DDA
-        add.b   (KnockStrength2).l,d0                ; 61DDC
+        add.b   KnockStrength2-PHYS_BASE(a6),d0 ; 61DDC
         bcc.w   l_61DEA                         ; 61DE2
         move.b  #$ff,d0                         ; 61DE6
 l_61DEA:
-        move.b  d0,(KnockStrength2).l                ; 61DEA
-        move.b  #$80,(KnockHappened).l              ; 61DF0
+        move.b  d0,KnockStrength2-PHYS_BASE(a6) ; 61DEA
+        move.b  #$80,KnockHappened-PHYS_BASE(a6)	; 61DF0
 l_61DF8:
-        move.w  (SpringFrontA).l,d0                ; 61DF8
+        move.w  SpringFrontA-PHYS_BASE(a6),d0   ; 61DF8
         cmpi.w  #$1200,d0                       ; 61DFE
         bcs.w   l_61E0E                         ; 61E02
-        move.w  #$11ff,(SpringFrontA).l            ; 61E06
+        move.w  #$11ff,SpringFrontA-PHYS_BASE(a6)	; 61E06
 l_61E0E:
         bra.w   l_61E22                         ; 61E0E
 l_61E12:
-        move.w  #$0,(SpringFrontA).l               ; 61E12
+        move.w  #$0,SpringFrontA-PHYS_BASE(a6)  ; 61E12
 l_61E1A:
-        move.b  #$0,(HardLandingCount).l               ; 61E1A
+        move.b  #$0,HardLandingCount-PHYS_BASE(a6)	; 61E1A
 l_61E22:
-        move.w  (CompressFrontA).l,(CompressFrontAKept).l     ; 61E22
-        move.l  (TrackUnderRear).l,d0                ; 61E2C
-        sub.l   (RearHeight).l,d0                ; 61E32
-        sub.l   (WreckDrop).l,d0                ; 61E38
-        move.l  d0,(RawCompressRear).l                ; 61E3E
+        move.w  CompressFrontA-PHYS_BASE(a6),CompressFrontAKept-PHYS_BASE(a6)	; 61E22
+        move.l  TrackUnderRear-PHYS_BASE(a6),d0 ; 61E2C
+        sub.l   RearHeight-PHYS_BASE(a6),d0     ; 61E32
+        sub.l   WreckDrop-PHYS_BASE(a6),d0      ; 61E38
+        move.l  d0,RawCompressRear-PHYS_BASE(a6)	; 61E3E
         bmi.w   l_61E56                         ; 61E44
         cmpi.l  #$1400,d0                       ; 61E48
         bcs.w   l_61E70                         ; 61E4E
@@ -15082,71 +15171,71 @@ l_61E56:
 l_61E6A:
         move.l  #$1400,d0                       ; 61E6A
 l_61E70:
-        move.w  d0,(CompressRear).l                ; 61E70
+        move.w  d0,CompressRear-PHYS_BASE(a6)   ; 61E70
         move.w  d0,d6                           ; 61E76
-        move.w  (CompressRearKept).l,d3                ; 61E78
+        move.w  CompressRearKept-PHYS_BASE(a6),d3	; 61E78
         sub.w   d3,d0                           ; 61E7E
         jsr     (ScaleAdd114).l                   ; 61E80
         bmi.w   l_61F3A                         ; 61E86
-        move.w  (SpringRear).l,d4                ; 61E8A
-        move.w  d0,(SpringRear).l                ; 61E90
+        move.w  SpringRear-PHYS_BASE(a6),d4     ; 61E8A
+        move.w  d0,SpringRear-PHYS_BASE(a6)     ; 61E90
         cmpi.w  #$400,d0                        ; 61E96
         blt.w   l_61EAC                         ; 61E9A
         cmpi.w  #$200,d4                        ; 61E9E
         bge.w   l_61EAC                         ; 61EA2
-        addq.b  #$1,(WheelsLanded).l               ; 61EA6
+        addq.b  #$1,WheelsLanded-PHYS_BASE(a6)  ; 61EA6
 l_61EAC:
-        move.w  (SpringRear).l,d0                ; 61EAC
-        move.b  (KnockMargin).l,d3                ; 61EB2
+        move.w  SpringRear-PHYS_BASE(a6),d0     ; 61EAC
+        move.b  KnockMargin-PHYS_BASE(a6),d3    ; 61EB2
         asl.w   #$8,d3                          ; 61EB8
         sub.w   d3,d0                           ; 61EBA
         bmi.w   l_61F42                         ; 61EBC
         cmpi.w  #$700,d0                        ; 61EC0
         blt.w   l_61F42                         ; 61EC4
-        cmp.w   (KnockForce).l,d0                ; 61EC8
+        cmp.w   KnockForce-PHYS_BASE(a6),d0     ; 61EC8
         bcs.w   l_61ED8                         ; 61ECE
-        move.w  d0,(KnockForce).l                ; 61ED2
+        move.w  d0,KnockForce-PHYS_BASE(a6)     ; 61ED2
 l_61ED8:
         subi.w  #$600,d0                        ; 61ED8
-        tst.b   (ClockTick).l                   ; 61EDC
+        tst.b   ClockTick-PHYS_BASE(a6)         ; 61EDC
         bmi.w   l_61F20                         ; 61EE2
-        addq.b  #$1,(HardLandingCount).l               ; 61EE6
-        move.b  (HardLandingCount).l,d3                ; 61EEC
+        addq.b  #$1,HardLandingCount-PHYS_BASE(a6)	; 61EE6
+        move.b  HardLandingCount-PHYS_BASE(a6),d3	; 61EEC
         cmp.b   (HardLandingSteps).l,d3                ; 61EF2
         bge.w   l_61F20                         ; 61EF8
         lsr.w   #$8,d0                          ; 61EFC
         move.b  d0,d3                           ; 61EFE
         lsr.b   #$1,d3                          ; 61F00
         add.b   d3,d0                           ; 61F02
-        add.b   (KnockStrength3).l,d0                ; 61F04
+        add.b   KnockStrength3-PHYS_BASE(a6),d0 ; 61F04
         bcc.w   l_61F12                         ; 61F0A
         move.b  #$ff,d0                         ; 61F0E
 l_61F12:
-        move.b  d0,(KnockStrength3).l                ; 61F12
-        move.b  #$80,(KnockHappened).l              ; 61F18
+        move.b  d0,KnockStrength3-PHYS_BASE(a6) ; 61F12
+        move.b  #$80,KnockHappened-PHYS_BASE(a6)	; 61F18
 l_61F20:
-        move.w  (SpringRear).l,d0                ; 61F20
+        move.w  SpringRear-PHYS_BASE(a6),d0     ; 61F20
         cmpi.w  #$1200,d0                       ; 61F26
         bcs.w   l_61F36                         ; 61F2A
-        move.w  #$11ff,(SpringRear).l            ; 61F2E
+        move.w  #$11ff,SpringRear-PHYS_BASE(a6) ; 61F2E
 l_61F36:
         bra.w   l_61F4A                         ; 61F36
 l_61F3A:
-        move.w  #$0,(SpringRear).l               ; 61F3A
+        move.w  #$0,SpringRear-PHYS_BASE(a6)    ; 61F3A
 l_61F42:
-        move.b  #$0,(HardLandingCount).l               ; 61F42
+        move.b  #$0,HardLandingCount-PHYS_BASE(a6)	; 61F42
 l_61F4A:
-        move.w  (CompressRear).l,(CompressRearKept).l     ; 61F4A
-        move.w  (SpringFrontB).l,d0                ; 61F54
-        add.w   (SpringFrontA).l,d0                ; 61F5A
+        move.w  CompressRear-PHYS_BASE(a6),CompressRearKept-PHYS_BASE(a6)	; 61F4A
+        move.w  SpringFrontB-PHYS_BASE(a6),d0   ; 61F54
+        add.w   SpringFrontA-PHYS_BASE(a6),d0   ; 61F5A
         asr.w   #$1,d0                          ; 61F60
-        move.w  d0,(WorkPointX).l                ; 61F62
-        add.w   (SpringRear).l,d0                ; 61F68
+        move.w  d0,WorkPointX-PHYS_BASE(a6)     ; 61F62
+        add.w   SpringRear-PHYS_BASE(a6),d0     ; 61F68
         asr.w   #$1,d0                          ; 61F6E
-        move.w  d0,(SpringMean).l                ; 61F70
+        move.w  d0,SpringMean-PHYS_BASE(a6)     ; 61F70
         jsr     (SuspensionForces).l                   ; 61F76
-        move.w  (SpringFrontB).l,d0                ; 61F7C
-        sub.w   (SpringFrontA).l,d0                ; 61F82
+        move.w  SpringFrontB-PHYS_BASE(a6),d0   ; 61F7C
+        sub.w   SpringFrontA-PHYS_BASE(a6),d0   ; 61F82
         move.w  d0,d3                           ; 61F88
         asl.w   #$1,d0                          ; 61F8A
         add.w   d3,d0                           ; 61F8C
@@ -15161,20 +15250,20 @@ l_61FA0:
         bpl.w   l_61FA8                         ; 61FA2
         neg.w   d0                              ; 61FA6
 l_61FA8:
-        move.w  d0,(SpringRoll).l                ; 61FA8
-        move.w  (WorkPointX).l,d0                ; 61FAE
-        sub.w   (SpringRear).l,d0                ; 61FB4
-        move.w  d0,(SpringPitch).l                ; 61FBA
-        move.b  (SpringMean).l,d0                ; 61FC0
-        or.b    (SpringMeanLow).l,d0                ; 61FC6
-        move.b  d0,(WheelsDown).l                ; 61FCC
+        move.w  d0,SpringRoll-PHYS_BASE(a6)     ; 61FA8
+        move.w  WorkPointX-PHYS_BASE(a6),d0     ; 61FAE
+        sub.w   SpringRear-PHYS_BASE(a6),d0     ; 61FB4
+        move.w  d0,SpringPitch-PHYS_BASE(a6)    ; 61FBA
+        move.b  SpringMean-PHYS_BASE(a6),d0     ; 61FC0
+        or.b    SpringMeanLow-PHYS_BASE(a6),d0  ; 61FC6
+        move.b  d0,WheelsDown-PHYS_BASE(a6)     ; 61FCC
         bne.w   l_62042                         ; 61FD2
-        tst.b   (DropCountdown).l               ; 61FD6
+        tst.b   DropCountdown-PHYS_BASE(a6)     ; 61FD6
         bne.w   l_62042                         ; 61FDC
         move.w  #$ff80,d3                       ; 61FE0
-        move.w  (CarPitch).l,d0                ; 61FE4
+        move.w  CarPitch-PHYS_BASE(a6),d0       ; 61FE4
         bpl.w   l_62014                         ; 61FEA
-        move.b  (CurrentTrack).l,d0             ; 61FEE
+        move.b  CurrentTrack-PHYS_BASE(a6),d0   ; 61FEE
         cmpi.b  #$7,d0                          ; 61FF4
         bne.w   l_62004                         ; 61FF8
         move.b  #$f8,d1                         ; 61FFC
@@ -15189,25 +15278,25 @@ l_62014:
         blt.w   l_62020                         ; 62018
         move.w  #$ff00,d3                       ; 6201C
 l_62020:
-        sub.w   (SpringPitch).l,d3                ; 62020
+        sub.w   SpringPitch-PHYS_BASE(a6),d3    ; 62020
         bpl.w   l_62042                         ; 62026
-        move.b  (TurnSpeedPitch).l,d0                ; 6202A
+        move.b  TurnSpeedPitch-PHYS_BASE(a6),d0 ; 6202A
         bpl.w   l_6203C                         ; 62030
         cmpi.b  #$ff,d0                         ; 62034
         bne.w   l_62042                         ; 62038
 l_6203C:
-        move.w  d3,(SpringPitch).l                ; 6203C
+        move.w  d3,SpringPitch-PHYS_BASE(a6)    ; 6203C
 l_62042:
         jsr     (UpdateDrop).l                   ; 62042
-        move.w  (SpringForceForward).l,(SpringForwardKept).l     ; 62048
+        move.w  SpringForceForward-PHYS_BASE(a6),SpringForwardKept-PHYS_BASE(a6)	; 62048
         jsr     (ApplyCollision).l                   ; 62052
         tst.b   (dat_620B6).l                   ; 62058
         beq.w   l_62068                         ; 6205E
         subq.b  #$1,(dat_620B6).l               ; 62062
 l_62068:
-        tst.b   (WheelsLanded).l                   ; 62068
+        tst.b   WheelsLanded-PHYS_BASE(a6)      ; 62068
         beq.w   l_620B4                         ; 6206E
-        move.b  (KnockForce).l,d0                ; 62072
+        move.b  KnockForce-PHYS_BASE(a6),d0     ; 62072
         cmpi.b  #$7,d0                          ; 62078
         bcc.w   l_62084                         ; 6207C
         move.b  #$7,d0                          ; 62080
@@ -15217,7 +15306,7 @@ l_62084:
         bcs.w   l_62092                         ; 6208A
         move.b  #$40,d0                         ; 6208E
 l_62092:
-        move.b  d0,(dat_1B705).l                ; 62092
+        move.b  d0,dat_1B705-PHYS_BASE(a6)      ; 62092
         tst.b   (dat_620B6).l                   ; 62098
         bne.w   l_620B4                         ; 6209E
         move.b  #$3,d0                          ; 620A2
@@ -15234,34 +15323,34 @@ dat_620B6:
 ; SpringForceForward + GravityForward; sideways: SideForce
 ;-------------------------------------------------------------------------------
 WheelForces:
-        move.w  (GravityUp).l,d0                ; 620B8
-        add.w   (SpringForceUp).l,d0                ; 620BE
-        move.w  d0,(CarForceUp).l                ; 620C4
-        move.b  (EngineForce).l,d0                ; 620CA
-        or.b    (SpeedForward).l,d0                ; 620D0
+        move.w  GravityUp-PHYS_BASE(a6),d0      ; 620B8
+        add.w   SpringForceUp-PHYS_BASE(a6),d0  ; 620BE
+        move.w  d0,CarForceUp-PHYS_BASE(a6)     ; 620C4
+        move.b  EngineForce-PHYS_BASE(a6),d0    ; 620CA
+        or.b    SpeedForward-PHYS_BASE(a6),d0   ; 620D0
         bmi.w   l_620EE                         ; 620D6
-        tst.b   (EngineForceLow).l                   ; 620DA
+        tst.b   EngineForceLow-PHYS_BASE(a6)    ; 620DA
         beq.w   l_620EE                         ; 620E0
         andi.w  #$ff,d0                         ; 620E4
-        sub.w   d0,(EngineForce).l                ; 620E8
+        sub.w   d0,EngineForce-PHYS_BASE(a6)    ; 620E8
 l_620EE:
-        move.w  (EngineForce).l,d3                ; 620EE
+        move.w  EngineForce-PHYS_BASE(a6),d3    ; 620EE
         bpl.w   l_620FA                         ; 620F4
         neg.w   d3                              ; 620F8
 l_620FA:
         jsr     (GroundForce).l                   ; 620FA
         sub.w   d0,d3                           ; 62100
         bcs.w   l_62118                         ; 62102
-        tst.b   (EngineForce).l                   ; 62106
+        tst.b   EngineForce-PHYS_BASE(a6)       ; 62106
         bpl.w   l_62112                         ; 6210C
         neg.w   d0                              ; 62110
 l_62112:
-        move.w  d0,(EngineForce).l                ; 62112
+        move.w  d0,EngineForce-PHYS_BASE(a6)    ; 62112
 l_62118:
-        move.w  (EngineForce).l,d0                ; 62118
-        add.w   (SpringForceForward).l,d0                ; 6211E
-        add.w   (GravityForward).l,d0                ; 62124
-        move.w  d0,(CarForceForward).l                ; 6212A
+        move.w  EngineForce-PHYS_BASE(a6),d0    ; 62118
+        add.w   SpringForceForward-PHYS_BASE(a6),d0	; 6211E
+        add.w   GravityForward-PHYS_BASE(a6),d0 ; 62124
+        move.w  d0,CarForceForward-PHYS_BASE(a6)	; 6212A
         jsr     (SideForce).l                   ; 62130
         rts                                     ; 62136
 
@@ -15271,22 +15360,22 @@ l_62118:
 ; speeds; a quarter of the forward force on the pitch with the wheels down
 ;-------------------------------------------------------------------------------
 TurnForces:
-        move.w  (TurnSpeedPitch).l,d3                ; 62138
+        move.w  TurnSpeedPitch-PHYS_BASE(a6),d3 ; 62138
         asr.w   #$4,d3                          ; 6213E
-        move.w  (SpringPitch).l,d0                ; 62140
+        move.w  SpringPitch-PHYS_BASE(a6),d0    ; 62140
         sub.w   d3,d0                           ; 62146
-        tst.b   (WheelsDown).l                   ; 62148
+        tst.b   WheelsDown-PHYS_BASE(a6)        ; 62148
         beq.w   l_6215C                         ; 6214E
-        move.w  (CarForceForward).l,d3                ; 62152
+        move.w  CarForceForward-PHYS_BASE(a6),d3	; 62152
         asr.w   #$2,d3                          ; 62158
         add.w   d3,d0                           ; 6215A
 l_6215C:
-        move.w  d0,(TurnForcePitch).l                ; 6215C
-        move.w  (TurnSpeedRoll).l,d3                ; 62162
+        move.w  d0,TurnForcePitch-PHYS_BASE(a6) ; 6215C
+        move.w  TurnSpeedRoll-PHYS_BASE(a6),d3  ; 62162
         asr.w   #$4,d3                          ; 62168
-        move.w  (SpringRoll).l,d0                ; 6216A
+        move.w  SpringRoll-PHYS_BASE(a6),d0     ; 6216A
         sub.w   d3,d0                           ; 62170
-        move.w  d0,(TurnForceRoll).l                ; 62172
+        move.w  d0,TurnForceRoll-PHYS_BASE(a6)  ; 62172
         rts                                     ; 62178
 
 ;-------------------------------------------------------------------------------
@@ -15295,38 +15384,38 @@ l_6215C:
 ; the car slides (Skidding)
 ;-------------------------------------------------------------------------------
 SideForce:
-        move.w  (GravitySide).l,d4                ; 6217A
-        add.w   (SpringForceSide).l,d4                ; 62180
+        move.w  GravitySide-PHYS_BASE(a6),d4    ; 6217A
+        add.w   SpringForceSide-PHYS_BASE(a6),d4	; 62180
         move.w  d4,d3                           ; 62186
-        sub.w   (SpeedSideways).l,d3                ; 62188
+        sub.w   SpeedSideways-PHYS_BASE(a6),d3  ; 62188
         bpl.w   l_62194                         ; 6218E
         neg.w   d3                              ; 62192
 l_62194:
         jsr     (GroundForce).l                   ; 62194
         cmp.w   d0,d3                           ; 6219A
         bcs.w   l_621BE                         ; 6219C
-        tst.b   (SpeedSideways).l                   ; 621A0
+        tst.b   SpeedSideways-PHYS_BASE(a6)     ; 621A0
         bpl.w   l_621AC                         ; 621A6
         neg.w   d0                              ; 621AA
 l_621AC:
         sub.w   d0,d4                           ; 621AC
-        move.w  d4,(CarForceSide).l                ; 621AE
-        move.b  #$80,(Skidding).l              ; 621B4
+        move.w  d4,CarForceSide-PHYS_BASE(a6)   ; 621AE
+        move.b  #$80,Skidding-PHYS_BASE(a6)     ; 621B4
         rts                                     ; 621BC
 l_621BE:
-        move.w  (SpringForceSide).l,d0                ; 621BE
-        sub.w   (SpeedSideways).l,d0                ; 621C4
-        move.w  d0,(CarForceSide).l                ; 621CA
-        move.b  #$0,(Skidding).l               ; 621D0
+        move.w  SpringForceSide-PHYS_BASE(a6),d0	; 621BE
+        sub.w   SpeedSideways-PHYS_BASE(a6),d0  ; 621C4
+        move.w  d0,CarForceSide-PHYS_BASE(a6)   ; 621CA
+        move.b  #$0,Skidding-PHYS_BASE(a6)      ; 621D0
         rts                                     ; 621D8
 
 ;-------------------------------------------------------------------------------
 ; GroundForce - d0 = 2 x SpringForceUp with the wheels on the track (WheelsDown), else 0
 ;-------------------------------------------------------------------------------
 GroundForce:
-        tst.b   (WheelsDown).l                   ; 621DA
+        tst.b   WheelsDown-PHYS_BASE(a6)        ; 621DA
         beq.w   l_621EE                         ; 621E0
-        move.w  (SpringForceUp).l,d0                ; 621E4
+        move.w  SpringForceUp-PHYS_BASE(a6),d0  ; 621E4
         asl.w   #$1,d0                          ; 621EA
         rts                                     ; 621EC
 l_621EE:
@@ -15341,20 +15430,20 @@ l_621EE:
 ;-------------------------------------------------------------------------------
 DragForce:
         move.l  #$1,d7                          ; 621F4
-        tst.b   (WheelsDown).l                   ; 621FA
+        tst.b   WheelsDown-PHYS_BASE(a6)        ; 621FA
         beq.w   l_6222E                         ; 62200
-        move.b  (SpringForwardKept).l,d0                ; 62204
+        move.b  SpringForwardKept-PHYS_BASE(a6),d0	; 62204
         bpl.w   l_62212                         ; 6220A
         eori.b  #$ff,d0                         ; 6220E
 l_62212:
         cmpi.b  #$3,d0                          ; 62212
         bge.w   l_6223E                         ; 62216
-        tst.b   (OffTrack).l                   ; 6221A
+        tst.b   OffTrack-PHYS_BASE(a6)          ; 6221A
         bmi.w   l_6223E                         ; 62220
-        tst.b   (CarWrecked).l                   ; 62224
+        tst.b   CarWrecked-PHYS_BASE(a6)        ; 62224
         bne.w   l_62238                         ; 6222A
 l_6222E:
-        tst.b   (DropCountdown).l               ; 6222E
+        tst.b   DropCountdown-PHYS_BASE(a6)     ; 6222E
         beq.w   l_62246                         ; 62234
 l_62238:
         move.l  #$3,d7                          ; 62238
@@ -15362,11 +15451,11 @@ l_6223E:
         move.w  #$6000,d0                       ; 6223E
         bra.w   l_622A4                         ; 62242
 l_62246:
-        move.w  (SpeedSideways).l,d0                ; 62246
+        move.w  SpeedSideways-PHYS_BASE(a6),d0  ; 62246
         bpl.w   l_62252                         ; 6224C
         neg.w   d0                              ; 62250
 l_62252:
-        move.w  (SpeedUp).l,d3                ; 62252
+        move.w  SpeedUp-PHYS_BASE(a6),d3        ; 62252
         bpl.w   l_6225E                         ; 62258
         neg.w   d3                              ; 6225C
 l_6225E:
@@ -15374,7 +15463,7 @@ l_6225E:
         bge.w   l_62266                         ; 62260
         move.w  d3,d0                           ; 62264
 l_62266:
-        move.w  (SpeedForward).l,d3                ; 62266
+        move.w  SpeedForward-PHYS_BASE(a6),d3   ; 62266
         bpl.w   l_62272                         ; 6226C
         neg.w   d3                              ; 62270
 l_62272:
@@ -15383,9 +15472,9 @@ l_62272:
         move.w  d3,d0                           ; 62278
 l_6227A:
         move.l  #$5,d7                          ; 6227A
-        tst.b   (CarsClose).l                   ; 62280
+        tst.b   CarsClose-PHYS_BASE(a6)         ; 62280
         bpl.w   l_622A4                         ; 62286
-        tst.b   (OpponentBehind).l                   ; 6228A
+        tst.b   OpponentBehind-PHYS_BASE(a6)    ; 6228A
         bmi.w   l_622A4                         ; 62290
         move.w  #$14,d3                         ; 62294
         asl.w   #$7,d3                          ; 62298
@@ -15393,21 +15482,21 @@ l_6227A:
         bcc.w   l_622A4                         ; 6229C
         move.w  #$0,d0                          ; 622A0
 l_622A4:
-        move.w  (VelocityX).l,d3                ; 622A4
+        move.w  VelocityX-PHYS_BASE(a6),d3      ; 622A4
         muls.w  d0,d3                           ; 622AA
         swap    d3                              ; 622AC
         asr.w   d7,d3                           ; 622AE
-        sub.w   d3,(ForceX).l                ; 622B0
-        move.w  (VelocityY).l,d3                ; 622B6
+        sub.w   d3,ForceX-PHYS_BASE(a6)         ; 622B0
+        move.w  VelocityY-PHYS_BASE(a6),d3      ; 622B6
         muls.w  d0,d3                           ; 622BC
         swap    d3                              ; 622BE
         asr.w   d7,d3                           ; 622C0
-        sub.w   d3,(ForceY).l                ; 622C2
-        move.w  (VelocityZ).l,d3                ; 622C8
+        sub.w   d3,ForceY-PHYS_BASE(a6)         ; 622C2
+        move.w  VelocityZ-PHYS_BASE(a6),d3      ; 622C8
         muls.w  d0,d3                           ; 622CE
         swap    d3                              ; 622D0
         asr.w   d7,d3                           ; 622D2
-        sub.w   d3,(ForceZ).l                ; 622D4
+        sub.w   d3,ForceZ-PHYS_BASE(a6)         ; 622D4
         rts                                     ; 622DA
 
 ;-------------------------------------------------------------------------------
@@ -15418,36 +15507,36 @@ l_622A4:
 ; SpringMean x roll cosine x pitch cosine, SpringForceForward = SpringMean x pitch sine
 ;-------------------------------------------------------------------------------
 SuspensionForces:
-        move.w  #$0,(UpSign).l               ; 622DC
-        move.l  (RawCompressFrontB).l,d0                ; 622E4
-        add.l   (RawCompressFrontA).l,d0                ; 622EA
+        move.w  #$0,UpSign-PHYS_BASE(a6)        ; 622DC
+        move.l  RawCompressFrontB-PHYS_BASE(a6),d0	; 622E4
+        add.l   RawCompressFrontA-PHYS_BASE(a6),d0	; 622EA
         asr.l   #$1,d0                          ; 622F0
-        sub.l   (RawCompressRear).l,d0                ; 622F2
+        sub.l   RawCompressRear-PHYS_BASE(a6),d0	; 622F2
         asr.l   #$4,d0                          ; 622F8
         move.w  d0,d3                           ; 622FA
         eori.w  #$8000,d3                       ; 622FC
-        move.w  d3,(PitchSlopeSign).l                ; 62300
+        move.w  d3,PitchSlopeSign-PHYS_BASE(a6) ; 62300
         jsr     (SlopeCosine).l                   ; 62306
-        move.b  (SlopeCos).l,(PieceExtendB).l     ; 6230C
-        move.b  (SlopeSine).l,(PitchSine).l     ; 62316
-        move.l  (RawCompressFrontB).l,d0                ; 62320
-        sub.l   (RawCompressFrontA).l,d0                ; 62326
+        move.b  SlopeCos-PHYS_BASE(a6),PieceExtendB-PHYS_BASE(a6)	; 6230C
+        move.b  SlopeSine-PHYS_BASE(a6),PitchSine-PHYS_BASE(a6)	; 62316
+        move.l  RawCompressFrontB-PHYS_BASE(a6),d0	; 62320
+        sub.l   RawCompressFrontA-PHYS_BASE(a6),d0	; 62326
         asr.l   #$3,d0                          ; 6232C
-        move.w  d0,(RollSlope).l                ; 6232E
+        move.w  d0,RollSlope-PHYS_BASE(a6)      ; 6232E
         jsr     (SlopeCosine).l                   ; 62334
-        move.b  (PieceExtendB).l,(WorkByte5).l     ; 6233A
-        move.b  (SlopeCos).l,d0                ; 62344
+        move.b  PieceExtendB-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 6233A
+        move.b  SlopeCos-PHYS_BASE(a6),d0       ; 62344
         jsr     (MulFraction).l                 ; 6234A
-        move.b  d0,(RollCosCos).l                ; 62350
-        move.b  (SlopeSine).l,d0                ; 62356
+        move.b  d0,RollCosCos-PHYS_BASE(a6)     ; 62350
+        move.b  SlopeSine-PHYS_BASE(a6),d0      ; 62356
         jsr     (MulFraction).l                 ; 6235C
-        move.b  d0,(RollSineCos).l                ; 62362
-        move.b  (RollSineCos).l,(WorkByte5).l     ; 62368
-        move.b  (RollSlope).l,(WorkSign).l     ; 62372
-        move.w  (SpringMean).l,d0                ; 6237C
-        move.b  (WorkByte5).l,d3                ; 62382
+        move.b  d0,RollSineCos-PHYS_BASE(a6)    ; 62362
+        move.b  RollSineCos-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 62368
+        move.b  RollSlope-PHYS_BASE(a6),WorkSign-PHYS_BASE(a6)	; 62372
+        move.w  SpringMean-PHYS_BASE(a6),d0     ; 6237C
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 62382
         andi.w  #$ff,d3                         ; 62388
-        tst.b   (WorkSign).l                   ; 6238C
+        tst.b   WorkSign-PHYS_BASE(a6)          ; 6238C
         bpl.w   l_62398                         ; 62392
         neg.w   d3                              ; 62396
 l_62398:
@@ -15455,13 +15544,13 @@ l_62398:
         muls.w  d3,d0                           ; 6239A
         asl.l   #$1,d0                          ; 6239C
         swap    d0                              ; 6239E
-        move.w  d0,(SpringForceSide).l                ; 623A0
-        move.b  (RollCosCos).l,(WorkByte5).l     ; 623A6
-        move.b  (UpSign).l,(WorkSign).l     ; 623B0
-        move.w  (SpringMean).l,d0                ; 623BA
-        move.b  (WorkByte5).l,d3                ; 623C0
+        move.w  d0,SpringForceSide-PHYS_BASE(a6)	; 623A0
+        move.b  RollCosCos-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 623A6
+        move.b  UpSign-PHYS_BASE(a6),WorkSign-PHYS_BASE(a6)	; 623B0
+        move.w  SpringMean-PHYS_BASE(a6),d0     ; 623BA
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 623C0
         andi.w  #$ff,d3                         ; 623C6
-        tst.b   (WorkSign).l                   ; 623CA
+        tst.b   WorkSign-PHYS_BASE(a6)          ; 623CA
         bpl.w   l_623D6                         ; 623D0
         neg.w   d3                              ; 623D4
 l_623D6:
@@ -15469,13 +15558,13 @@ l_623D6:
         muls.w  d3,d0                           ; 623D8
         asl.l   #$1,d0                          ; 623DA
         swap    d0                              ; 623DC
-        move.w  d0,(SpringForceUp).l                ; 623DE
-        move.b  (PitchSine).l,(WorkByte5).l     ; 623E4
-        move.b  (PitchSlopeSign).l,(WorkSign).l     ; 623EE
-        move.w  (SpringMean).l,d0                ; 623F8
-        move.b  (WorkByte5).l,d3                ; 623FE
+        move.w  d0,SpringForceUp-PHYS_BASE(a6)  ; 623DE
+        move.b  PitchSine-PHYS_BASE(a6),WorkByte5-PHYS_BASE(a6)	; 623E4
+        move.b  PitchSlopeSign-PHYS_BASE(a6),WorkSign-PHYS_BASE(a6)	; 623EE
+        move.w  SpringMean-PHYS_BASE(a6),d0     ; 623F8
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 623FE
         andi.w  #$ff,d3                         ; 62404
-        tst.b   (WorkSign).l                   ; 62408
+        tst.b   WorkSign-PHYS_BASE(a6)          ; 62408
         bpl.w   l_62414                         ; 6240E
         neg.w   d3                              ; 62412
 l_62414:
@@ -15483,7 +15572,7 @@ l_62414:
         muls.w  d3,d0                           ; 62416
         asl.l   #$1,d0                          ; 62418
         swap    d0                              ; 6241A
-        move.w  d0,(SpringForceForward).l                ; 6241C
+        move.w  d0,SpringForceForward-PHYS_BASE(a6)	; 6241C
         rts                                     ; 62422
 
 ;-------------------------------------------------------------------------------
@@ -15500,11 +15589,11 @@ l_6242C:
         bge.w   l_6243A                         ; 62434
         move.b  d0,d1                           ; 62438
 l_6243A:
-        move.b  d1,(SlopeSine).l                ; 6243A
+        move.b  d1,SlopeSine-PHYS_BASE(a6)      ; 6243A
         lsr.b   #$1,d1                          ; 62440
-        movea.l #CosFromSine,a0                   ; 62442
+        lea CosFromSine-PHYS_BASE(a6),a0        ; 62442
         move.b  (a0,d1.w),d0                    ; 62448
-        move.b  d0,(SlopeCos).l                ; 6244C
+        move.b  d0,SlopeCos-PHYS_BASE(a6)       ; 6244C
         rts                                     ; 62452
 
 ;-------------------------------------------------------------------------------
@@ -17315,21 +17404,23 @@ OpponentFollow:
 ; speed
 ;-------------------------------------------------------------------------------
 MoveOpponent:
-        move.b  (RaceStarted).l,d0                ; 63996
+	movem.l	a6,-(a7)			; (the enhanced game) a6: the race's variables
+	lea	(PHYS_BASE).l,a6		; (physfast.i; movem and lea leave the flags)
+        move.b  RaceStarted-PHYS_BASE(a6),d0    ; 63996
         beq.w   l_63A56                         ; 6399C
-        move.b  (OpponentHeld).l,d0                ; 639A0
+        move.b  OpponentHeld-PHYS_BASE(a6),d0   ; 639A0
         bne.w   l_63A56                         ; 639A6
-        move.b  (OpponentPiece).l,d1            ; 639AA
+        move.b  OpponentPiece-PHYS_BASE(a6),d1  ; 639AA
         jsr     (LoadPiece).l                   ; 639B0
         jsr     (OpponentPhysics).l                   ; 639B6
         jsr     (OpponentSwerve).l                   ; 639BC
         jsr     (OpponentControls).l                   ; 639C2
         jsr     (OpponentTargetSpeed).l                   ; 639C8
         jsr     (OpponentAccelerate).l                   ; 639CE
-        move.b  (ShapeAlongScale).l,d0                ; 639D4
-        move.b  d0,(WorkByte5).l                ; 639DA
-        move.w  (OpponentSpeed).l,d0                ; 639E0
-        move.b  (WorkByte5).l,d3                ; 639E6
+        move.b  ShapeAlongScale-PHYS_BASE(a6),d0	; 639D4
+        move.b  d0,WorkByte5-PHYS_BASE(a6)      ; 639DA
+        move.w  OpponentSpeed-PHYS_BASE(a6),d0  ; 639E0
+        move.b  WorkByte5-PHYS_BASE(a6),d3      ; 639E6
         asl.w   #$7,d3                          ; 639EC
         bclr    #$f,d3                          ; 639EE
         muls.w  d3,d0                           ; 639F2
@@ -17344,24 +17435,25 @@ l_63A04:
         asl.l   #$3,d0                          ; 63A06
         move.b  d0,d3                           ; 63A08
         asr.l   #$8,d0                          ; 63A0A
-        add.b   d3,(OpponentPosFraction).l                ; 63A0C
+        add.b   d3,OpponentPosFraction-PHYS_BASE(a6)	; 63A0C
         bcc.w   l_63A18                         ; 63A12
         addq.w  #$1,d0                          ; 63A16
 l_63A18:
-        add.w   d0,(OpponentPiecePos).l         ; 63A18
-        move.b  (OpponentPiecePos).l,d0         ; 63A1E
-        cmp.b   (PieceSections).l,d0                ; 63A24
+        add.w   d0,OpponentPiecePos-PHYS_BASE(a6)	; 63A18
+        move.b  OpponentPiecePos-PHYS_BASE(a6),d0	; 63A1E
+        cmp.b   PieceSections-PHYS_BASE(a6),d0  ; 63A24
         bcs.w   l_63A56                         ; 63A2A
-        sub.b   (PieceSections).l,d0                ; 63A2E
-        move.b  d0,(OpponentPiecePos).l         ; 63A34
-        move.b  (OpponentPiece).l,d1            ; 63A3A
+        sub.b   PieceSections-PHYS_BASE(a6),d0  ; 63A2E
+        move.b  d0,OpponentPiecePos-PHYS_BASE(a6)	; 63A34
+        move.b  OpponentPiece-PHYS_BASE(a6),d1  ; 63A3A
         addq.b  #$1,d1                          ; 63A40
-        cmp.b   (TrackPieceCount).l,d1          ; 63A42
+        cmp.b   TrackPieceCount-PHYS_BASE(a6),d1	; 63A42
         bcs.w   l_63A50                         ; 63A48
         move.b  #$0,d1                          ; 63A4C
 l_63A50:
-        move.b  d1,(OpponentPiece).l            ; 63A50
+        move.b  d1,OpponentPiece-PHYS_BASE(a6)  ; 63A50
 l_63A56:
+	movem.l	(a7)+,a6			; (the enhanced game) a6 back
         rts                                     ; 63A56
 
 ;-------------------------------------------------------------------------------
@@ -17427,47 +17519,47 @@ l_63B06:
 ; OpponentBehind), x $EE/256; never below 0
 ;-------------------------------------------------------------------------------
 OpponentAccelerate:
-        move.w  #$0,(WorkByte3).l               ; 63B08
-        move.b  (OpponentAccelBit).l,d0                ; 63B10
+        move.w  #$0,WorkByte3-PHYS_BASE(a6)     ; 63B08
+        move.b  OpponentAccelBit-PHYS_BASE(a6),d0	; 63B10
         asl.b   #$1,d0                          ; 63B16
-        move.b  (OpponentSpeed).l,d0                ; 63B18
+        move.b  OpponentSpeed-PHYS_BASE(a6),d0  ; 63B18
         bmi.w   l_63B94                         ; 63B1E
         roxl.b  #$1,d0                          ; 63B22
-        tst.b   (CarsClose).l                   ; 63B24
+        tst.b   CarsClose-PHYS_BASE(a6)         ; 63B24
         bpl.w   l_63B44                         ; 63B2A
-        tst.b   (OpponentBehind).l                   ; 63B2E
+        tst.b   OpponentBehind-PHYS_BASE(a6)    ; 63B2E
         bpl.w   l_63B44                         ; 63B34
         subi.b  #$14,d0                         ; 63B38
         bcc.w   l_63B44                         ; 63B3C
         move.b  #$0,d0                          ; 63B40
 l_63B44:
-        move.b  d0,(WorkByte5).l                ; 63B44
-        move.b  (OpponentSpeed).l,d0                ; 63B4A
+        move.b  d0,WorkByte5-PHYS_BASE(a6)      ; 63B44
+        move.b  OpponentSpeed-PHYS_BASE(a6),d0  ; 63B4A
         jsr     (MulFraction).l                 ; 63B50
         asr.w   #$6,d3                          ; 63B56
-        move.w  d3,(WorkByte3).l                ; 63B58
-        move.b  (OpponentRacing).l,d0                ; 63B5E
+        move.w  d3,WorkByte3-PHYS_BASE(a6)      ; 63B58
+        move.b  OpponentRacing-PHYS_BASE(a6),d0 ; 63B5E
         beq.w   l_63B94                         ; 63B64
-        move.w  (OpponentAccel).l,d0                ; 63B68
+        move.w  OpponentAccel-PHYS_BASE(a6),d0  ; 63B68
         bmi.w   l_63B94                         ; 63B6E
         move.w  #$0,d3                          ; 63B72
-        move.b  (OpponentSpeed).l,d3                ; 63B76
+        move.b  OpponentSpeed-PHYS_BASE(a6),d3  ; 63B76
         sub.w   d3,d0                           ; 63B7C
-        tst.b   (PieceDirection).l                   ; 63B7E
+        tst.b   PieceDirection-PHYS_BASE(a6)    ; 63B7E
         bpl.w   l_63B8E                         ; 63B84
         sub.w   d3,d0                           ; 63B88
         subi.w  #$23,d0                         ; 63B8A
 l_63B8E:
-        move.w  d0,(OpponentAccel).l                ; 63B8E
+        move.w  d0,OpponentAccel-PHYS_BASE(a6)  ; 63B8E
 l_63B94:
-        move.w  (OpponentAccel).l,d0                ; 63B94
-        sub.w   (WorkByte3).l,d0                ; 63B9A
-        tst.b   (OpponentRacing).l                   ; 63BA0
+        move.w  OpponentAccel-PHYS_BASE(a6),d0  ; 63B94
+        sub.w   WorkByte3-PHYS_BASE(a6),d0      ; 63B9A
+        tst.b   OpponentRacing-PHYS_BASE(a6)    ; 63BA0
         beq.w   l_63BE4                         ; 63BA6
-        move.w  (PiecePoints).l,d3              ; 63BAA
-        add.w   (PiecePoints2).l,d3                ; 63BB0
+        move.w  PiecePoints-PHYS_BASE(a6),d3    ; 63BAA
+        add.w   PiecePoints2-PHYS_BASE(a6),d3   ; 63BB0
         lsr.w   #$1,d3                          ; 63BB6
-        sub.w   (PiecePoints3).l,d3                ; 63BB8
+        sub.w   PiecePoints3-PHYS_BASE(a6),d3   ; 63BB8
         move.w  d3,d4                           ; 63BBE
         bpl.w   l_63BC6                         ; 63BC0
         neg.w   d4                              ; 63BC4
@@ -17491,9 +17583,9 @@ l_63BE4:
         muls.w  d2,d0                           ; 63BEC
         asr.l   #$8,d0                          ; 63BEE
 l_63BF0:
-        add.w   d0,(OpponentSpeed).l                ; 63BF0
+        add.w   d0,OpponentSpeed-PHYS_BASE(a6)  ; 63BF0
         bpl.w   l_63C02                         ; 63BF6
-        move.w  #$0,(OpponentSpeed).l               ; 63BFA
+        move.w  #$0,OpponentSpeed-PHYS_BASE(a6) ; 63BFA
 l_63C02:
         rts                                     ; 63C02
 
@@ -17502,19 +17594,19 @@ l_63C02:
 ; while swerving: SwerveCountdown; none unless OpponentRacing)
 ;-------------------------------------------------------------------------------
 OpponentControls:
-        move.b  (OpponentAccelInLow).l,d0                ; 63C04
-        move.b  (OpponentAccelIn).l,d2                ; 63C0A
-        move.b  (SwerveCountdown).l,d1                ; 63C10
+        move.b  OpponentAccelInLow-PHYS_BASE(a6),d0	; 63C04
+        move.b  OpponentAccelIn-PHYS_BASE(a6),d2	; 63C0A
+        move.b  SwerveCountdown-PHYS_BASE(a6),d1	; 63C10
         beq.w   l_63C1E                         ; 63C16
         subi.b  #$19,d0                         ; 63C1A
 l_63C1E:
-        move.b  (OpponentRacing).l,d1                ; 63C1E
+        move.b  OpponentRacing-PHYS_BASE(a6),d1 ; 63C1E
         bne.w   l_63C2E                         ; 63C24
         move.b  #$0,d0                          ; 63C28
         move.b  d0,d2                           ; 63C2C
 l_63C2E:
-        move.b  d0,(OpponentAccelCopy).l                ; 63C2E
-        move.b  d2,(OpponentAccel).l                ; 63C34
+        move.b  d0,OpponentAccelCopy-PHYS_BASE(a6)	; 63C2E
+        move.b  d2,OpponentAccel-PHYS_BASE(a6)  ; 63C34
         rts                                     ; 63C3A
 
 ;-------------------------------------------------------------------------------
@@ -17524,12 +17616,12 @@ l_63C2E:
 ; when well below it
 ;-------------------------------------------------------------------------------
 OpponentTargetSpeed:
-        tst.b   (OpponentRacing).l                   ; 63C3C
+        tst.b   OpponentRacing-PHYS_BASE(a6)    ; 63C3C
         bne.w   l_63C48                         ; 63C42
         rts                                     ; 63C46
 l_63C48:
-        move.b  (OpponentPiece).l,d1            ; 63C48
-        movea.l #PieceOpponentSpeeds,a0                   ; 63C4E
+        move.b  OpponentPiece-PHYS_BASE(a6),d1  ; 63C48
+        lea PieceOpponentSpeeds-PHYS_BASE(a6),a0	; 63C4E
         move.b  (a0,d1.w),d0                    ; 63C54
         bmi.w   l_63C6C                         ; 63C58
         cmp.b   (OpponentTopSpeed).l,d0                ; 63C5C
@@ -17537,32 +17629,32 @@ l_63C48:
         move.b  (OpponentTopSpeed).l,d0                ; 63C66
 l_63C6C:
         andi.b  #$7f,d0                         ; 63C6C
-        move.b  d0,(OpponentSpeedTarget).l                ; 63C70
-        move.b  (OpponentSpeed).l,d0                ; 63C76
-        sub.b   (OpponentSpeedTarget).l,d0                ; 63C7C
+        move.b  d0,OpponentSpeedTarget-PHYS_BASE(a6)	; 63C70
+        move.b  OpponentSpeed-PHYS_BASE(a6),d0  ; 63C76
+        sub.b   OpponentSpeedTarget-PHYS_BASE(a6),d0	; 63C7C
         bcs.w   l_63CA0                         ; 63C82
         beq.w   l_63CD6                         ; 63C86
-        move.b  #$80,(OpponentBraking).l              ; 63C8A
-        neg.w   (OpponentAccel).l                   ; 63C92
+        move.b  #$80,OpponentBraking-PHYS_BASE(a6)	; 63C8A
+        neg.w   OpponentAccel-PHYS_BASE(a6)     ; 63C92
         cmpi.b  #$e,d0                          ; 63C98
         bcs.w   l_63CD4                         ; 63C9C
 l_63CA0:
-        movea.l #PieceOpponentSpeeds,a1                   ; 63CA0
+        lea PieceOpponentSpeeds-PHYS_BASE(a6),a1	; 63CA0
         tst.b   (a1,d1.w)                       ; 63CA6
         bmi.w   l_63CCE                         ; 63CAA
         tst.b   d0                              ; 63CAE
         bpl.w   l_63CCE                         ; 63CB0
-        move.b  (OpponentBraking).l,d2                ; 63CB4
+        move.b  OpponentBraking-PHYS_BASE(a6),d2	; 63CB4
         beq.w   l_63CCE                         ; 63CBA
         cmpi.b  #$fe,d0                         ; 63CBE
         bcc.w   l_63CD4                         ; 63CC2
-        bclr    #$7,(OpponentBraking).l               ; 63CC6
+        bclr    #$7,OpponentBraking-PHYS_BASE(a6)	; 63CC6
 l_63CCE:
-        asl.w   (OpponentAccel).l                   ; 63CCE
+        asl.w   OpponentAccel-PHYS_BASE(a6)     ; 63CCE
 l_63CD4:
         rts                                     ; 63CD4
 l_63CD6:
-        move.b  #$80,(OpponentBraking).l              ; 63CD6
+        move.b  #$80,OpponentBraking-PHYS_BASE(a6)	; 63CD6
         rts                                     ; 63CDE
 OpponentTopSpeed:				; the opponent's top speed in this race: Random within the track's limits (SetRaceLimits, OpponentSpeedLimits)
 	dc.b	$00
@@ -17684,29 +17776,29 @@ ApplyCollision:
         beq.w   l_63E3E                         ; 63E34
         subq.b  #$1,(dat_63EE0).l               ; 63E38
 l_63E3E:
-        tst.b   (KnockPending).l                   ; 63E3E
+        tst.b   KnockPending-PHYS_BASE(a6)      ; 63E3E
         beq.w   l_63EDC                         ; 63E44
-        move.b  #$0,(KnockPending).l               ; 63E48
-        move.w  (OpponentSpeed).l,d0                ; 63E50
-        sub.w   (KnockForceZ).l,d0                ; 63E56
+        move.b  #$0,KnockPending-PHYS_BASE(a6)  ; 63E48
+        move.w  OpponentSpeed-PHYS_BASE(a6),d0  ; 63E50
+        sub.w   KnockForceZ-PHYS_BASE(a6),d0    ; 63E56
         bpl.w   l_63E64                         ; 63E5C
         move.w  #$0,d0                          ; 63E60
 l_63E64:
-        move.w  d0,(OpponentSpeed).l                ; 63E64
-        move.w  (KnockForceY).l,d0                ; 63E6A
+        move.w  d0,OpponentSpeed-PHYS_BASE(a6)  ; 63E64
+        move.w  KnockForceY-PHYS_BASE(a6),d0    ; 63E6A
         asr.w   #$4,d0                          ; 63E70
-        sub.w   d0,(OpponentCornerSpeeds).l                ; 63E72
-        sub.w   d0,(OpponentCornerSpeed2).l                ; 63E78
-        sub.w   d0,(OpponentCornerSpeed3).l                ; 63E7E
-        move.w  (KnockForceX).l,d0                ; 63E84
-        add.w   d0,(SpringForceSide).l                ; 63E8A
-        move.w  (KnockForceY).l,d0                ; 63E90
-        add.w   d0,(SpringForceUp).l                ; 63E96
-        move.w  (KnockForceZ).l,d0                ; 63E9C
-        add.w   d0,(SpringForceForward).l                ; 63EA2
-        move.w  #$0,(KnockForceX).l               ; 63EA8
-        move.w  #$0,(KnockForceY).l               ; 63EB0
-        move.w  #$0,(KnockForceZ).l               ; 63EB8
+        sub.w   d0,OpponentCornerSpeeds-PHYS_BASE(a6)	; 63E72
+        sub.w   d0,OpponentCornerSpeed2-PHYS_BASE(a6)	; 63E78
+        sub.w   d0,OpponentCornerSpeed3-PHYS_BASE(a6)	; 63E7E
+        move.w  KnockForceX-PHYS_BASE(a6),d0    ; 63E84
+        add.w   d0,SpringForceSide-PHYS_BASE(a6)	; 63E8A
+        move.w  KnockForceY-PHYS_BASE(a6),d0    ; 63E90
+        add.w   d0,SpringForceUp-PHYS_BASE(a6)  ; 63E96
+        move.w  KnockForceZ-PHYS_BASE(a6),d0    ; 63E9C
+        add.w   d0,SpringForceForward-PHYS_BASE(a6)	; 63EA2
+        move.w  #$0,KnockForceX-PHYS_BASE(a6)   ; 63EA8
+        move.w  #$0,KnockForceY-PHYS_BASE(a6)   ; 63EB0
+        move.w  #$0,KnockForceZ-PHYS_BASE(a6)   ; 63EB8
         tst.b   (dat_63EE0).l                   ; 63EC0
         bne.w   l_63EDC                         ; 63EC6
         move.b  #$2,d0                          ; 63ECA
@@ -17727,26 +17819,26 @@ dat_63EE0:
 OpponentPhysics:
         move.w  #$8000,(dat_63EDE).l            ; 63EE2
         move.w  #$28,d0                         ; 63EEA
-        tst.b   (PieceDirection).l                   ; 63EEE
+        tst.b   PieceDirection-PHYS_BASE(a6)    ; 63EEE
         bpl.w   l_63EFC                         ; 63EF4
         move.w  #$7c,d0                         ; 63EF8
 l_63EFC:
-        move.w  d0,(WorkPointZ).l                ; 63EFC
+        move.w  d0,WorkPointZ-PHYS_BASE(a6)     ; 63EFC
         move.w  #$0,d7                          ; 63F02
-        move.w  (PiecePoints).l,d0              ; 63F06
-        sub.w   (OpponentCorners).l,d0                ; 63F0C
+        move.w  PiecePoints-PHYS_BASE(a6),d0    ; 63F06
+        sub.w   OpponentCorners-PHYS_BASE(a6),d0	; 63F0C
         cmp.w   (dat_63EDE).l,d0                ; 63F12
         blt.w   l_63F22                         ; 63F18
         move.w  d0,(dat_63EDE).l                ; 63F1C
 l_63F22:
-        add.w   (WorkPointZ).l,d0                ; 63F22
+        add.w   WorkPointZ-PHYS_BASE(a6),d0     ; 63F22
         bpl.w   l_63F38                         ; 63F28
         cmpi.w  #$ffa0,d0                       ; 63F2C
         bcc.w   l_63F38                         ; 63F30
         move.w  #$ffa0,d0                       ; 63F34
 l_63F38:
         move.w  d0,d6                           ; 63F38
-        sub.w   (OpponentSpringKept0).l,d0                ; 63F3A
+        sub.w   OpponentSpringKept0-PHYS_BASE(a6),d0	; 63F3A
         jsr     (ScaleAdd114).l                   ; 63F40
         bpl.w   l_63F4E                         ; 63F46
         move.w  #$0,d0                          ; 63F4A
@@ -17756,23 +17848,23 @@ l_63F4E:
         move.w  #$3ff,d0                        ; 63F56
 l_63F5A:
         or.w    d0,d7                           ; 63F5A
-        sub.w   (WorkPointZ).l,d0                ; 63F5C
-        move.w  d0,(OpponentSpring0).l                ; 63F62
-        move.w  d6,(OpponentSpringKept0).l                ; 63F68
-        move.w  (PiecePoints2).l,d0                ; 63F6E
-        sub.w   (OpponentCorner2).l,d0                ; 63F74
+        sub.w   WorkPointZ-PHYS_BASE(a6),d0     ; 63F5C
+        move.w  d0,OpponentSpring0-PHYS_BASE(a6)	; 63F62
+        move.w  d6,OpponentSpringKept0-PHYS_BASE(a6)	; 63F68
+        move.w  PiecePoints2-PHYS_BASE(a6),d0   ; 63F6E
+        sub.w   OpponentCorner2-PHYS_BASE(a6),d0	; 63F74
         cmp.w   (dat_63EDE).l,d0                ; 63F7A
         blt.w   l_63F8A                         ; 63F80
         move.w  d0,(dat_63EDE).l                ; 63F84
 l_63F8A:
-        add.w   (WorkPointZ).l,d0                ; 63F8A
+        add.w   WorkPointZ-PHYS_BASE(a6),d0     ; 63F8A
         bpl.w   l_63FA0                         ; 63F90
         cmpi.w  #$ffa0,d0                       ; 63F94
         bcc.w   l_63FA0                         ; 63F98
         move.w  #$ffa0,d0                       ; 63F9C
 l_63FA0:
         move.w  d0,d6                           ; 63FA0
-        sub.w   (OpponentSpringKept2).l,d0                ; 63FA2
+        sub.w   OpponentSpringKept2-PHYS_BASE(a6),d0	; 63FA2
         jsr     (ScaleAdd114).l                   ; 63FA8
         bpl.w   l_63FB6                         ; 63FAE
         move.w  #$0,d0                          ; 63FB2
@@ -17782,23 +17874,23 @@ l_63FB6:
         move.w  #$3ff,d0                        ; 63FBE
 l_63FC2:
         or.w    d0,d7                           ; 63FC2
-        sub.w   (WorkPointZ).l,d0                ; 63FC4
-        move.w  d0,(OpponentSpring2).l                ; 63FCA
-        move.w  d6,(OpponentSpringKept2).l                ; 63FD0
-        move.w  (PiecePoints3).l,d0                ; 63FD6
-        sub.w   (OpponentCorner3).l,d0                ; 63FDC
+        sub.w   WorkPointZ-PHYS_BASE(a6),d0     ; 63FC4
+        move.w  d0,OpponentSpring2-PHYS_BASE(a6)	; 63FCA
+        move.w  d6,OpponentSpringKept2-PHYS_BASE(a6)	; 63FD0
+        move.w  PiecePoints3-PHYS_BASE(a6),d0   ; 63FD6
+        sub.w   OpponentCorner3-PHYS_BASE(a6),d0	; 63FDC
         cmp.w   (dat_63EDE).l,d0                ; 63FE2
         blt.w   l_63FF2                         ; 63FE8
         move.w  d0,(dat_63EDE).l                ; 63FEC
 l_63FF2:
-        add.w   (WorkPointZ).l,d0                ; 63FF2
+        add.w   WorkPointZ-PHYS_BASE(a6),d0     ; 63FF2
         bpl.w   l_64008                         ; 63FF8
         cmpi.w  #$ffa0,d0                       ; 63FFC
         bcc.w   l_64008                         ; 64000
         move.w  #$ffa0,d0                       ; 64004
 l_64008:
         move.w  d0,d6                           ; 64008
-        sub.w   (OpponentSpringKept3).l,d0                ; 6400A
+        sub.w   OpponentSpringKept3-PHYS_BASE(a6),d0	; 6400A
         jsr     (ScaleAdd114).l                   ; 64010
         bpl.w   l_6401E                         ; 64016
         move.w  #$0,d0                          ; 6401A
@@ -17808,101 +17900,101 @@ l_6401E:
         move.w  #$3ff,d0                        ; 64026
 l_6402A:
         or.w    d0,d7                           ; 6402A
-        sub.w   (WorkPointZ).l,d0                ; 6402C
-        move.w  d0,(OpponentSpring3).l                ; 64032
-        move.w  d6,(OpponentSpringKept3).l                ; 64038
+        sub.w   WorkPointZ-PHYS_BASE(a6),d0     ; 6402C
+        move.w  d0,OpponentSpring3-PHYS_BASE(a6)	; 64032
+        move.w  d6,OpponentSpringKept3-PHYS_BASE(a6)	; 64038
         move.w  d7,d0                           ; 6403E
         asr.w   #$8,d0                          ; 64040
         or.b    d7,d0                           ; 64042
-        move.b  d0,(OpponentRacing).l                ; 64044
-        move.w  (OpponentSpring0).l,d4                ; 6404A
-        add.w   (OpponentSpring2).l,d4                ; 64050
-        add.w   (OpponentSpring3).l,d4                ; 64056
-        move.w  (OpponentSpring0).l,d7                ; 6405C
+        move.b  d0,OpponentRacing-PHYS_BASE(a6) ; 64044
+        move.w  OpponentSpring0-PHYS_BASE(a6),d4	; 6404A
+        add.w   OpponentSpring2-PHYS_BASE(a6),d4	; 64050
+        add.w   OpponentSpring3-PHYS_BASE(a6),d4	; 64056
+        move.w  OpponentSpring0-PHYS_BASE(a6),d7	; 6405C
         asl.w   #$2,d7                          ; 64062
         move.w  d4,d0                           ; 64064
-        add.w   (OpponentSpring0).l,d0                ; 64066
+        add.w   OpponentSpring0-PHYS_BASE(a6),d0	; 64066
         add.w   d7,d0                           ; 6406C
         asr.w   #$3,d0                          ; 6406E
-        move.w  d0,(OpponentPush0).l                ; 64070
-        move.w  (OpponentSpring2).l,d7                ; 64076
+        move.w  d0,OpponentPush0-PHYS_BASE(a6)  ; 64070
+        move.w  OpponentSpring2-PHYS_BASE(a6),d7	; 64076
         asl.w   #$2,d7                          ; 6407C
         move.w  d4,d0                           ; 6407E
-        add.w   (OpponentSpring2).l,d0                ; 64080
+        add.w   OpponentSpring2-PHYS_BASE(a6),d0	; 64080
         add.w   d7,d0                           ; 64086
         asr.w   #$3,d0                          ; 64088
-        move.w  d0,(OpponentPush2).l                ; 6408A
-        move.w  (OpponentSpring3).l,d7                ; 64090
+        move.w  d0,OpponentPush2-PHYS_BASE(a6)  ; 6408A
+        move.w  OpponentSpring3-PHYS_BASE(a6),d7	; 64090
         asl.w   #$2,d7                          ; 64096
         move.w  d4,d0                           ; 64098
-        add.w   (OpponentSpring3).l,d0                ; 6409A
+        add.w   OpponentSpring3-PHYS_BASE(a6),d0	; 6409A
         add.w   d7,d0                           ; 640A0
         asr.w   #$3,d0                          ; 640A2
-        move.w  d0,(OpponentPush3).l                ; 640A4
-        move.b  (OpponentSkill).l,d1                ; 640AA
-        movea.l #dat_1ED8A,a0                   ; 640B0
+        move.w  d0,OpponentPush3-PHYS_BASE(a6)  ; 640A4
+        move.b  OpponentSkill-PHYS_BASE(a6),d1  ; 640AA
+        lea dat_1ED8A-PHYS_BASE(a6),a0          ; 640B0
         move.b  (a0,d1.w),d0                    ; 640B6
         andi.b  #$4,d0                          ; 640BA
         beq.w   l_640EC                         ; 640BE
-        move.w  (OpponentCornerSpeed3).l,d0                ; 640C2
-        or.w    (OpponentPush3).l,d0                ; 640C8
+        move.w  OpponentCornerSpeed3-PHYS_BASE(a6),d0	; 640C2
+        or.w    OpponentPush3-PHYS_BASE(a6),d0  ; 640C8
         andi.w  #$fffc,d0                       ; 640CE
         bne.w   l_640EC                         ; 640D2
         jsr     (Random).l                      ; 640D6
         andi.b  #$f,d0                          ; 640DC
         bne.w   l_640EC                         ; 640E0
-        move.w  #$a0,(OpponentCornerSpeed3).l              ; 640E4
+        move.w  #$a0,OpponentCornerSpeed3-PHYS_BASE(a6)	; 640E4
 l_640EC:
-        move.w  (OpponentPush0).l,d0                ; 640EC
+        move.w  OpponentPush0-PHYS_BASE(a6),d0  ; 640EC
         move.b  #$ee,d2                         ; 640F2
         beq.w   l_640FE                         ; 640F6
         muls.w  d2,d0                           ; 640FA
         asr.l   #$8,d0                          ; 640FC
 l_640FE:
-        add.w   (OpponentCornerSpeeds).l,d0                ; 640FE
-        move.w  d0,(OpponentCornerSpeeds).l                ; 64104
+        add.w   OpponentCornerSpeeds-PHYS_BASE(a6),d0	; 640FE
+        move.w  d0,OpponentCornerSpeeds-PHYS_BASE(a6)	; 64104
         move.b  #$ee,d2                         ; 6410A
         beq.w   l_64116                         ; 6410E
         muls.w  d2,d0                           ; 64112
         asr.l   #$8,d0                          ; 64114
 l_64116:
         asr.w   #$1,d0                          ; 64116
-        add.w   d0,(OpponentCorners).l                ; 64118
-        move.w  (OpponentPush2).l,d0                ; 6411E
+        add.w   d0,OpponentCorners-PHYS_BASE(a6)	; 64118
+        move.w  OpponentPush2-PHYS_BASE(a6),d0  ; 6411E
         move.b  #$ee,d2                         ; 64124
         beq.w   l_64130                         ; 64128
         muls.w  d2,d0                           ; 6412C
         asr.l   #$8,d0                          ; 6412E
 l_64130:
-        add.w   (OpponentCornerSpeed2).l,d0                ; 64130
-        move.w  d0,(OpponentCornerSpeed2).l                ; 64136
+        add.w   OpponentCornerSpeed2-PHYS_BASE(a6),d0	; 64130
+        move.w  d0,OpponentCornerSpeed2-PHYS_BASE(a6)	; 64136
         move.b  #$ee,d2                         ; 6413C
         beq.w   l_64148                         ; 64140
         muls.w  d2,d0                           ; 64144
         asr.l   #$8,d0                          ; 64146
 l_64148:
         asr.w   #$1,d0                          ; 64148
-        add.w   d0,(OpponentCorner2).l                ; 6414A
-        move.w  (OpponentPush3).l,d0                ; 64150
+        add.w   d0,OpponentCorner2-PHYS_BASE(a6)	; 6414A
+        move.w  OpponentPush3-PHYS_BASE(a6),d0  ; 64150
         move.b  #$ee,d2                         ; 64156
         beq.w   l_64162                         ; 6415A
         muls.w  d2,d0                           ; 6415E
         asr.l   #$8,d0                          ; 64160
 l_64162:
-        add.w   (OpponentCornerSpeed3).l,d0                ; 64162
-        move.w  d0,(OpponentCornerSpeed3).l                ; 64168
+        add.w   OpponentCornerSpeed3-PHYS_BASE(a6),d0	; 64162
+        move.w  d0,OpponentCornerSpeed3-PHYS_BASE(a6)	; 64168
         move.b  #$ee,d2                         ; 6416E
         beq.w   l_6417A                         ; 64172
         muls.w  d2,d0                           ; 64176
         asr.l   #$8,d0                          ; 64178
 l_6417A:
         asr.w   #$1,d0                          ; 6417A
-        add.w   d0,(OpponentCorner3).l                ; 6417C
-        move.w  #$128,(WorkPointX).l             ; 64182
+        add.w   d0,OpponentCorner3-PHYS_BASE(a6)	; 6417C
+        move.w  #$128,WorkPointX-PHYS_BASE(a6)  ; 64182
         move.b  #$0,d1                          ; 6418A
         move.b  #$2,d2                          ; 6418E
         jsr     (OpponentEvenCorners).l                   ; 64192
-        move.w  #$170,(WorkPointX).l             ; 64198
+        move.w  #$170,WorkPointX-PHYS_BASE(a6)  ; 64198
         move.b  #$0,d1                          ; 641A0
         tst.w   d4                              ; 641A4
         bpl.w   l_641AC                         ; 641A6
@@ -17937,7 +18029,7 @@ LinkOpponentCorners:
 ; OpponentCornerDiff - d0 = |corner d1 - corner d2| (OpponentCorners's words), d4 the difference signed
 ;-------------------------------------------------------------------------------
 OpponentCornerDiff:
-        movea.l #OpponentCorners,a0                   ; 64218
+        lea OpponentCorners-PHYS_BASE(a6),a0    ; 64218
         move.w  (a0,d1.w),d0                    ; 6421E
         sub.w   (a0,d2.w),d0                    ; 64222
         move.w  d0,d4                           ; 64226
@@ -17952,17 +18044,17 @@ l_64230:
 ; (OpponentCornerDiff) brought to their mean (AveragePair)
 ;-------------------------------------------------------------------------------
 OpponentEvenCorners:
-        movea.l #OpponentCornerSpeeds,a4                   ; 64232
-        move.b  d1,(WorkD1b).l                ; 64238
+        lea OpponentCornerSpeeds-PHYS_BASE(a6),a4	; 64232
+        move.b  d1,WorkD1b-PHYS_BASE(a6)        ; 64238
         jsr     (OpponentCornerDiff).l                   ; 6423E
-        move.w  (WorkPointX).l,d3                ; 64244
+        move.w  WorkPointX-PHYS_BASE(a6),d3     ; 64244
         sub.w   d0,d3                           ; 6424A
         bpl.w   l_642A0                         ; 6424C
         tst.w   d4                              ; 64250
         bpl.w   l_64258                         ; 64252
         move.b  d2,d1                           ; 64256
 l_64258:
-        movea.l #OpponentCorners,a0                   ; 64258
+        lea OpponentCorners-PHYS_BASE(a6),a0    ; 64258
         add.w   d3,(a0,d1.w)                    ; 6425E
         cmpi.b  #$4,d2                          ; 64262
         beq.w   l_64274                         ; 64266
@@ -17977,13 +18069,13 @@ l_64274:
         move.b  #$0,d1                          ; 6428C
         jsr     (AveragePair).l                   ; 64290
         move.b  #$4,d2                          ; 64296
-        move.b  (WorkD1b).l,d1                ; 6429A
+        move.b  WorkD1b-PHYS_BASE(a6),d1        ; 6429A
 l_642A0:
         cmpi.b  #$4,d2                          ; 642A0
         bne.w   l_642E8                         ; 642A4
-        move.b  (OpponentRacing).l,d0                ; 642A8
+        move.b  OpponentRacing-PHYS_BASE(a6),d0 ; 642A8
         bne.w   l_642E8                         ; 642AE
-        tst.b   (WorkByte3).l                   ; 642B2
+        tst.b   WorkByte3-PHYS_BASE(a6)         ; 642B2
         bmi.w   l_642BC                         ; 642B8
 l_642BC:
         move.w  (a4,d1.w),d0                    ; 642BC
@@ -25664,6 +25756,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"readout.i"			; (the enhanced game) the opponent's distance: only what changed printed
 	include	"textfast.i"			; (the enhanced game) PrintCharNow's rows drawn faster
 	include	"scanside.i"			; (the enhanced game) ScanEdge: edges clipped at the view's sides only
+	include	"physfast.i"			; (the enhanced game) the physics' work made cheaper, exactly
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

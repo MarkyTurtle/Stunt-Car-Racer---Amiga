@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: 8e7f0bce94fcaef04c0ce9009210e03b9c1ceb2f
+  ADF_SHA1: 17b9f0588662b0403b9356339b6d80db612e0cbb
 
 jobs:
   build:
@@ -59,6 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0              # test_physics.py builds the game at an earlier commit
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
@@ -81,6 +83,10 @@ jobs:
         run: python enhanced/tools/test_scanside.py
       - name: The tracks read as the game reads them (enhanced/tools/test_tracks.py)
         run: python enhanced/tools/test_tracks.py
+      - name: The physics' table-made LoadPiece the same call by call (enhanced/tools/test_physfast.py)
+        run: python enhanced/tools/test_physfast.py
+      - name: The race the same to the byte as before physfast.i (enhanced/tools/test_physics.py)
+        run: python enhanced/tools/test_physics.py --base 3f9c26a
       - name: The variables the view's drawing keeps (enhanced/tools/measure_keep.py --check)
         run: python enhanced/tools/measure_keep.py --check
       - name: The blitter beside the CPU in the right order (enhanced/tools/bench.py --blitcheck)

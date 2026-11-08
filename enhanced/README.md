@@ -65,6 +65,13 @@ workflow). So far it differs from the original in:
   about 89K of chip memory is free for the enhancements. The 4489_byteloader reads them from the
   drive the game was booted from; if the game's disk is not in it (a save disk, no disk), the game
   says "Insert the Stunt Car Racer disc into drive n" and waits for it.
+* **the physics' work cheaper, exactly** ([`src/physfast.i`](src/physfast.i)): `LoadPiece` copies
+  the piece's numbers from a table built when the track is (instead of working them out about 9
+  times a step), the physics and the opponent reach their variables through a base register
+  (`a6`: 4 cycles less an access), `MatrixTimes` inlined at its calls - `CarPhysics` 12% quicker,
+  the step's work about 1% less; the race the same to the byte (checked vertical blank by vertical
+  blank on all 8 tracks, `tools/test_physics.py`, and `LoadPiece` call by call,
+  `tools/test_physfast.py`).
 
 Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F4 the draw
 distance, F6 the cockpit, F7 the calibration run (the telemetry disk), F8 the release's timing, F9
