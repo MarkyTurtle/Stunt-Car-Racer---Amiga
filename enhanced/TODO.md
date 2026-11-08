@@ -62,7 +62,7 @@ Load what a race needs when it is set up instead of keeping everything in memory
   what can come with them: per-track scenery, colours, objects or sounds that would not all fit in
   memory together.
 * Hook: the race set-up at `$5D2C8` calls the track builder (`$5AE46`) with the track number
-  (`dat_1CA33`): load the track's file (or file set) just before it.
+  (`CurrentTrack`): load the track's file (or file set) just before it.
 * ~~First work out the track format~~: done (`original/docs/TRACKS.md`, `original/tools/tracks.py`,
   checked against the game by `tools/test_tracks.py`). Per track: the track's bytes only - the
   shapes' geometry and the height profiles are shared by all 8 (`Data6502`, `HeightProfiles`); the
@@ -231,21 +231,24 @@ bench_baseline.json`, also run by the workflow) and, for real figures, the telem
   `CarPhysics` 29,900 cycles a step (`BuildViewMatrix` 5,800, the track under the wheels
   `TrackUnderWheels` 8,600, `WheelsOnTrack` 3,800, the forces through `MatrixTimes` about 20 calls),
   `PlaceOpponentOnTrack` 10,800 (in the view), `MoveOpponent` 6,100 (the opponent follows the track,
-  it is not simulated). Each step the car is a rigid body on four wheels: its matrix from its
-  angles (`Sin`/`Cos`: a 512-entry table, interpolated), the track's height under each wheel from
-  its piece's points, the wheels on, above or below the track, the forces turned between the
-  car's frame and the world's, then an Euler step (velocity x 238/256 added to the place, the
-  turn rates to the angles). All exact, so the cars drive as before:
-  * the pieces' loads cached: `LoadPiece` about 7 times a step (about 930 cycles each; it copies
-    some 20 values of the piece into variables that other code changes between the calls, so an
-    exact cache must check them all - perhaps 0.4%),
-    `ReadPiecePoints` 8 times in `PlaceOpponentOnTrack` - mostly the piece of the step before: ~0.5%;
-  * the physics' variables from a base register (`d16(An)`) instead of absolute longs (4 cycles
-    an access, hundreds of accesses a step): ~0.7%;
-  * `Sin`/`Cos` tighter (about 270 cycles a call, ~10 a step; an exact full table would take
-    32K): ~0.2%;
-  * `MatrixTimes` inlined (20 calls a step): ~0.2%.
-  Together about 1.5%. A cheaper integrator or fewer samples of the track would change the
+  it is not simulated). Each step the car is a rigid body on three points (the rear's middle and
+  the front corners): its matrix from its angles (`Sin`/`Cos`: a 512-entry table, interpolated),
+  the track's height under each point from its piece's points, the points on, above or below the
+  track, the forces turned between the car's frame and the world's, then an Euler step (velocity x 238/256 added to the place, the
+  turn rates to the angles). ~~All exact, so the cars drive as before~~: done (November 2026,
+  `src/physfast.i`) - `CarPhysics` 31,100 to 27,350 cycles a step, `MoveOpponent` 6,100 to 5,400,
+  `PlaceOpponentOnTrack` 11,000 to 10,100: the step's work about 1% less, the race the same to the
+  byte (`tools/test_physics.py`, `tools/test_physfast.py`):
+  * ~~the pieces' loads cached~~: done - `LoadPiece` from a table of records built when the track
+    is (the release's routine run once a piece), 930 cycles to about 550 a call;
+  * ~~the physics' variables from a base register~~: done - `a6` in the 2,245 lines only
+    `CarPhysics`, `MoveOpponent` and `PlaceOpponentOnTrack` reach (worked out from the code's flow);
+  * ~~`MatrixTimes` inlined~~: done (its 12 calls);
+  * `Sin`/`Cos`: looked at, not done - an exact table of their results takes 32K, and they leave
+    `d3`, `d4`, `d6` and the X flag depending on the angle; `ReadPiecePoints` (most of its calls
+    the view's): a ready pointer would be a copy of `PieceDataPointer`, which `interp.i` sets back,
+    so not exact.
+  A cheaper integrator or fewer samples of the track would change the
   handling: not recommended.
 * ~~**The opponent's distance on the instruments**~~ (`PrintOpponentDistance`): done (`src/readout.i`) -
   printed every 4th step a row of pixels at a time into both screens, about 11,400 cycles a
