@@ -1,6 +1,6 @@
 """How close renderer 1's picture is to renderer 0's (src/renderer.i: F5).
 
-  python3 enhanced/tools/test_renderers.py [--tracks 0,1,..] [--shots N] [--max PERCENT] [--png DIR] [--half] [--keep DIR]
+  python3 enhanced/tools/test_renderers.py [--tracks 0,1,..] [--shots N] [--max PERCENT] [--png DIR] [--half] [--nocockpit] [--vs RENDERER] [--keep DIR]
 
 Each track is raced as test_physics.py does (the benchmark's way to the race, the track chosen at the
 preview, then random controls) twice, once with each renderer (F5's flag, HelperRenderer, set at the
@@ -32,7 +32,7 @@ def run(game, lst, track, renderer, shots, vblanks, work, tag):
     head, tail = sc.split('joy f\nframes 60\n')
     head += 'joy f\nframes 60\n'
     if renderer:
-        head += f'poke {sym["HelperRenderer"]:#x} 1 b\n'
+        head += f'poke {sym["HelperRenderer"]:#x} {renderer} b\n'
     if '--nocockpit' in flags:
         head += f'poke {sym["HelperCockpitOff"]:#x} 1 b\n'
     if '--half' in flags:
@@ -93,7 +93,7 @@ def main():
     allpct = []
     for t in tracks:
         a = run(game, lst, t, 0, shots, vblanks, work, f't{t}r0')
-        b = run(game, lst, t, 1, shots, vblanks, work, f't{t}r1')
+        b = run(game, lst, t, int(bench.arg('--vs', 1)), shots, vblanks, work, f't{t}r1')
         pcts = []
         for k, (x, y) in enumerate(zip(a, b), 1):
             ia, ib = picture(work, x), picture(work, y)

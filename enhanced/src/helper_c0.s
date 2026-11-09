@@ -100,9 +100,10 @@ Helper_Keys:					; $FC
 .f6:	cmp.b	#$53,d0				; F4: the draw distance (ProjectFarPieces)
 	bne.s	.f5
 	not.b	7(a0)
-.f5:	cmp.b	#$54,d0				; F5: the renderer (renderer.i)
+.f5:	cmp.b	#$54,d0				; F5: the renderer, 0-3 in turn (renderer.i)
 	bne.s	.f6b
-	not.b	8(a0)
+	addq.b	#1,8(a0)
+	andi.b	#3,8(a0)
 .f6b:	move.w	d0,-(a7)			; F6-F10: a flag each, toggled (F7: set). Caught here, in
 	subi.b	#$55,d0				; the keyboard interrupt, so that no press is missed:
 	cmpi.b	#$59-$55,d0			; F6 the cockpit drawn over the view or not (the game's

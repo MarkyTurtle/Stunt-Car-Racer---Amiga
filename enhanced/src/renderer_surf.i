@@ -22,8 +22,8 @@ SurfMask:	dcb.b	128*SURF_STRIDE,0
 ; buffers, a2 its start; the colour in dat_69AEC. All registers kept; the blits are done on return
 ;-------------------------------------------------------------------------------
 RenderFillSurface:
-	tst.b	RendererSel
-	bne.s	.blit
+	cmpi.b	#1,RendererSel
+	beq.s	.blit
 	jmp	(FillBetweenEdges).l
 .blit:
 	cmpa.l	a1,a2

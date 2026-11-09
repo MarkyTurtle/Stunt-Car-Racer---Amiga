@@ -67,7 +67,7 @@ def script(frames, snap, lst=None):
         ([f'poke {sym.get("HelperHalfRes", 0x175):#x} 1 b'] if '--half' in sys.argv else []) + \
         ([f'poke {sym.get("HelperMountainsOff", 0x176):#x} 1 b'] if '--nomountains' in sys.argv else []) + \
         ([f'poke {sym.get("HelperFarShort", 0x177):#x} 1 b'] if '--farshort' in sys.argv else []) + \
-        ([f'poke {sym["HelperRenderer"]:#x} 1 b'] if '--renderer' in sys.argv else []) + \
+        ([f'poke {sym["HelperRenderer"]:#x} {renderer_arg()} b'] if '--renderer' in sys.argv else []) + \
         ['frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']                         # the title: fire
     for k in ('37', '20', '13', '27', '44'):                                           # MARK, Return
         L += [f'key {k}', 'frames 10']
@@ -88,6 +88,12 @@ def script(frames, snap, lst=None):
         L += (['callprof 1'] if '--callprof' in sys.argv else []) + ['joy f', f'frames {frames}']
     L += ([f'callprofdump {arg("--callprof")}'] if '--callprof' in sys.argv else []) + [f'snap {snap}']
     return '\n'.join(L) + '\n'
+
+
+def renderer_arg():
+    """--renderer [N]: the renderer F5 chooses (0-3); by default 1"""
+    i = sys.argv.index('--renderer') + 1
+    return int(sys.argv[i]) if i < len(sys.argv) and sys.argv[i].isdigit() else 1
 
 
 def symbols(lst=None):
