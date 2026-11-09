@@ -81,6 +81,7 @@ def main():
     limit = float(bench.arg('--max', 5))
     work = bench.arg('--keep') or tempfile.mkdtemp()
     png = bench.arg('--png')
+    vs = int(bench.arg('--vs', 1))
     os.makedirs(work, exist_ok=True)
     if png:
         os.makedirs(png, exist_ok=True)
@@ -93,7 +94,7 @@ def main():
     allpct = []
     for t in tracks:
         a = run(game, lst, t, 0, shots, vblanks, work, f't{t}r0')
-        b = run(game, lst, t, int(bench.arg('--vs', 1)), shots, vblanks, work, f't{t}r1')
+        b = run(game, lst, t, vs, shots, vblanks, work, f't{t}r1')
         pcts = []
         for k, (x, y) in enumerate(zip(a, b), 1):
             ia, ib = picture(work, x), picture(work, y)
