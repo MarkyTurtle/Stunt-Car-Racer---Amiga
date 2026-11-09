@@ -20,6 +20,7 @@
 ;   the near rows         DrawNearRows                    (renderer 0's)
 ;-------------------------------------------------------------------------------
 
+FAR_ROWS_3	equ	3			; renderer 3: the far rows drawn (FAR_SHORT_ROWS is renderer 2's)
 HelperRenderer	equ	$188			; F5: the renderer, 0-3 (helper_c0.s)
 
 RendererSel:	dc.b	0			; this view's renderer (RendererLatch)
@@ -43,17 +44,20 @@ RendererLatch:
 .apply:	clr.b	(HelperHalfRes).w		; 0, 1: the full detail; 2: the track drawn less far ahead;
 	clr.b	(HelperMountainsOff).w		; 3: that, at half height, and no mountains
 	clr.b	(HelperFarShort).w
+	move.b	#4+4*FAR_SHORT_ROWS,FarShortLimit
 	cmpi.b	#2,d0
 	bcs.s	.same
 	st	(HelperFarShort).w
 	cmpi.b	#3,d0
 	bne.s	.same
+	move.b	#4+4*FAR_ROWS_3,FarShortLimit
 	st	(HelperHalfRes).w
 	st	(HelperMountainsOff).w
 .same:	movem.w	(a7)+,d0-d1
 	rts
 
 RendererPrev:	dc.b	0			; the renderer last latched
+FarShortLimit:	dc.b	4+4*FAR_SHORT_ROWS	; F4's limit of the far points drawn (ProjectFarPieces): renderer 3's lower
 	even
 
 ;-------------------------------------------------------------------------------

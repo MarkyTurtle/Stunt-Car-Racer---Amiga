@@ -59,7 +59,10 @@ workflow). So far it differs from the original in:
   any of them; renderer 0 is the release's (the race is exactly as before), renderer 1 draws the
   mountains with the blitter ([`src/renderer_blit.i`](src/renderer_blit.i)) - a prototype: the
   picture is within a pixel of the release's (`tools/test_renderers.py` measures it), but it takes
-  longer than the CPU does, which the [TODO](TODO.md) explains.
+  longer than the CPU does, which the [TODO](TODO.md) explains. Renderers 2 and 3 are presets of
+  detail (F5 sets the flags of F4, F9 and F10, which can be changed after): 2 draws the track 6 far
+  rows ahead (the work 109 ms to 92 ms a frame on the benchmark), 3 only 3, at half height and
+  with no mountains (71 ms: about 14 frames a second on an A500).
 * **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
   (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain
   polygons and their 24 edges (a third crossing the view's sides) are not drawn;

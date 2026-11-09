@@ -20241,7 +20241,7 @@ l_6608C:
         bge.w   l_660F2                         ; 660A6
         tst.b   (HelperFarShort).w              ; (enhanced) F4: the track drawn less far ahead - at most
         beq.s   .far                            ; FAR_SHORT_ROWS of the far pieces' cross-sections (12 on
-        cmpi.b  #4+4*FAR_SHORT_ROWS,d1          ; a straight); the opponent's car, beyond them, not drawn
+        cmp.b   (FarShortLimit).l,d1            ; a straight); the opponent's car, beyond them, not drawn (renderer.i: renderer 3's is shorter)
         bge.w   l_660F2
 .far:
         movea.l #PointScreenX,a4                ; 660AA
