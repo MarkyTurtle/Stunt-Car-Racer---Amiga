@@ -26,13 +26,16 @@ VIEW_X, VIEW_Y, VIEW_W, VIEW_H = 32, 16, 256, 128      # the view on the screen 
 
 def run(game, lst, track, renderer, shots, vblanks, work, tag):
     """the race; a snapshot after each of `shots` equal parts of the vblanks. Returns the snapshot names"""
+    flags = list(sys.argv)                  # (race_script sets sys.argv for bench's script)
     sym = bench.symbols(lst)
     sc, _ = test_physics.race_script(lst, track, False, 100 + track, os.path.join(work, 'r.rec'), os.path.join(work, tag))
     head, tail = sc.split('joy f\nframes 60\n')
     head += 'joy f\nframes 60\n'
     if renderer:
         head += f'poke {sym["HelperRenderer"]:#x} 1 b\n'
-    if '--half' in sys.argv:
+    if '--nocockpit' in flags:
+        head += f'poke {sym["HelperCockpitOff"]:#x} 1 b\n'
+    if '--half' in flags:
         head += f'poke {sym["HelperHalfRes"]:#x} 1 b\n'
     out, n, step, nxt, names = [], 0, vblanks // shots, 1, []
     for l in tail.split('\n'):
