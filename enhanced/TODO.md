@@ -113,9 +113,17 @@ None keeps the picture pixel for pixel as the release's except the second.
   change - to try first on the mountains (6 flat polygons a frame) to measure it.
 * **Front to back with a span buffer**: the near rows first, each screen line keeping the spans
   already covered; further rows fill only the gaps, the sky and ground what is left. No overdraw
-  (a word is written 1.87 times now), and far rows behind a crest skipped. Perhaps 5-10%, most on
-  hills (the worst frames). The CPU's renderer kept; the picture can stay the same. A cheaper
-  form: a "floating horizon" (the highest line drawn so far in each column).
+  (a word is written 1.87 times now), and far rows behind a crest skipped. The CPU's renderer
+  kept; the picture can stay the same. A cheaper form: a "floating horizon" (the highest line
+  drawn so far in each column). **Measured** (November 2026, `tools/measure_hidden.py`: 8 tracks,
+  3,200 frames of driven races, the CPU's plane-0 writes followed row by row): 5.0% of the words
+  the track's fills write are certainly covered by a nearer row's whole words, 14.6% touched at
+  all by one; 0.5 of a frame's 6.7 rows are wholly hidden (at most 20%, counting the edges'
+  partial words as hiding). By track: 0, 5 and 6 (flat) under 3% covered, 1 (hills) 12.8% and up to
+  12 of 13 rows hidden in its worst frames, 3, 4 and 7 3-7%. So the saving is small on average -
+  perhaps 1-3% of the work once a span buffer's own cost is paid - and large only in the few frames
+  at a crest or a dip. Not worth the span buffer; a horizon test that skips only wholly hidden rows
+  (their edges not stepped, nothing filled) is the part that could pay, on track 1's frames.
 * **The whole view filled at once by the blitter**: the edges between colours drawn as XOR lines
   and each plane filled in one pass (about 4.6 ms for the view). Only for polygons that do not
   overlap: it needs the visible regions first (as the span buffer finds them).
