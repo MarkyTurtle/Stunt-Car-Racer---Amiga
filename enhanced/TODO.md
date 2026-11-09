@@ -105,12 +105,26 @@ None keeps the picture pixel for pixel as the release's except the second.
 
 * **The blitter's polygons** (the demos' filled vectors): each polygon's outline drawn by the
   blitter's line mode into a buffer, filled by its fill mode, and put on the 4 planes in its
-  colour; the CPU only sets up each edge (about 150-200 cycles, against about 1,000 now with the
-  clipping) and projects the next rows while the blitter fills. The blitter's time about the
-  drawing's now (25-30 ms a frame), but beside the CPU. Costs: the blitter shares the bus on an
-  A500; a polygon costs its bounding box (slanted quads waste a lot); the painter's order keeps
-  the blits in sequence; the fill rules differ from `ScanEdge`'s. Perhaps 15-25%. The biggest
-  change - to try first on the mountains (6 flat polygons a frame) to measure it.
+  colour. **Tried on the mountains** (November 2026, F5: `src/renderer_blit.i`; the picture is
+  the release's to within a pixel at the edges: 0.5% of the view's pixels differ): the CPU's part
+  is small (the points, each edge's clipping, the blits' set-up) but the blitter's is not - a
+  polygon costs its bounding box: clear the mask, the lines, the fill (2 channels), and the
+  colour cut into each plane (3 channels a plane: 12 a word) - about the CPU's own time for these
+  polygons, and the CPU waits for each blit. **Measured: the mountains 16.1 ms a frame by the
+  blitter against 10.8 ms by the CPU** (the benchmark: the work 105 ms against 100). Overlapped
+  with the geometry (as the sky and ground are, `src/blitqueue.i`) it would at best break even on
+  an A500: the blitter takes the bus cycles the CPU would use (all its memory is chip memory), and
+  scremu does not model that. So not the 15-25% estimated: the blitter is no faster than the CPU
+  for polygons this small, and it would be the same for the track's rows (about the same words
+  to write, plus the mask passes). Kept as renderer 1 for its picture test and as a base.
+* **The mountains from a panorama** (not tried): the mountains depend only on the heading, the
+  pitch and the roll - and in most frames the roll is nil. Drawn once at the race's start into a
+  strip of the whole circle (about 1,500 pixels wide by 40 lines, the 4 planes and a mask: about
+  28K, within the free memory) by the release's own drawing; each frame one cookie-cut blit a
+  plane from the strip's window (the heading's shift, the pitch's offset) to the screen - 4
+  channels, about 2.4 ms of the blitter's time against 10.8 ms of the CPU's - and the polygons
+  as now when the car is rolled. About 8 ms of the frame, 7%. The picture the same to a pixel
+  (the strip's rows are the release's).
 * **Front to back with a span buffer**: the near rows first, each screen line keeping the spans
   already covered; further rows fill only the gaps, the sky and ground what is left. No overdraw
   (a word is written 1.87 times now), and far rows behind a crest skipped. Perhaps 5-10%, most on

@@ -21,7 +21,7 @@ CAL_TESTS	equ	CAL+$06
 CAL_RUNS	equ	CAL+$08
 CAL_RESULTS	equ	CAL+$10
 CAL_LINE	equ	300			; each test starts here (the display ends at line $2C+200)
-HelperCalibrate	equ	$173			; F7 sets it (helper_c0.s)
+HelperCalibrate	equ	$183			; F7 sets it (helper_c0.s)
 
 ;-------------------------------------------------------------------------------
 ; Calibrate - the tests run, their times kept at CAL. All registers kept.

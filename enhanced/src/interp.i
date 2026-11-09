@@ -52,7 +52,7 @@
 ; length kept from the step, InterpMoveOpponent) and its steering (WorkByte5).
 ;-------------------------------------------------------------------------------
 
-HelperInterpOff	equ	$174			; F8: non-zero - the release's timing (helper_c0.s)
+HelperInterpOff	equ	$184			; F8: non-zero - the release's timing (helper_c0.s)
 INTERP_STEP	equ	6			; vertical blanks a step (FrameLimiter's limit)
 
 InterpVBlanks:	dc.l	0			; vertical blanks (VBlankTick)

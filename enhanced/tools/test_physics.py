@@ -41,6 +41,9 @@ def assemble(src, work, name):
     vasm = os.environ.get('VASM', 'vasmm68k_mot')
     subprocess.run([vasm, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', src, '-I', ORIG,
                     '-L', game[:-4] + '.lst', '-o', game, os.path.join(src, 'scr_game.s')], check=True)
+    # its helper block too: the keys' flags (src/helper_c0.s) have moved between versions of the game
+    subprocess.run([vasm, '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', src, '-o', game[:-4] + '.helper',
+                    os.path.join(src, 'helper_c0.s')], check=True)
     return game
 
 
@@ -100,7 +103,7 @@ def run(game, lst, track, interp, seed, work, tag):
     sc, size = race_script(lst, track, interp, seed, rec, snap)
     txt = os.path.join(work, tag + '.txt')
     open(txt, 'w').write(sc)
-    out = subprocess.run([bench.EMU, game, bench.helper(), os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), txt],
+    out = subprocess.run([bench.EMU, game, game[:-4] + '.helper', os.path.join(ORIG, 'bin', 'loadpic_78000.bin'), txt],
                          check=True, capture_output=True, text=True).stdout
     if out.count(': reached') < 3:
         sys.exit(f'{tag}: the race not reached\n{out}')

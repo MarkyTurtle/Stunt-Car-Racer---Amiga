@@ -230,7 +230,46 @@ static uint32_t ptr(int r) { return ((uint32_t)cust[r / 2] << 16 | cust[r / 2 + 
 static void blit(uint16_t size) {
     uint16_t con0 = cust[0x40 / 2], con1 = cust[0x42 / 2];
     blits++;
-    if (con1 & 1) { blit_line++; goto done; }      /* line mode: not done */
+    if (con1 & 1) {                                 /* line mode (the Hardware Reference Manual's): a pixel a step */
+        int n = size >> 6 ? size >> 6 : 1024;      /* the pixels (the major axis' length + 1) */
+        blit_line++;
+        blit_words += n;
+        blit_cycles += (long)n * 4;                /* about 4 memory cycles a pixel */
+        if (blit_timed) blit_busy_until = cyc_now() + 2L * n * 4;
+        int ash = con0 >> 12, bsh = con1 >> 12, mt = con0 & 0xFF;
+        int sud = con1 >> 4 & 1, sul = con1 >> 3 & 1, aul = con1 >> 2 & 1, sing = con1 >> 1 & 1;
+        int32_t d = (int16_t)cust[0x52 / 2] | 0;    /* BLTAPT's low word: the error, signed */
+        int16_t amod = cust[0x64 / 2], bmod = cust[0x62 / 2], cmod = cust[0x60 / 2];
+        uint32_t cp = ptr(0x48);
+        uint16_t bdat = cust[0x72 / 2], adat = cust[0x74 / 2];
+        int moved_y = 1;                            /* the first pixel is always plotted (ONEDOT: the first of a row) */
+        for (int i = 0; i < n; i++) {
+            uint16_t a = (adat >> ash) & 0xFFFF, c = rw(cp);
+            if (!(adat & 0x8000)) a = adat >> ash;
+            uint16_t b = (bdat >> bsh & 1) ? 0xFFFF : 0;
+            if (!sing || moved_y) {
+                uint16_t dd = 0;
+                for (int k = 0; k < 8; k++) if (mt >> k & 1)
+                    dd |= (k & 4 ? a : ~a) & (k & 2 ? b : ~b) & (k & 1 ? c : ~c);
+                ww(cp, dd);
+            }
+            bsh = (bsh - 1) & 15;
+            int sign = d < 0;
+            moved_y = 0;
+            /* the major axis always, the minor one when the error is not negative */
+            for (int pass = 0; pass < 2; pass++) {
+                if (pass == 1 && sign) break;
+                int vertical = pass == 0 ? sud : !sud;          /* this step's axis */
+                int back = pass == 0 ? aul : sul;              /* up / left */
+                if (vertical) { cp += back ? -cmod : cmod; moved_y = 1; }
+                else if (back) { if (ash == 0) { ash = 15; cp -= 2; } else ash--; }
+                else { if (ash == 15) { ash = 0; cp += 2; } else ash++; }
+            }
+            d += sign ? bmod : amod;
+        }
+        cust[0x48 / 2] = cp >> 16; cust[0x4A / 2] = cp; cust[0x54 / 2] = cp >> 16; cust[0x56 / 2] = cp;
+        goto done;
+    }
     int h = size >> 6 ? size >> 6 : 1024, w = size & 63 ? size & 63 : 64;
     blit_words += (long)h * w;
     int use = con0 >> 8 & 15, ash = con0 >> 12, bsh = con1 >> 12, mt = con0 & 0xFF, desc = con1 & 2;

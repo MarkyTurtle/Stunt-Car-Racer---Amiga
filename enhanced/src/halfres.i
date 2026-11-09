@@ -23,7 +23,7 @@
 ; view is drawn all one way.
 ;-------------------------------------------------------------------------------
 
-HelperHalfRes	equ	$175			; F9: non-zero - the view at half its height (helper_c0.s)
+HelperHalfRes	equ	$185			; F9: non-zero - the view at half its height (helper_c0.s)
 HALF_TOP	equ	64			; the half-height view's first line
 
 HalfRes:	dc.b	0			; this view's way (HalfLatch)

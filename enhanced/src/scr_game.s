@@ -18987,7 +18987,7 @@ DrawCockpitPart:
 	jmp	(DrawCutout).l
 .off:	rts
 
-HelperCockpitOff	equ	$172		; (helper_c0.s: its flags) non-zero: the cockpit's parts are not drawn over the view (F6)
+HelperCockpitOff	equ	$182		; (helper_c0.s: its flags) non-zero: the cockpit's parts are not drawn over the view (F6)
 
 ;-------------------------------------------------------------------------------
 ; RaceView - the view each race frame: the cars placed on their pieces (or, off the track, the
@@ -18998,6 +18998,7 @@ HelperCockpitOff	equ	$172		; (helper_c0.s: its flags) non-zero: the cockpit's pa
 ;-------------------------------------------------------------------------------
 RaceView:
         jsr     (HalfLatch).l                   ; (enhanced) F9: this view at full or half height (halfres.i)
+        jsr     (RendererLatch).l               ; (enhanced) F5: this view by renderer 0 or 1 (renderer.i)
         jsr     (InterpViewStart).l             ; (enhanced) in a step to the clock: the variables kept, nothing drawn (interp.i)
         jsr     (StartView).l                   ; 64E4C
         move.b  #$0,d0                          ; 64E52
@@ -19133,12 +19134,12 @@ l_650AE:
 	else
         jsr     (DrawHorizon).l                 ; 650B4
 	endc
-        jsr     (DrawMountains).l               ; 650BA
+        jsr     (RenderMountains).l             ; 650BA  (enhanced) DrawMountains, or renderer 1's (renderer.i)
         move.w  (a7)+,(RowOffset).l             ; 650C0
         jsr     (LinkCheckCollision).l          ; 650C6
-        jsr     (DrawFarRows).l                   ; 650CC
+        jsr     (RenderFarRows).l               ; 650CC  (enhanced) DrawFarRows, or renderer 1's (renderer.i)
         move.w  (FarRowsEnd).l,(RowOffset).l     ; 650D2
-        jsr     (DrawNearRows).l                   ; 650DC
+        jsr     (RenderNearRows).l              ; 650DC  (enhanced) DrawNearRows, or renderer 1's (renderer.i)
 l_650E2:
         jsr     (HalfExpand).l                  ; (enhanced) at half height: the lines doubled (halfres.i)
         tst.b   (DropCountdown).l               ; 650E2
@@ -20108,7 +20109,7 @@ dat_65EC2:
 ; ProjectFarPieces - the pieces seen from the one the car is on (their list: $7AA1A, a pointer
 ; a piece), each one's points projected for the distance (ProjectPointXFar, ProjectPointYFar)
 ;-------------------------------------------------------------------------------
-HelperFarShort  equ     $177                    ; (enhanced) F4's flag (helper_c0.s)
+HelperFarShort  equ     $187                    ; (enhanced) F4's flag (helper_c0.s)
 FAR_SHORT_ROWS  equ     6                       ; (enhanced) F4: the far rows drawn (cross-sections, 2 points each)
 ProjectFarPieces:
         clr.w   d0                              ; 65EC4
@@ -24901,7 +24902,7 @@ l_69532:
 ; the view; the edges of their 6 or so polygons, many of them clipped at the view's sides, and
 ; the polygons' fills)
 ;-------------------------------------------------------------------------------
-HelperMountainsOff	equ	$176		; F10: non-zero - no mountains (helper_c0.s)
+HelperMountainsOff	equ	$186		; F10: non-zero - no mountains (helper_c0.s)
 
 ;-------------------------------------------------------------------------------
 ; DrawMountains - the mountains on the horizon: the groups in view by the heading (CarHeading),
@@ -25757,6 +25758,7 @@ ScreenDrawTop:				; ScreenDraw + $284: where the 3D view starts on it
 	include	"textfast.i"			; (the enhanced game) PrintCharNow's rows drawn faster
 	include	"scanside.i"			; (the enhanced game) ScanEdge: edges clipped at the view's sides only
 	include	"physfast.i"			; (the enhanced game) the physics' work made cheaper, exactly
+	include	"renderer.i"			; (the enhanced game) F5: a choice of renderers for the view
 	include	"gfx/screens.s"
 DiskPicture	equ	Screens+2*$7D00			; after the two screens, beyond what is loaded: the
 							; pictures loaded from the disk (LoadPicture)

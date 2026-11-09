@@ -11,11 +11,12 @@
 ;                     telemetry build: calibrate.i), F8 the race's steps to the clock with the
 ;                     view drawn between them, or the release's timing (interp.i), F9 the view
 ;                     at half its height (halfres.i), F10 the mountains off (DrawMountains),
-;                     F4 the track drawn less far ahead (ProjectFarPieces)
-;   $15C the flags (the release's; the enhanced game's at $170, its code having grown): F2's (NTSC
-;        on), F3's (the turbo on), F6's (the cockpit off: $172), F7's ($173), F8's ($174: the
-;        release's timing), F9's ($175: half height), F10's ($176: no mountains), F4's ($177: the
-;        track drawn less far ahead)
+;                     F4 the track drawn less far ahead (ProjectFarPieces), F5 the other
+;                     renderer (renderer.i)
+;   $15C the flags (the release's; the enhanced game's at $180, its code having grown): F2's (NTSC
+;        on), F3's (the turbo on), F6's (the cockpit off: $182), F7's ($183), F8's ($184: the
+;        release's timing), F9's ($185: half height), F10's ($186: no mountains), F4's ($187: the
+;        track drawn less far ahead), F5's ($188: the other renderer)
 ;
 ; The release's F3 rewrote the wait's bne at $C2 into a NOP and back: self-modifying code, which
 ; the instruction caches of the 68020 and later do not see (the change would not be noticed until
@@ -97,8 +98,11 @@ Helper_Keys:					; $FC
 	not.b	1(a0)				; (Helper_Wait tests it)
 	bra.s	.done
 .f6:	cmp.b	#$53,d0				; F4: the draw distance (ProjectFarPieces)
-	bne.s	.f6b
+	bne.s	.f5
 	not.b	7(a0)
+.f5:	cmp.b	#$54,d0				; F5: the renderer (renderer.i)
+	bne.s	.f6b
+	not.b	8(a0)
 .f6b:	move.w	d0,-(a7)			; F6-F10: a flag each, toggled (F7: set). Caught here, in
 	subi.b	#$55,d0				; the keyboard interrupt, so that no press is missed:
 	cmpi.b	#$59-$55,d0			; F6 the cockpit drawn over the view or not (the game's
@@ -115,23 +119,26 @@ Helper_Keys:					; $FC
 	rts
 
 	ifnd	ORIGINAL
-	dcb.b	$170-*,0
+	dcb.b	$180-*,0
 	endc
-HelperFlags:					; $15C ($170)
+HelperFlags:					; $15C ($180)
 	dc.b	0				; F2: NTSC
 TurboOn:
 	dc.b	0				; F3: the turbo
 	ifnd	ORIGINAL
-CockpitOff:					; $172
+CockpitOff:					; $182
 	dc.b	0				; F6: the cockpit off
-CalibrateAsked:					; $173
+CalibrateAsked:					; $183
 	dc.b	0				; F7: a calibration run asked for (the telemetry build)
-InterpOff:					; $174
+InterpOff:					; $184
 	dc.b	0				; F8: the release's timing
-HalfHeight:					; $175
+HalfHeight:					; $185
 	dc.b	0				; F9: the view at half height
-MountainsOff:					; $176
+MountainsOff:					; $186
 	dc.b	0				; F10: no mountains
-FarShort:					; $177
+FarShort:					; $187
 	dc.b	0				; F4: the track drawn less far ahead
+Renderer:					; $188
+	dc.b	0				; F5: the other renderer (renderer.i)
+	dc.b	0
 	endc

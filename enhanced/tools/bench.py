@@ -1,7 +1,7 @@
 """The race benchmark: the telemetry build played in scremu, the same race the same way every time,
 so that a change to the game's speed shows as a change in the figures.
 
-  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--farshort] [--cpumult N] [--blitcheck] [--game BIN [--lst LST]] [--helper BIN] [--keep DIR]
+  python3 enhanced/tools/bench.py [--vblanks N] [--json OUT] [--compare BASE.json] [--list] [--opponent] [--calibrate] [--chipbus] [--cpulost N] [--calibration REF.json] [--interp] [--half] [--nomountains] [--farshort] [--renderer] [--cpumult N] [--blitcheck] [--game BIN [--lst LST]] [--helper BIN] [--keep DIR]
 
 Builds the telemetry game (tools/build_disk.py --telemetry) unless --game names one, and scremu
 (original/tools/scremu/build.sh) if it is not built. Then: the title (fire), the driver's name
@@ -63,10 +63,11 @@ def script(frames, snap, lst=None):
         ['blittime 1',                                                                  # the blitter's time: the CPU waits for it
          ] + (['blitcheck 1'] if '--blitcheck' in sys.argv else []) + [
          'until 0xE730 100'] + \
-        ([] if '--interp' in sys.argv else ['poke 0x174 1 b']) + \
-        (['poke 0x175 1 b'] if '--half' in sys.argv else []) + \
-        (['poke 0x176 1 b'] if '--nomountains' in sys.argv else []) + \
-        (['poke 0x177 1 b'] if '--farshort' in sys.argv else []) + \
+        ([] if '--interp' in sys.argv else [f'poke {sym.get("HelperInterpOff", 0x174):#x} 1 b']) + \
+        ([f'poke {sym.get("HelperHalfRes", 0x175):#x} 1 b'] if '--half' in sys.argv else []) + \
+        ([f'poke {sym.get("HelperMountainsOff", 0x176):#x} 1 b'] if '--nomountains' in sys.argv else []) + \
+        ([f'poke {sym.get("HelperFarShort", 0x177):#x} 1 b'] if '--farshort' in sys.argv else []) + \
+        ([f'poke {sym["HelperRenderer"]:#x} 1 b'] if '--renderer' in sys.argv else []) + \
         ['frames 400', 'joy f', 'frames 5', 'joy', 'frames 150']                         # the title: fire
     for k in ('37', '20', '13', '27', '44'):                                           # MARK, Return
         L += [f'key {k}', 'frames 10']

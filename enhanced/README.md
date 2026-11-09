@@ -54,6 +54,12 @@ workflow). So far it differs from the original in:
 * **F4 in a race draws the track less far ahead**: 6 of the far pieces' cross-sections instead of
   12 (`ProjectFarPieces`) - the race's work 15% less; the cut is near the horizon, and the
   opponent's car beyond it is not drawn;
+* **F5 in a race switches the renderer** ([`src/renderer.i`](src/renderer.i)): the view's stages go
+  through a table (the mountains, the track's far and near rows), so that a renderer can replace
+  any of them; renderer 0 is the release's (the race is exactly as before), renderer 1 draws the
+  mountains with the blitter ([`src/renderer_blit.i`](src/renderer_blit.i)) - a prototype: the
+  picture is within a pixel of the release's (`tools/test_renderers.py` measures it), but it takes
+  longer than the CPU does, which the [TODO](TODO.md) explains.
 * **F10 in a race turns the horizon's mountains off and on**: the race's work about 11% less
   (113 ms to 101 ms a frame on the benchmark; 92 ms with F9's half height too) - the 6 mountain
   polygons and their 24 edges (a third crossing the view's sides) are not drawn;
@@ -74,7 +80,7 @@ workflow). So far it differs from the original in:
   `tools/test_physfast.py`).
 
 Keys in a race: F1 the audio filter, F2 PAL / NTSC, F3 the turbo (no frame limit), F4 the draw
-distance, F6 the cockpit, F7 the calibration run (the telemetry disk), F8 the release's timing, F9
+distance, F5 the renderer, F6 the cockpit, F7 the calibration run (the telemetry disk), F8 the release's timing, F9
 half height, F10 the mountains, P pause - and the game's own. Its data (`sound/`, `gfx/`, `tracks/`) is the
 original's: the build finds it with `-I original`.
 
