@@ -47,3 +47,4 @@ RenderNearRows:
 	bra.w	DrawNearRows
 
 	include	"renderer_blit.i"
+	include	"renderer_surf.i"

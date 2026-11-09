@@ -19,7 +19,7 @@ on:
 env:
   # The disk's SHA-1. A change to the game, the helper block or the bootblock changes it: update
   # this line with the new SHA-1 (build_disk.py prints it).
-  ADF_SHA1: 41f7b8667ca415ed63309c163c03e181717f4286
+  ADF_SHA1: dbffaef0b068eb1554fb4dc3aeeeb91b7986cbb3
 
 jobs:
   build:

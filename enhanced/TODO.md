@@ -121,6 +121,14 @@ None keeps the picture pixel for pixel as the release's except the second.
   crossings, not worked out again): the blitter's mountains cost 2.3 ms more than the CPU's (the
   work 110.8 ms against 108.5; first 5.3 more) - the CPU's part of it is now the larger, 10 ms of
   the 12.7: each polygon's set-up of its 7 blits and its 4 edges' clipping.
+  **The track's surfaces then built** (`src/renderer_surf.i`, renderer 1: the surface's edge
+  buffers' x put in a mask a line each by the CPU - a bit change - then the blitter's fill and
+  the colour on 4 planes): the picture is as renderer 0's (0.3% of the view differs, all of it the
+  mountains'), but `FillRowSurface` takes the CPU's own 14.3 ms (7.2 ms the CPU's part, 7.2 the
+  wait for the blits): the surfaces are nearly the view's width, so the area written is the same
+  and the blitter's 3-channel cookie cut is no faster per word than the CPU's unrolled
+  `move.l`s. The work 112.7 ms against 108.5. Overlap is blocked by the painter's order: the
+  edge lines and side walls are drawn by the CPU on the same words right after each surface.
   **The rows looked at, not built** (bench.py --callprof, the benchmark race, an A500's time): a
   frame has 15 surfaces (`FillRowSurface`, 17.4 ms with `FillBetweenEdges` 14.4: about 0.95 ms
   each), 24 edge lines (`DrawEdgeLine` 8.3 ms), 12 far side walls and the opponent's car

@@ -24294,7 +24294,7 @@ l_68EDC:
 l_68EFC:
         andi.l  #$f000000,d4                    ; 68EFC
         bne.w   l_68F0C                         ; 68F02
-        jsr     (FillBetweenEdges).l                   ; 68F06
+        jsr     (RenderFillSurface).l                   ; 68F06 (enhanced: renderer.i)
 l_68F0C:
         move.b  #$0,(FillingSurface).l               ; 68F0C
         btst    #$0,(RowFlags).l               ; 68F14
