@@ -117,6 +117,15 @@ None keeps the picture pixel for pixel as the release's except the second.
   scremu does not model that. So not the 15-25% estimated: the blitter is no faster than the CPU
   for polygons this small, and it would be the same for the track's rows (about the same words
   to write, plus the mask passes). Kept as renderer 1 for its picture test and as a base.
+  **The rows looked at, not built** (bench.py --callprof, the benchmark race, an A500's time): a
+  frame has 15 surfaces (`FillRowSurface`, 17.4 ms with `FillBetweenEdges` 14.4: about 0.95 ms
+  each), 24 edge lines (`DrawEdgeLine` 8.3 ms), 12 far side walls and the opponent's car
+  (`FillPolygon`). The same estimate as the mountains' gives about 0.85 ms a surface by the blitter
+  (the mask, fill and 4 planes of a bounding box 16 words wide, and the set-up) - no better - and
+  the painter's order stops the overlap that could pay for it: the near rows' edge lines are
+  drawn by the CPU on the screen after each surface, so the CPU waits for the blit each time.
+  The gain there is on the CPU's side (`FillBetweenEdges`' variables in registers, `ScanEdge`'s
+  133 calls a frame: 15 ms).
 * **The mountains from a panorama** (not tried): the mountains depend only on the heading, the
   pitch and the roll - and in most frames the roll is nil. Drawn once at the race's start into a
   strip of the whole circle (about 1,500 pixels wide by 40 lines, the 4 planes and a mask: about
