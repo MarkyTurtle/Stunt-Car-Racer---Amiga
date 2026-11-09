@@ -37,6 +37,7 @@ BmEdge:		dcb.l	BM_EDGES,0		; the group's edges: the points' offsets, p1 << 16 | 
 BmPoly:		dcb.l	4,0			; the polygon being drawn: its edges (copied from BmEdge)
 BmPolyN:	dc.w	0			; how many
 BmColour:	dc.b	0			; its colour
+	even
 BmY0:		dc.w	0			; the polygon's first and last line
 BmY1:		dc.w	0
 BmEX1:		dc.w	0			; BlitEdge's edge: x1, y1 (the upper end), x2, y2
@@ -44,6 +45,9 @@ BmEY1:		dc.w	0
 BmEX2:		dc.w	0
 BmEY2:		dc.w	0
 	even
+	ifne	(BmY0|BmY1|BmEX1|BmEY1|BmEX2|BmEY2)&1		; a word at an odd address is the 68000's address error
+	fail	"renderer_blit.i: a variable's word is at an odd address"
+	endc
 
 ;-------------------------------------------------------------------------------
 ; BlitMountains - the mountains drawn the blitter's way. As DrawMountains: the groups in view by
