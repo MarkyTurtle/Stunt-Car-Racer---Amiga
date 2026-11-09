@@ -84,7 +84,7 @@ def main():
     if not os.path.exists(bench.EMU):
         subprocess.run(['sh', os.path.join(bench.EMU_DIR, 'build.sh')], check=True)
     game, lst = os.path.join(work, 'game.bin'), os.path.join(work, 'game.lst')
-    subprocess.run([os.environ.get('VASM', 'vasmm68k_mot'), '-Fbin', '-m68000', '-no-opt', '-quiet', '-I', os.path.join(ENH, 'src'),
+    subprocess.run([os.environ.get('VASM', 'vasmm68k_mot'), '-Fbin', '-m68000', '-no-opt', '-quiet'] + os.environ.get('VASMOPT', '').split() + ['-I', os.path.join(ENH, 'src'),
                     '-I', os.path.join(ROOT, 'original'), '-L', lst, '-o', game, os.path.join(ENH, 'src', 'scr_game.s')], check=True)
     sys.argv += ['--cpumult', str(test_physics.CPUMULT)] if '--cpumult' not in sys.argv else []
     allpct = []

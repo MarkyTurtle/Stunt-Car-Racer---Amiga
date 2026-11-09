@@ -191,7 +191,8 @@ BlitMountains:
 	movem.l	(a7)+,d1/d6-d7/a0
 .next:	subq.b	#1,d1
 	bpl.w	.group
-	rts
+	lea	(CUSTOM).l,a5
+	bra.w	BlitWait				; (the last blit done before the rows are drawn on the screen)
 
 ;-------------------------------------------------------------------------------
 ; BlitPoly - the polygon of BmPoly's BmPolyN edges drawn in BmColour: its lines in the mask, the
@@ -543,7 +544,8 @@ BmLerp:
 ; them in the blitter's line mode, one pixel a row, exclusive-or'd into the mask. a5 = CUSTOM
 ; The line's octant: the major axis (the longer: x or y) is stepped every pixel, the other
 ; sometimes (the error term, BLTAPT = 4 minor - 2 major, BLTAMOD = 4 (minor - major), BLTBMOD =
-; 4 minor); the major axis' direction and the minor's are bits of BLTCON1 (SUD, SUL, AUL)
+; 4 minor); the major axis' direction and the minor's are bits of BLTCON1: SUD set when y moves only sometimes
+; (x is the major axis), AUL when the axis that always moves goes up or left, SUL when the other does
 ;-------------------------------------------------------------------------------
 BlitLine:
 	move.w	d2,d4
@@ -558,13 +560,14 @@ BlitLine:
 	bcs.s	.vert
 	move.w	d3,d6				; the major axis x: the minor is dy
 	move.w	d4,d7
+	ori.w	#$10,d5				; SUD: y only sometimes
 	bra.s	.go
 .vert:	move.w	d4,d6				; the major axis y: the minor is |dx|
 	move.w	d3,d7
 	andi.w	#4,d5
 	beq.s	.down
 	moveq	#8,d5				; left: SUL (x sometimes)
-.down:	ori.w	#$10,d5				; SUD: the major axis y
+.down:
 .go:	move.w	d6,d4
 	add.w	d4,d4
 	add.w	d4,d4				; 4 minor

@@ -259,7 +259,7 @@ static void blit(uint16_t size) {
             /* the major axis always, the minor one when the error is not negative */
             for (int pass = 0; pass < 2; pass++) {
                 if (pass == 1 && sign) break;
-                int vertical = pass == 0 ? sud : !sud;          /* this step's axis */
+                int vertical = pass == 0 ? !sud : sud;          /* this step's axis (SUD: y sometimes, so x is the major axis) */
                 int back = pass == 0 ? aul : sul;              /* up / left */
                 if (vertical) { cp += back ? -cmod : cmod; moved_y = 1; }
                 else if (back) { if (ash == 0) { ash = 15; cp -= 2; } else ash--; }
@@ -373,6 +373,10 @@ static unsigned custom_read(unsigned r) {
 static long cyc_now(void);
 static void custom_write(unsigned r, unsigned v) {
     v &= 0xFFFF;
+    if (bh_on && blit_timed && r >= 0x040 && r <= 0x076 && cyc_now() < blit_busy_until) {   /* blitcheck: a blitter register written while it is busy */
+        if (bh_n++ < 20) fprintf(logf ? logf : stdout, "blit hazard: frame %lu line %lu, blitter register $%03X written by the instruction at $%X while a blit runs\n",
+                                 frame, line_no, r, m68k_get_reg(NULL, M68K_REG_PPC));
+    }
     cust[r / 2] = v;
     if (audf && ((r >= 0xA0 && r < 0xE0) || r == 0x096)) fprintf(audf, "%ld %03X %04X\n", cyc_now(), r, v);
     if ((r & 2) && ((r >= 0x80 && r < 0x88) || (r >= 0xE0 && r < 0x100) || (r >= 0x120 && r < 0x140)))
