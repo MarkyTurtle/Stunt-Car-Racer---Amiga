@@ -114,6 +114,8 @@ static unsigned joy;                  /* bits: 1 up 2 down 4 left 8 right 16 fir
 static unsigned until_pc = 0xFFFFFFFF; static int until_hit;
 static unsigned hits_pc = 0xFFFFFFFF; static long hits_left;   /* hits: the passes still to come */
 static unsigned trace_pc = 0xFFFFFFFF; static int trace_all;
+static unsigned trace_more[16]; static int trace_n;       /* trace ADDR again: up to 16 addresses */
+static int trace_hit(unsigned pc) { if (pc == trace_pc) return 1; for (int i = 0; i < trace_n; i++) if (pc == trace_more[i]) return 1; return 0; }
 static void snapshot(const char *prefix);
 static void odd_access(unsigned a, const char *what);
 static unsigned rnd(void);
@@ -409,7 +411,7 @@ unsigned int m68k_read_memory_16(unsigned int a) {
 }
 unsigned int m68k_read_memory_32(unsigned int a) {
     if (a & 1) odd_access(a & 0xFFFFFF, "a long read"); return m68k_read_memory_16(a) << 16 | m68k_read_memory_16(a + 2); }
-static unsigned wlog_lo = 1, wlog_hi = 0; static FILE *wlogf;   /* writelog: every CPU write to LO-HI */
+static unsigned wlog_lo = 1, wlog_hi = 0; static FILE *wlogf; static unsigned wlog_p0;   /* writelog: every CPU write to LO-HI (writelogp0: only plane 0 of the two screens) */
 static unsigned wc_lo = 1, wc_hi = 0; static unsigned *wc_addr, *wc_pc;   /* writecount: CPU writes to LO-HI */
 static void wcount(unsigned a) {
     if (a >= wc_lo && a < wc_hi) { wc_addr[(a - wc_lo) >> 1]++; unsigned pc = m68k_get_reg(NULL, M68K_REG_PPC); if (pc < RAM) wc_pc[pc >> 1]++; }
@@ -422,7 +424,7 @@ static void odd_access(unsigned a, const char *what) {
 }
 static void wlog(unsigned a, unsigned v, int size) {
     wcount(a & ~1u);
-    if (a + size > wlog_lo && a < wlog_hi && wlogf)
+    if (a + size > wlog_lo && a < wlog_hi && wlogf && (!wlog_p0 || (a - wlog_lo) % 0x7D00 < 8000))
         fprintf(wlogf, pt_flag ? "%lu %lu %X %X %X/%d %d\n" : "%lu %lu %X %X %X/%d\n", frame, line_no, m68k_get_reg(NULL, M68K_REG_PPC), a, v, size,
                 pt_flag ? pt_phase() : 0);   /* (with phasetrack on: the phase too) */
 }
@@ -532,12 +534,12 @@ void instr_hook(unsigned int pc) {
         unsigned op = m68k_read_memory_16(pc);
         if ((op & 0xFFC0) == 0x4E80 || (op & 0xFF00) == 0x6100) call_from = pc;
     }
-    if (pc == trace_pc && logf)
+    if (trace_hit(pc) && logf)
         fprintf(logf, "frame %lu line %lu: pc $%X sr $%04X a7 $%X intreq $%04X d0 $%X d1 $%X d2 $%X a0 $%X a1 $%X a5 $%X a6 $%X\n",
                 frame, line_no, pc, m68k_get_reg(NULL, M68K_REG_SR), m68k_get_reg(NULL, M68K_REG_A7), intreq, m68k_get_reg(NULL, M68K_REG_D0), m68k_get_reg(NULL, M68K_REG_D1),
                 m68k_get_reg(NULL, M68K_REG_D2), m68k_get_reg(NULL, M68K_REG_A0), m68k_get_reg(NULL, M68K_REG_A1),
                 m68k_get_reg(NULL, M68K_REG_A5), m68k_get_reg(NULL, M68K_REG_A6));
-    if (pc == trace_pc && logf && trace_all)               /* (traceall 1: the other registers too) */
+    if (trace_hit(pc) && logf && trace_all)               /* (traceall 1: the other registers too) */
         fprintf(logf, "  d3 $%X d4 $%X d5 $%X d6 $%X d7 $%X a2 $%X a3 $%X a4 $%X\n", m68k_get_reg(NULL, M68K_REG_D3), m68k_get_reg(NULL, M68K_REG_D4),
                 m68k_get_reg(NULL, M68K_REG_D5), m68k_get_reg(NULL, M68K_REG_D6), m68k_get_reg(NULL, M68K_REG_D7), m68k_get_reg(NULL, M68K_REG_A2),
                 m68k_get_reg(NULL, M68K_REG_A3), m68k_get_reg(NULL, M68K_REG_A4));
@@ -708,7 +710,8 @@ int main(int argc, char **argv) {
             if (reps > 1) { while (line_no < FRAME_LINES) run_line(); line_no = 0; frame++; }
           }
         }
-        else if (!strcmp(cmd, "trace")) { trace_pc = strtoul(a1, 0, 0); }
+        else if (!strcmp(cmd, "trace")) { unsigned t = strtoul(a1, 0, 0); if (trace_pc == 0xFFFFFFFF) trace_pc = t; else if (trace_n < 16) trace_more[trace_n++] = t; }   /* trace again: more addresses */
+        else if (!strcmp(cmd, "traceclear")) { trace_pc = 0xFFFFFFFF; trace_n = 0; }
         else if (!strcmp(cmd, "traceall")) { trace_all = atoi(a1); }   /* traceall 1: trace prints all the registers */
         else if (!strcmp(cmd, "readwatch")) { rwatch_lo = strtoul(a1, 0, 0); rwatch_hi = strtoul(a2, 0, 0); }
         else if (!strcmp(cmd, "dmacheck")) { dma_lo = strtoul(a1, 0, 0); dma_hi = strtoul(a2, 0, 0); }
@@ -721,6 +724,7 @@ int main(int argc, char **argv) {
             FILE *o = fopen(a1, "w");
             if (o && prof) for (unsigned i = 0; i < RAM / 2; i++) if (prof[i]) fprintf(o, "%X %u\n", i * 2, prof[i]);
             if (o) fclose(o); }
+        else if (!strcmp(cmd, "writelogp0")) { wlog_p0 = 1; }   /* with writelog LO HI: only plane 0 of screens $7D00 apart from LO */
         else if (!strcmp(cmd, "writelog")) { wlog_lo = strtoul(a1, 0, 0); wlog_hi = strtoul(a2, 0, 0); if (!wlogf) wlogf = logf ? logf : stdout; }
         else if (!strcmp(cmd, "pokecopy")) {                   /* pokecopy DST SRC ADD: byte DST = byte SRC + ADD */
             unsigned d = strtoul(a1, 0, 0), sr = strtoul(a2, 0, 0); long add = strtol(a3, 0, 0);
