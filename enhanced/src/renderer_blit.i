@@ -207,6 +207,8 @@ BlitPoly:
 	moveq	#$f,d5				; the sides all the points are off: left 1, right 2, above 4,
 	move.w	#$7fff,d6			; below 8 (a bit is cleared by a point not off that side);
 	move.w	#$8000,d7			; the lowest and highest y
+	movea.w	#255,a1				; the points' x range (clamped to the view): a1 least, a2 greatest
+	suba.l	a2,a2
 	move.w	BmPolyN,d3
 	subq.w	#1,d3
 .edge:	move.l	(a0)+,d0			; p1 << 16 | p2
@@ -221,7 +223,19 @@ BlitPoly:
 .a:	cmpi.w	#255,d1
 	bgt.s	.b
 	bclr	#1,d5
-.b:	cmp.w	BmTopW(pc),d4
+.b:	tst.w	d1				; (the x range, d1 kept in the view)
+	bpl.s	.xl
+	moveq	#0,d1
+.xl:	cmpi.w	#255,d1
+	ble.s	.xh
+	move.w	#255,d1
+.xh:	cmpa.w	d1,a1
+	ble.s	.xm
+	movea.w	d1,a1
+.xm:	cmpa.w	d1,a2
+	bge.s	.xn
+	movea.w	d1,a2
+.xn:	cmp.w	BmTopW(pc),d4
 	blt.s	.c
 	bclr	#2,d5
 .c:	cmpi.w	#127,d4
@@ -251,18 +265,34 @@ BlitPoly:
 	sub.w	d6,d7
 	addq.w	#1,d7				; the lines
 	lsl.w	#6,d7
-	ori.w	#16,d7				; the blits' size: 16 words wide
+	move.w	a1,d0				; the words the polygon spans: BmW0 to the last
+	lsr.w	#4,d0
+	move.w	d0,BmW0
+	move.w	a2,d1
+	lsr.w	#4,d1
+	sub.w	d0,d1
+	addq.w	#1,d1				; how many
+	or.w	d1,d7				; the blits' size: the lines, and the words wide
 	move.w	d7,BmSize
+	add.w	d1,d1				; bytes
+	moveq	#BM_STRIDE,d0
+	sub.w	d1,d0
+	move.w	d0,BmMMod			; the mask's modulo
+	moveq	#40,d0
+	sub.w	d1,d0
+	move.w	d0,BmSMod			; the screen's
 
 	; 1. the mask cleared on those lines
 	move.w	d6,d0
 	lsl.w	#5,d0				; * BM_STRIDE
+	add.w	BmW0,d0
+	add.w	BmW0,d0				; (and the first word)
 	lea	BlitMask(pc),a1
 	adda.w	d0,a1
 	bsr.w	BlitWait
 	move.w	#$0100,BLTCON0(a5)		; D only: zeros
 	clr.w	BLTCON1(a5)
-	clr.w	BLTDMOD(a5)
+	move.w	BmMMod,BLTDMOD(a5)
 	move.l	a1,BLTDPTH(a5)
 	move.w	BmSize,BLTSIZE(a5)
 
@@ -285,13 +315,18 @@ BlitPoly:
 	; 3. the fill: exclusive, descending, from the last line's last word
 	move.w	BmY1,d0
 	lsl.w	#5,d0
-	lea	BlitMask+BM_STRIDE-2(pc),a1
+	move.w	BmSize,d1
+	andi.w	#$3f,d1				; the words wide: the last word is BmW0 + that - 1
+	add.w	BmW0,d1
+	add.w	d1,d1
+	add.w	d1,d0
+	lea	BlitMask-2(pc),a1
 	adda.w	d0,a1
 	bsr.w	BlitWait
 	move.w	#$09f0,BLTCON0(a5)		; A to D
 	move.w	#$0012,BLTCON1(a5)		; descending, exclusive fill
-	clr.w	BLTAMOD(a5)
-	clr.w	BLTDMOD(a5)
+	move.w	BmMMod,BLTAMOD(a5)
+	move.w	BmMMod,BLTDMOD(a5)
 	move.l	a1,BLTAPTH(a5)
 	move.l	a1,BLTDPTH(a5)
 	move.w	BmSize,BLTSIZE(a5)
@@ -300,9 +335,13 @@ BlitPoly:
 	move.w	BmY0,d0
 	move.w	d0,d1
 	lsl.w	#5,d0
+	add.w	BmW0,d0
+	add.w	BmW0,d0
 	lea	BlitMask(pc),a1
-	adda.w	d0,a1				; the mask's first line
+	adda.w	d0,a1				; the mask's first line, first word
 	mulu.w	#40,d1
+	add.w	BmW0,d1
+	add.w	BmW0,d1
 	movea.l	(ScreenDrawTop).l,a2
 	adda.w	d1,a2				; the screen's, plane 0
 	move.b	BmColour,d4
@@ -314,9 +353,9 @@ BlitPoly:
 	move.w	#$0d0c,d0			; B and not A
 .set:	move.w	d0,BLTCON0(a5)
 	clr.w	BLTCON1(a5)
-	clr.w	BLTAMOD(a5)
-	move.w	#40-32,BLTBMOD(a5)
-	move.w	#40-32,BLTDMOD(a5)
+	move.w	BmMMod,BLTAMOD(a5)
+	move.w	BmSMod,BLTBMOD(a5)
+	move.w	BmSMod,BLTDMOD(a5)
 	move.l	a1,BLTAPTH(a5)
 	move.l	a2,BLTBPTH(a5)
 	move.l	a2,BLTDPTH(a5)
@@ -388,20 +427,24 @@ BlitEdge:
 	move.w	d4,BmXA
 	move.w	d5,BmXB
 	; the rows where the edge crosses column 0 and column 255 (if it does), sorted: BmC1, BmC2
-	move.w	d7,BmC1				; (none: the last row)
+	move.w	d7,BmC1				; (none: the last row, and the x there)
 	move.w	d7,BmC2
+	move.w	d5,BmK1
+	move.w	d5,BmK2
 	moveq	#0,d3				; d3: how many crossings
 	tst.w	d4
 	bpl.s	.l1
 	tst.w	d5
 	bmi.s	.l2				; both left of it
 	moveq	#0,d0
+	moveq	#0,d5				; (d5 the column: its x)
 	bsr.w	BmCross				; d0 the row
 	bsr.w	BmAddCross
 	bra.s	.l2
 .l1:	tst.w	d5
 	bpl.s	.l2
 	moveq	#0,d0
+	moveq	#0,d5
 	bsr.w	BmCross
 	bsr.w	BmAddCross
 .l2:	cmpi.w	#255,BmXA
@@ -409,25 +452,33 @@ BlitEdge:
 	cmpi.w	#255,BmXB
 	bgt.s	.pieces				; both right of it
 	move.w	#255,d0
+	move.w	#255,d5
 	bsr.w	BmCross
 	bsr.w	BmAddCross
 	bra.s	.pieces
 .r1:	cmpi.w	#255,BmXB
 	ble.s	.pieces
 	move.w	#255,d0
+	move.w	#255,d5
 	bsr.w	BmCross
 	bsr.w	BmAddCross
-.pieces:
+.pieces:				; the pieces' ends' x: the edge's ends and the columns it crosses
 	move.w	BmPA,d6				; the first piece's first row
 	move.w	BmC1,d7
+	move.w	BmXA,d4
+	move.w	BmK1,d5
 	bsr.w	BmPiece
 	move.w	BmC1,d6
 	addq.w	#1,d6
 	move.w	BmC2,d7
+	move.w	BmK1,d4
+	move.w	BmK2,d5
 	bsr.w	BmPiece
 	move.w	BmC2,d6
 	addq.w	#1,d6
 	move.w	BmPB,d7
+	move.w	BmK2,d4
+	move.w	BmXB,d5
 	bsr.w	BmPiece
 .done:	rts
 
@@ -452,39 +503,35 @@ BmCross:
 .hi:	rts
 
 ;-------------------------------------------------------------------------------
-; BmAddCross - d0 a crossing row: kept in BmC1, BmC2 in order (d3 how many so far)
+; BmAddCross - d0 a crossing row, d5 its column: kept in BmC1, BmC2 (and BmK1, BmK2) in order of
+; the rows (d3 how many so far)
 ;-------------------------------------------------------------------------------
 BmAddCross:
 	tst.w	d3
 	bne.s	.second
 	move.w	d0,BmC1
+	move.w	d5,BmK1
 	moveq	#1,d3
 	rts
 .second:
 	cmp.w	BmC1(pc),d0
 	bge.s	.in
 	move.w	BmC1(pc),BmC2
+	move.w	BmK1(pc),BmK2
 	move.w	d0,BmC1
+	move.w	d5,BmK1
 	rts
 .in:	move.w	d0,BmC2
+	move.w	d5,BmK2
 	rts
 
 ;-------------------------------------------------------------------------------
-; BmPiece - rows d6-d7 of the edge (BmE*): on column 0 if left of the view, on 255 if right of it,
+; BmPiece - rows d6-d7 of the edge (BmE*), its x d4 at the first and d5 at the last: on column 0 if left of the view, on 255 if right of it,
 ; else its line, its ends kept in the view. Nothing if there are no rows
 ;-------------------------------------------------------------------------------
 BmPiece:
 	cmp.w	d6,d7
 	blt.s	.none
-	movem.w	d6-d7,-(a7)
-	move.w	d6,d1
-	bsr.w	BmLerp
-	move.w	d0,-(a7)			; x at the first row
-	move.w	4(a7),d1			; (d7)
-	bsr.w	BmLerp
-	move.w	(a7)+,d4			; d4 = x first, d0 = x last
-	move.w	d0,d5
-	movem.w	(a7)+,d6-d7
 	move.w	d4,d0
 	add.w	d5,d0
 	asr.w	#1,d0				; the middle
@@ -608,7 +655,10 @@ BlitLine:
 	move.w	d7,BLTSIZE(a5)
 	rts
 
-BmSize:		dc.w	0			; the polygon's blits' size: its lines, 16 words
+BmW0:		dc.w	0			; the polygon's first word, its modulos in the mask and the screen
+BmMMod:		dc.w	0
+BmSMod:		dc.w	0
+BmSize:		dc.w	0			; the polygon's blits' size: its lines, its words wide
 BmTopW:		dc.w	0			; the view's first line to draw: 0, or 64 at half height
 BmPA:		dc.w	0			; BlitEdge: the rows drawn, the x at the ends, the crossings
 BmPB:		dc.w	0
@@ -616,3 +666,5 @@ BmXA:		dc.w	0
 BmXB:		dc.w	0
 BmC1:		dc.w	0
 BmC2:		dc.w	0
+BmK1:		dc.w	0			; the x (column) at the crossings BmC1, BmC2
+BmK2:		dc.w	0
