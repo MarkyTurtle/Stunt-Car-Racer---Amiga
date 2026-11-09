@@ -85,8 +85,8 @@ def script(frames, snap, lst=None):
         for _ in range(0, frames, 25):
             L += [f'pokecopy {sym["OpponentPiece"]:#x} {sym["PlayerPiece"]:#x} 1', 'frames 25']
     else:
-        L += (['callprof 1'] if '--callprof' in sys.argv else []) + ['joy f', f'frames {frames}']
-    L += ([f'callprofdump {arg("--callprof")}'] if '--callprof' in sys.argv else []) + [f'snap {snap}']
+        L += (['callprof 1'] if '--callprof' in sys.argv else []) + (['profile 1'] if '--profile' in sys.argv else []) + ['joy f', f'frames {frames}']
+    L += ([f'callprofdump {arg("--callprof")}'] if '--callprof' in sys.argv else []) + ([f'profdump {arg("--profile")}'] if '--profile' in sys.argv else []) + [f'snap {snap}']
     return '\n'.join(L) + '\n'
 
 
