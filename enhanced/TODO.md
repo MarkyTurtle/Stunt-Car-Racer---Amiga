@@ -129,6 +129,18 @@ None keeps the picture pixel for pixel as the release's except the second.
   and the blitter's 3-channel cookie cut is no faster per word than the CPU's unrolled
   `move.l`s. The work 112.7 ms against 108.5. Overlap is blocked by the painter's order: the
   edge lines and side walls are drawn by the CPU on the same words right after each surface.
+  **Geometry looked at, not built** (bench.py --callprof and --profile, an A500's time): the
+  geometry and physics are about 45 ms of the 108 ms frame, and close to their floor. `ScanEdge`'s
+  family 15 ms (133 edges; already an in-view fast path, line-at-a-time x-major steps), `ArcTan`
+  5.4 (one `divu`, 140 cycles, as cheap as a reciprocal table's multiply on a 68000),
+  `RollPointXY`/`RollPointNow` 5, the projection loops 5, the piece and edge builders 6.
+  Ideas measured and dropped: reusing the far points between pictures (under 1 ms: renderer 3's
+  `ProjectFarPieces` is 1.9 ms), a pre-rendered mountains' panorama (the view is level in 4% of a
+  random-control race), a planar perspective for the angle projection (it bends the edges at the
+  view's sides), skipping what the cockpit covers (its chrome is full of gaps: 0.3% of the view's
+  words are always covered), and caching the near pieces' sections (`LoadPiece`,
+  `PieceGridOffset`, `PieceModelSections`: 1.3 ms a frame for the near pieces). What is left is
+  many exact rewrites of 0.1-0.4 ms each (5-7 ms together).
   **The rows looked at, not built** (bench.py --callprof, the benchmark race, an A500's time): a
   frame has 15 surfaces (`FillRowSurface`, 17.4 ms with `FillBetweenEdges` 14.4: about 0.95 ms
   each), 24 edge lines (`DrawEdgeLine` 8.3 ms), 12 far side walls and the opponent's car
