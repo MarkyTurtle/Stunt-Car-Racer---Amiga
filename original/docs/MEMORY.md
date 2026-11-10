@@ -15,7 +15,7 @@ is left out.
 |---|---:|---|---|
 | `$00000-$000FF` | 256 | exception vectors; the release's helper block at `$C0` | |
 | `$00100-$0015B` | 92 | | a few bytes read |
-| `$0015C-$03D79` | 15,390 | **free** (the enhanced game's helper block reaches `$175`: its flags at `$170`): nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
+| `$0015C-$03D79` | 15,390 | **free** (the enhanced game's helper block reaches `$189`: its flags at `$180`): nothing touched in play. The supervisor stack ends at `$3D80` (it uses only a few bytes); the save routine's MFM buffer starts at `$400` (`SectorLoader`, a1 = `$400`: about `$400-$3700` while a game position is loaded or saved) | untouched |
 | `$03D80-$0648F` | 10,000 | the race's work area: cleared at the start of each race (`$5D83A`); the 3D view's edge buffers (`$3D80-$60A8`, [RENDER.md](RENDER.md)) | read and written |
 | `$06490-$0E297` | 32,264 | the cut-out graphics: 52 pieces of the pictures (the cockpit's parts, the chains, ...) masked by `MakeCutouts` at start-up; their addresses at `CutoutPointers` | written once, read |
 | `$0E298-$0E729` | 1,170 | free (no use found) | untouched |

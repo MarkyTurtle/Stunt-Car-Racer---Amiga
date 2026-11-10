@@ -105,12 +105,59 @@ None keeps the picture pixel for pixel as the release's except the second.
 
 * **The blitter's polygons** (the demos' filled vectors): each polygon's outline drawn by the
   blitter's line mode into a buffer, filled by its fill mode, and put on the 4 planes in its
-  colour; the CPU only sets up each edge (about 150-200 cycles, against about 1,000 now with the
-  clipping) and projects the next rows while the blitter fills. The blitter's time about the
-  drawing's now (25-30 ms a frame), but beside the CPU. Costs: the blitter shares the bus on an
-  A500; a polygon costs its bounding box (slanted quads waste a lot); the painter's order keeps
-  the blits in sequence; the fill rules differ from `ScanEdge`'s. Perhaps 15-25%. The biggest
-  change - to try first on the mountains (6 flat polygons a frame) to measure it.
+  colour. **Tried on the mountains** (November 2026, F5: `src/renderer_blit.i`; the picture is
+  the release's to within a pixel at the edges: 0.5% of the view's pixels differ): the CPU's part
+  is small (the points, each edge's clipping, the blits' set-up) but the blitter's is not - a
+  polygon costs its bounding box: clear the mask, the lines, the fill (2 channels), and the
+  colour cut into each plane (3 channels a plane: 12 a word) - about the CPU's own time for these
+  polygons, and the CPU waits for each blit. **Measured: the mountains 16.1 ms a frame by the
+  blitter against 10.8 ms by the CPU** (the benchmark: the work 105 ms against 100). Overlapped
+  with the geometry (as the sky and ground are, `src/blitqueue.i`) it would at best break even on
+  an A500: the blitter takes the bus cycles the CPU would use (all its memory is chip memory), and
+  scremu does not model that. So not the 15-25% estimated: the blitter is no faster than the CPU
+  for polygons this small, and it would be the same for the track's rows (about the same words
+  to write, plus the mask passes). Kept as renderer 1 for its picture test and as a base.
+  **Then trimmed** (the blits only over the polygon's words, and the edges' pieces' ends from the
+  crossings, not worked out again): the blitter's mountains cost 2.3 ms more than the CPU's (the
+  work 110.8 ms against 108.5; first 5.3 more) - the CPU's part of it is now the larger, 10 ms of
+  the 12.7: each polygon's set-up of its 7 blits and its 4 edges' clipping.
+  **The track's surfaces then built** (`src/renderer_surf.i`, renderer 1: the surface's edge
+  buffers' x put in a mask a line each by the CPU - a bit change - then the blitter's fill and
+  the colour on 4 planes): the picture is as renderer 0's (0.3% of the view differs, all of it the
+  mountains'), but `FillRowSurface` takes the CPU's own 14.3 ms (7.2 ms the CPU's part, 7.2 the
+  wait for the blits): the surfaces are nearly the view's width, so the area written is the same
+  and the blitter's 3-channel cookie cut is no faster per word than the CPU's unrolled
+  `move.l`s. The work 112.7 ms against 108.5. Overlap is blocked by the painter's order: the
+  edge lines and side walls are drawn by the CPU on the same words right after each surface.
+  **Geometry looked at, not built** (bench.py --callprof and --profile, an A500's time): the
+  geometry and physics are about 45 ms of the 108 ms frame, and close to their floor. `ScanEdge`'s
+  family 15 ms (133 edges; already an in-view fast path, line-at-a-time x-major steps), `ArcTan`
+  5.4 (one `divu`, 140 cycles, as cheap as a reciprocal table's multiply on a 68000),
+  `RollPointXY`/`RollPointNow` 5, the projection loops 5, the piece and edge builders 6.
+  Ideas measured and dropped: reusing the far points between pictures (under 1 ms: renderer 3's
+  `ProjectFarPieces` is 1.9 ms), a pre-rendered mountains' panorama (the view is level in 4% of a
+  random-control race), a planar perspective for the angle projection (it bends the edges at the
+  view's sides), skipping what the cockpit covers (its chrome is full of gaps: 0.3% of the view's
+  words are always covered), and caching the near pieces' sections (`LoadPiece`,
+  `PieceGridOffset`, `PieceModelSections`: 1.3 ms a frame for the near pieces). What is left is
+  many exact rewrites of 0.1-0.4 ms each (5-7 ms together).
+  **The rows looked at, not built** (bench.py --callprof, the benchmark race, an A500's time): a
+  frame has 15 surfaces (`FillRowSurface`, 17.4 ms with `FillBetweenEdges` 14.4: about 0.95 ms
+  each), 24 edge lines (`DrawEdgeLine` 8.3 ms), 12 far side walls and the opponent's car
+  (`FillPolygon`). The same estimate as the mountains' gives about 0.85 ms a surface by the blitter
+  (the mask, fill and 4 planes of a bounding box 16 words wide, and the set-up) - no better - and
+  the painter's order stops the overlap that could pay for it: the near rows' edge lines are
+  drawn by the CPU on the screen after each surface, so the CPU waits for the blit each time.
+  The gain there is on the CPU's side (`FillBetweenEdges`' variables in registers, `ScanEdge`'s
+  133 calls a frame: 15 ms).
+* **The mountains from a panorama** (not tried): the mountains depend only on the heading, the
+  pitch and the roll - and in most frames the roll is nil. Drawn once at the race's start into a
+  strip of the whole circle (about 1,500 pixels wide by 40 lines, the 4 planes and a mask: about
+  28K, within the free memory) by the release's own drawing; each frame one cookie-cut blit a
+  plane from the strip's window (the heading's shift, the pitch's offset) to the screen - 4
+  channels, about 2.4 ms of the blitter's time against 10.8 ms of the CPU's - and the polygons
+  as now when the car is rolled. About 8 ms of the frame, 7%. The picture the same to a pixel
+  (the strip's rows are the release's).
 * **Front to back with a span buffer**: the near rows first, each screen line keeping the spans
   already covered; further rows fill only the gaps, the sky and ground what is left. No overdraw
   (a word is written 1.87 times now), and far rows behind a crest skipped. Perhaps 5-10%, most on
